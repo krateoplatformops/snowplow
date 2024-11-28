@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krateoplatformops/snowplow/plumbing/server/handlers"
+	"github.com/krateoplatformops/snowplow/plumbing/server"
 )
 
 func TestLoggerMiddleware(t *testing.T) {
@@ -19,7 +19,7 @@ func TestLoggerMiddleware(t *testing.T) {
 		&slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// Create a simple handler that uses the logger.
-	sillyHandler := http.HandlerFunc(
+	sillyHandler := server.Handler(
 		func(w http.ResponseWriter, r *http.Request) {
 			log := Get(r.Context())
 			log.Info("Processing a lot...")
@@ -31,7 +31,7 @@ func TestLoggerMiddleware(t *testing.T) {
 		})
 
 	// Create a middleware chain with the LoggerMiddleware.
-	chain := handlers.NewChain(New(log)).Then(sillyHandler)
+	chain := server.Chain(sillyHandler, New(log))
 
 	// Create a test request.
 	req := httptest.NewRequest("GET", "/", nil)
@@ -40,7 +40,7 @@ func TestLoggerMiddleware(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	// Serve the request.
-	chain.ServeHTTP(rec, req)
+	chain(rec, req)
 
 	// Check the log output.
 	fmt.Println(buf.String())
