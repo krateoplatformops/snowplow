@@ -9,12 +9,13 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/krateoplatformops/snowplow/plumbing/server"
 	"github.com/krateoplatformops/snowplow/plumbing/server/traceid"
 )
 
-func New(log *slog.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(wri http.ResponseWriter, req *http.Request) {
+func New(log *slog.Logger) server.Middleware {
+	return func(next server.Handler) server.Handler {
+		return func(wri http.ResponseWriter, req *http.Request) {
 			tid := req.Header.Get("X-Request-Id")
 			if len(tid) == 0 {
 				tid = uuid.New().String()
@@ -37,8 +38,8 @@ func New(log *slog.Logger) func(http.Handler) http.Handler {
 					))
 			}
 
-			next.ServeHTTP(wri, req.WithContext(ctx))
-		})
+			next(wri, req.WithContext(ctx))
+		}
 	}
 }
 

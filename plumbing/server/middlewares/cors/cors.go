@@ -24,6 +24,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/krateoplatformops/snowplow/plumbing/server"
 )
 
 // Options is a configuration container to setup the CORS middleware.
@@ -110,6 +112,24 @@ type Cors struct {
 	optionPassthrough bool
 }
 
+// AllowAll create a new Cors handler with permissive configuration allowing all
+// origins with all standard methods with any header and credentials.
+func AllowAll() *Cors {
+	return New(Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{
+			http.MethodHead,
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+		},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: false,
+	})
+}
+
 // New creates a new Cors handler with the provided options.
 func New(options Options) *Cors {
 	c := &Cors{
@@ -182,34 +202,10 @@ func New(options Options) *Cors {
 	return c
 }
 
-// Handler creates a new Cors handler with passed options.
-func Handler(options Options) func(next http.Handler) http.Handler {
-	c := New(options)
-	return c.Handler
-}
-
-// AllowAll create a new Cors handler with permissive configuration allowing all
-// origins with all standard methods with any header and credentials.
-func AllowAll() *Cors {
-	return New(Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{
-			http.MethodHead,
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodPut,
-			http.MethodPatch,
-			http.MethodDelete,
-		},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: false,
-	})
-}
-
 // Handler apply the CORS specification on the request, and add relevant CORS headers
 // as necessary.
-func (c *Cors) Handler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (c *Cors) Handler(next server.Handler) server.Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 			c.logf("Handler: Preflight request")
 			c.handlePreflight(w, r)
@@ -218,16 +214,16 @@ func (c *Cors) Handler(next http.Handler) http.Handler {
 			// is authentication middleware ; OPTIONS requests won't carry authentication
 			// headers (see #1)
 			if c.optionPassthrough {
-				next.ServeHTTP(w, r)
+				next(w, r)
 			} else {
 				w.WriteHeader(http.StatusOK)
 			}
 		} else {
 			c.logf("Handler: Actual request")
 			c.handleActualRequest(w, r)
-			next.ServeHTTP(w, r)
+			next(w, r)
 		}
-	})
+	}
 }
 
 // handlePreflight handles pre-flight CORS requests

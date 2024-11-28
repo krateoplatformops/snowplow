@@ -13,6 +13,10 @@ func InternalError(w http.ResponseWriter, err error) error {
 	return Encode(w, New(http.StatusInternalServerError, err))
 }
 
+func ServiceUnavailable(w http.ResponseWriter, err error) error {
+	return Encode(w, New(http.StatusServiceUnavailable, err))
+}
+
 func BadRequest(w http.ResponseWriter, err error) error {
 	return Encode(w, New(http.StatusBadRequest, err))
 }

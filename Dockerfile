@@ -19,13 +19,16 @@ COPY go.sum go.sum
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
-COPY apis/ apis/
+#COPY apis/ apis/
 COPY cmd/ cmd/
 COPY internal/ internal/
 COPY main.go main.go
 
+# Get the current commit hash
+ARG COMMIT_HASH
+
 # Build
-RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o /bin/server ./main.go && \
+RUN CGO_ENABLED=0 GO111MODULE=on go build -a -a -ldflags "-X main.Build=${COMMIT_HASH}" -o /bin/server ./main.go && \
     strip /bin/server
 
 # Deployment environment

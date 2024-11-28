@@ -7,17 +7,17 @@ metadata:
 kind: ServiceAccount
 apiVersion: v1
 metadata:
-  name: bff
+  name: snowplow
   namespace: demo-system
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: bff
+  name: snowplow
   namespace: demo-system
 spec:
   selector:
-    app: bff
+    app: snowplow
   type: NodePort
   ports:
   - name: http
@@ -29,30 +29,30 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bff
+  name: snowplow
   namespace: demo-system
   labels:
-    app: bff
+    app: snowplow
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: bff
+      app: snowplow
   template:
     metadata:
       labels:
-        app: bff
+        app: snowplow
     spec:
-      serviceAccountName: bff
+      serviceAccountName: snowplow
       containers:
-      - name: krateo-bff
-        image: kind.local/bff:latest
+      - name: snowplow
+        image: kind.local/snowplow:latest
         imagePullPolicy: Never
         args:
           - --debug=true
-          - --dump-env=true
+          - --port=8081
           - --authn-store-namespace=demo-system
         ports:
         - name: http
@@ -61,7 +61,7 @@ spec:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: bff
+  name: snowplow
 rules:
 - apiGroups:
   - ""
@@ -76,12 +76,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: bff
+  name: snowplow
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: bff
+  name: snowplow
 subjects:
 - kind: ServiceAccount
-  name: bff
+  name: snowplow
   namespace: demo-system

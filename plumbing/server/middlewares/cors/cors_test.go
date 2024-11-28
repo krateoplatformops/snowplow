@@ -6,11 +6,13 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/krateoplatformops/snowplow/plumbing/server"
 )
 
-var testHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+var testHandler = func(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("bar"))
-})
+}
 
 var allHeaders = []string{
 	"Vary",
@@ -392,9 +394,10 @@ func TestSpec(t *testing.T) {
 			}
 
 			t.Run("Handler", func(t *testing.T) {
-				res := httptest.NewRecorder()
-				s.Handler(testHandler).ServeHTTP(res, req)
-				assertHeaders(t, res.Header(), tc.resHeaders)
+				rec := httptest.NewRecorder()
+				chain := server.Chain(testHandler, s.Handler)
+				chain(rec, req)
+				assertHeaders(t, rec.Header(), tc.resHeaders)
 			})
 		})
 	}

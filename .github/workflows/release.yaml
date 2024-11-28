@@ -33,6 +33,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get commit hash
+        id: vars
+        run: |
+          echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Build docker image and push
         id: docker_build_amd64
         uses: docker/build-push-action@v4
@@ -41,7 +46,9 @@ jobs:
           platforms: linux/amd64
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
-
+          build-args: |
+            COMMIT_HASH=${{ env.COMMIT_HASH }}
+    
       - name: Export digest
         run: |
           mkdir -p /tmp/digests
@@ -81,6 +88,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get commit hash
+        id: vars
+        run: |
+          echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Build docker image and push
         id: docker_build_arm64
         uses: docker/build-push-action@v4
@@ -89,6 +101,8 @@ jobs:
           platforms: linux/arm64
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            COMMIT_HASH=${{ env.COMMIT_HASH }}
 
       - name: Export digest
         run: |
