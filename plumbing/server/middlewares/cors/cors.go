@@ -19,13 +19,10 @@
 package cors
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
-
-	"github.com/krateoplatformops/snowplow/plumbing/server"
 )
 
 // Options is a configuration container to setup the CORS middleware.
@@ -68,9 +65,6 @@ type Options struct {
 	// OptionsPassthrough instructs preflight to let other potential next handlers to
 	// process the OPTIONS method. Turn this on if your application handles OPTIONS.
 	OptionsPassthrough bool
-
-	// Debugging flag adds additional output to debug server side CORS issues
-	Debug bool
 }
 
 // Logger generic interface for logger
@@ -81,7 +75,7 @@ type Logger interface {
 // Cors http handler
 type Cors struct {
 	// Debug logger
-	Log Logger
+	Log *slog.Logger
 
 	// Normalized list of plain allowed origins
 	allowedOrigins []string
@@ -138,9 +132,6 @@ func New(options Options) *Cors {
 		allowCredentials:  options.AllowCredentials,
 		maxAge:            options.MaxAge,
 		optionPassthrough: options.OptionsPassthrough,
-	}
-	if options.Debug && c.Log == nil {
-		c.Log = log.New(os.Stdout, "[cors] ", log.LstdFlags)
 	}
 
 	// Normalize options
@@ -204,26 +195,27 @@ func New(options Options) *Cors {
 
 // Handler apply the CORS specification on the request, and add relevant CORS headers
 // as necessary.
-func (c *Cors) Handler(next server.Handler) server.Handler {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
-			c.logf("Handler: Preflight request")
-			c.handlePreflight(w, r)
-			// Preflight requests are standalone and should stop the chain as some other
-			// middleware may not handle OPTIONS requests correctly. One typical example
-			// is authentication middleware ; OPTIONS requests won't carry authentication
-			// headers (see #1)
-			if c.optionPassthrough {
-				next(w, r)
+func (c *Cors) Handler(next http.Handler) http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+				c.debug("CORS handler: preflight request")
+				c.handlePreflight(w, r)
+				// Preflight requests are standalone and should stop the chain as some other
+				// middleware may not handle OPTIONS requests correctly. One typical example
+				// is authentication middleware ; OPTIONS requests won't carry authentication
+				// headers (see #1)
+				if c.optionPassthrough {
+					next.ServeHTTP(w, r)
+				} else {
+					w.WriteHeader(http.StatusOK)
+				}
 			} else {
-				w.WriteHeader(http.StatusOK)
+				c.debug("CORS handler: actual request")
+				c.handleActualRequest(w, r)
+				next.ServeHTTP(w, r)
 			}
-		} else {
-			c.logf("Handler: Actual request")
-			c.handleActualRequest(w, r)
-			next(w, r)
-		}
-	}
+		})
 }
 
 // handlePreflight handles pre-flight CORS requests
@@ -232,7 +224,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 
 	if r.Method != http.MethodOptions {
-		c.logf("Preflight aborted: %s!=OPTIONS", r.Method)
+		c.debug("CORS preflight aborted: %s!=OPTIONS", r.Method)
 		return
 	}
 	// Always set Vary headers
@@ -243,22 +235,22 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	headers.Add("Vary", "Access-Control-Request-Headers")
 
 	if origin == "" {
-		c.logf("Preflight aborted: empty origin")
+		c.debug("CORS preflight aborted: empty origin")
 		return
 	}
 	if !c.isOriginAllowed(r, origin) {
-		c.logf("Preflight aborted: origin '%s' not allowed", origin)
+		c.debug("CORS preflight aborted: origin not allowed", slog.String("origin", origin))
 		return
 	}
 
 	reqMethod := r.Header.Get("Access-Control-Request-Method")
 	if !c.isMethodAllowed(reqMethod) {
-		c.logf("Preflight aborted: method '%s' not allowed", reqMethod)
+		c.debug("CORS preflight aborted: method not allowed", slog.String("method", reqMethod))
 		return
 	}
 	reqHeaders := parseHeaderList(r.Header.Get("Access-Control-Request-Headers"))
 	if !c.areHeadersAllowed(reqHeaders) {
-		c.logf("Preflight aborted: headers '%v' not allowed", reqHeaders)
+		c.debug("CORS preflight aborted: headers not allowed", slog.String("headers", strings.Join(reqHeaders, ",")))
 		return
 	}
 	if c.allowedOriginsAll {
@@ -281,7 +273,7 @@ func (c *Cors) handlePreflight(w http.ResponseWriter, r *http.Request) {
 	if c.maxAge > 0 {
 		headers.Set("Access-Control-Max-Age", strconv.Itoa(c.maxAge))
 	}
-	c.logf("Preflight response headers: %v", headers)
+	c.debug("CORS preflight response headers", slog.Any("headers", headers))
 }
 
 // handleActualRequest handles simple cross-origin requests, actual request or redirects
@@ -292,11 +284,11 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	// Always set Vary, see https://github.com/rs/cors/issues/10
 	headers.Add("Vary", "Origin")
 	if origin == "" {
-		c.logf("Actual request no headers added: missing origin")
+		c.debug("CORS actual request no headers added: missing origin")
 		return
 	}
 	if !c.isOriginAllowed(r, origin) {
-		c.logf("Actual request no headers added: origin '%s' not allowed", origin)
+		c.debug("CORS actual request no headers added: origin not allowed", slog.String("origin", origin))
 		return
 	}
 
@@ -305,10 +297,10 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	// spec doesn't instruct to check the allowed methods for simple cross-origin requests.
 	// We think it's a nice feature to be able to have control on those methods though.
 	if !c.isMethodAllowed(r.Method) {
-		c.logf("Actual request no headers added: method '%s' not allowed", r.Method)
-
+		c.debug("CORS actual request no headers added: method not allowed", slog.String("method", r.Method))
 		return
 	}
+
 	if c.allowedOriginsAll {
 		headers.Set("Access-Control-Allow-Origin", "*")
 	} else {
@@ -320,13 +312,13 @@ func (c *Cors) handleActualRequest(w http.ResponseWriter, r *http.Request) {
 	if c.allowCredentials {
 		headers.Set("Access-Control-Allow-Credentials", "true")
 	}
-	c.logf("Actual response added headers: %v", headers)
+	c.debug("CORS actual response added headers", slog.Any("headers", headers))
 }
 
 // convenience method. checks if a logger is set.
-func (c *Cors) logf(format string, a ...interface{}) {
+func (c *Cors) debug(msg string, args ...any) {
 	if c.Log != nil {
-		c.Log.Printf(format, a...)
+		c.Log.Debug(msg, args...)
 	}
 }
 

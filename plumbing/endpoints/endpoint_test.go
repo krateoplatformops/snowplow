@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/krateoplatformops/snowplow/pkg/endpoints"
+	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )

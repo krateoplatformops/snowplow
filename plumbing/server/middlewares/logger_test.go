@@ -1,4 +1,4 @@
-package logger
+package middlewares
 
 import (
 	"bytes"
@@ -8,8 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	"github.com/krateoplatformops/snowplow/plumbing/server"
 )
 
 func TestLoggerMiddleware(t *testing.T) {
@@ -19,9 +17,9 @@ func TestLoggerMiddleware(t *testing.T) {
 		&slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// Create a simple handler that uses the logger.
-	sillyHandler := server.Handler(
+	sillyHandler := http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			log := Get(r.Context())
+			log := LogFromContext(r.Context())
 			log.Info("Processing a lot...")
 			log.Debug("for devs only")
 			time.Sleep(1 * time.Second)
@@ -30,8 +28,7 @@ func TestLoggerMiddleware(t *testing.T) {
 			log.Info("Done!", "eta", ElapsedTime(r.Context()))
 		})
 
-	// Create a middleware chain with the LoggerMiddleware.
-	chain := server.Chain(sillyHandler, New(log))
+	route := NewChain(Logger(log)).Then(sillyHandler)
 
 	// Create a test request.
 	req := httptest.NewRequest("GET", "/", nil)
@@ -40,7 +37,7 @@ func TestLoggerMiddleware(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	// Serve the request.
-	chain(rec, req)
+	route.ServeHTTP(rec, req)
 
 	// Check the log output.
 	fmt.Println(buf.String())

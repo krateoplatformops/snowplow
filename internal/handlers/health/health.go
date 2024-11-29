@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
-	"github.com/krateoplatformops/snowplow/plumbing/server"
 	"k8s.io/client-go/rest"
 )
 
@@ -18,7 +17,7 @@ import (
 // @Produce  json
 // @Success 200 {object} ServiceInfo
 // @Router /health [get]
-func Check(serviceName, build string) server.Handler {
+func Check(serviceName, build string) http.HandlerFunc {
 	return func(wri http.ResponseWriter, req *http.Request) {
 		if _, err := rest.InClusterConfig(); err != nil {
 			status.ServiceUnavailable(wri, err)

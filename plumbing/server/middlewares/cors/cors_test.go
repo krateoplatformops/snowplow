@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/krateoplatformops/snowplow/plumbing/server"
 )
 
 var testHandler = func(w http.ResponseWriter, r *http.Request) {
@@ -395,21 +393,10 @@ func TestSpec(t *testing.T) {
 
 			t.Run("Handler", func(t *testing.T) {
 				rec := httptest.NewRecorder()
-				chain := server.Chain(testHandler, s.Handler)
-				chain(rec, req)
+				s.Handler(http.HandlerFunc(testHandler)).ServeHTTP(rec, req)
 				assertHeaders(t, rec.Header(), tc.resHeaders)
 			})
 		})
-	}
-}
-
-func TestDebug(t *testing.T) {
-	s := New(Options{
-		Debug: true,
-	})
-
-	if s.Log == nil {
-		t.Error("Logger not created when debug=true")
 	}
 }
 

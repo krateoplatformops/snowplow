@@ -3,7 +3,7 @@ package traceid
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"github.com/krateoplatformops/snowplow/plumbing/shortid"
 )
 
 func Get(ctx context.Context) string {
@@ -17,12 +17,8 @@ func Set(ctx context.Context) context.Context {
 		return ctx
 	}
 
-	traceID = uuidV7()
+	traceID = shortid.MustGenerate()
 	return context.WithValue(ctx, requestIdContextKey, traceID)
-}
-
-func uuidV7() string {
-	return uuid.Must(uuid.NewV7()).String()
 }
 
 type contextKey string

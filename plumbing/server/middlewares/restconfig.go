@@ -1,4 +1,4 @@
-package clientconfig
+package middlewares
 
 import (
 	"context"
@@ -10,15 +10,13 @@ import (
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
-	"github.com/krateoplatformops/snowplow/plumbing/server"
-	"github.com/krateoplatformops/snowplow/plumbing/server/middlewares/logger"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
 )
 
-func New(authnNS string, verbose bool) server.Middleware {
-	return func(next server.Handler) server.Handler {
-		return func(wri http.ResponseWriter, req *http.Request) {
+func RESTConfig(authnNS string, verbose bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(wri http.ResponseWriter, req *http.Request) {
 			sub := req.Header.Get("X-Krateo-User")
 			orgs := strings.Split(req.Header.Get("X-Krateo-Groups"), ",")
 
@@ -32,7 +30,7 @@ func New(authnNS string, verbose bool) server.Middleware {
 				return
 			}
 
-			log := logger.Get(req.Context())
+			log := LogFromContext(req.Context())
 
 			sarc, err := rest.InClusterConfig()
 			if err != nil {
@@ -49,6 +47,9 @@ func New(authnNS string, verbose bool) server.Middleware {
 				status.InternalError(wri, err)
 				return
 			}
+			if verbose {
+				ep.Debug = true
+			}
 
 			rc, err := kubeconfig.NewClientConfig(context.Background(), ep)
 			if err != nil {
@@ -60,13 +61,15 @@ func New(authnNS string, verbose bool) server.Middleware {
 			// Store the *rest.Config in the context
 			ctx := context.WithValue(req.Context(), clientConfigContextKey, rc)
 
-			next(wri, req.WithContext(ctx))
+			next.ServeHTTP(wri, req.WithContext(ctx))
 		}
+
+		return http.HandlerFunc(fn)
 	}
 }
 
-// Get retrieves the user *rest.Config from the context.
-func Get(ctx context.Context) (*rest.Config, error) {
+// RESTConfigFromContext retrieves the user *rest.Config from the context.
+func RESTConfigFromContext(ctx context.Context) (*rest.Config, error) {
 	rc, ok := ctx.Value(clientConfigContextKey).(*rest.Config)
 	if !ok {
 		return nil, fmt.Errorf("user *rest.Config not found in context")
