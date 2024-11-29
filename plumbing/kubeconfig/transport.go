@@ -1,22 +1,48 @@
-package traceid
+package kubeconfig
 
 import (
+	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"os"
 
 	"github.com/krateoplatformops/snowplow/plumbing/shortid"
 )
 
 func Transport(next http.RoundTripper) http.RoundTripper {
-	return RoundTripFunc(func(req *http.Request) (resp *http.Response, err error) {
-		r := cloneRequest(req)
+	return RoundTripFunc(func(in *http.Request) (resp *http.Response, err error) {
+		req := cloneRequest(in)
 
-		traceID, _ := r.Context().Value(requestIdContextKey).(string)
+		traceID, _ := req.Context().Value(requestIdContextKey).(string)
 		if traceID == "" {
 			traceID = shortid.MustGenerate()
 		}
-		r.Header.Set(string(requestIdContextKey), traceID)
+		req.Header.Set(string(requestIdContextKey), traceID)
 
-		return next.RoundTrip(r)
+		// Dump the request to os.Stderr.
+		b, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return nil, err
+		}
+		os.Stderr.Write(b)
+		os.Stderr.Write([]byte{'\n'})
+
+		resp, err = next.RoundTrip(req)
+		// If an error was returned, dump it to os.Stderr.
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return resp, err
+		}
+
+		// Dump the response to os.Stderr.
+		b, err = httputil.DumpResponse(resp, req.URL.Query().Get("watch") != "true")
+		if err != nil {
+			return nil, err
+		}
+		os.Stderr.Write(b)
+		os.Stderr.Write([]byte{'\n'})
+
+		return resp, err
 	})
 }
 
@@ -47,3 +73,9 @@ func cloneRequest(orig *http.Request) *http.Request {
 
 	return clone
 }
+
+type contextKey string
+
+const (
+	requestIdContextKey contextKey = "X-Request-Id"
+)

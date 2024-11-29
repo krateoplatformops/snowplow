@@ -1,0 +1,58 @@
+
+Health Check
+==================
+
+curl "http://127.0.0.1:30081/health"
+
+
+List
+================
+
+With namespace:
+--------------
+
+curl --silent \
+  -H "X-Krateo-User: cyberjoker" \
+  -H "X-Krateo-Groups: devs" \
+  "http://127.0.0.1:30081/list?category=pods&ns=demo-system"
+
+Without namespace:
+------------------
+
+curl --silent \
+  -H "X-Krateo-User: cyberjoker" \
+  -H "X-Krateo-Groups: devs" \
+  "http://127.0.0.1:30081/list?category=pods"
+
+
+Call (GET example)
+==================
+
+curl -v -G GET \
+  -H 'x-krateo-user: cyberjoker' \
+  -H 'x-krateo-groups: devs' \
+  -d 'apiVersion=v1' \
+  -d 'resource=pods' \
+  -d 'namespace=demo-system' \
+  -d 'name=authn-7867479b58-lqh6l' \
+  "http://127.0.0.1:30081/call"
+
+
+
+Call (POST example)
+==================
+
+curl -v --request POST \
+  -H 'X-Krateo-User: cyberjoker' \
+  -H 'X-Krateo-Groups: devs' \
+  -H 'Content-Type: application/json' \
+  -d @testdata/pod-sample.json \
+  "http://127.0.0.1:30081/call?apiVersion=v1&namespace=demo-system&resource=pods&name=authn-7867479b58-lqh6"
+
+
+
+Names 
+==================
+
+curl -v --request GET \
+  "http://127.0.0.1:30081/api-info/names?apiVersion=v1&kind=Pod"

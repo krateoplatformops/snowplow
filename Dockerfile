@@ -20,6 +20,7 @@ COPY go.sum go.sum
 RUN go mod download
 
 #COPY apis/ apis/
+COPY docs/ docs/
 COPY cmd/ cmd/
 COPY internal/ internal/
 COPY main.go main.go

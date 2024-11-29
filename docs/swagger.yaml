@@ -1,0 +1,141 @@
+basePath: /
+definitions:
+  health.ServiceInfo:
+    properties:
+      build:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+    type: object
+  status.Status:
+    properties:
+      apiVersion:
+        type: string
+      code:
+        description: Suggested HTTP return code for this status, 0 if not set.
+        type: integer
+      kind:
+        type: string
+      message:
+        description: A human-readable description of the status of this operation.
+        type: string
+      reason:
+        allOf:
+        - $ref: '#/definitions/status.StatusReason'
+        description: |-
+          A machine-readable description of why this operation is in the
+          "Failure" status. If this value is empty there
+          is no information available. A Reason clarifies an HTTP status
+          code but does not override it.
+      status:
+        description: |-
+          Status of the operation.
+          One of: "Success" or "Failure".
+        type: string
+    type: object
+  status.StatusReason:
+    enum:
+    - ""
+    - Unauthorized
+    - Forbidden
+    - NotFound
+    - Conflict
+    - Gone
+    - Invalid
+    - Timeout
+    - TooManyRequests
+    - BadRequest
+    - MethodNotAllowed
+    - NotAcceptable
+    - RequestEntityTooLarge
+    - UnsupportedMediaType
+    - InternalError
+    - ServiceUnavailable
+    type: string
+    x-enum-varnames:
+    - StatusReasonUnknown
+    - StatusReasonUnauthorized
+    - StatusReasonForbidden
+    - StatusReasonNotFound
+    - StatusReasonConflict
+    - StatusReasonGone
+    - StatusReasonInvalid
+    - StatusReasonTimeout
+    - StatusReasonTooManyRequests
+    - StatusReasonBadRequest
+    - StatusReasonMethodNotAllowed
+    - StatusReasonNotAcceptable
+    - StatusReasonRequestEntityTooLarge
+    - StatusReasonUnsupportedMediaType
+    - StatusReasonInternalError
+    - StatusReasonServiceUnavailable
+info:
+  contact: {}
+  description: This the total new Krateo backend.
+  title: SnowPlow API
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      description: Health Check
+      operationId: health
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/health.ServiceInfo'
+      summary: Liveness Endpoint
+  /list:
+    get:
+      description: Resources List
+      operationId: list
+      parameters:
+      - description: Krateo User
+        in: header
+        name: X-Krateo-User
+        required: true
+        type: string
+      - description: Krateo User Groups
+        in: header
+        name: X-Krateo-Groups
+        required: true
+        type: string
+      - description: Resource category
+        in: query
+        name: category
+        required: true
+        type: string
+      - description: Namespace
+        in: query
+        name: ns
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/status.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/status.Status'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Status'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/status.Status'
+      summary: List resources by category in a specified namespace.
+swagger: "2.0"

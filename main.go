@@ -11,26 +11,33 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krateoplatformops/snowplow/cmd"
+	"github.com/krateoplatformops/snowplow/internal/handlers/health"
+	"github.com/krateoplatformops/snowplow/internal/handlers/resources"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
+	"github.com/krateoplatformops/snowplow/plumbing/server/middlewares"
+	"github.com/krateoplatformops/snowplow/plumbing/server/middlewares/cors"
+
+	_ "github.com/krateoplatformops/snowplow/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
+)
+
+const (
+	serviceName = "snowplow"
 )
 
 var (
 	Build string
 )
 
-// @title Backend API
-// @version 1.0
-// @description This the Krateo BFF server.
+// @title SnowPlow API
+// @version 0.1.0
+// @description This the total new Krateo backend.
 // @BasePath /
 func main() {
-	opts := cmd.Options{
-		Build: Build,
-	}
-	flag.BoolVar(&opts.Debug, "debug", env.Bool("DEBUG", false), "dump verbose output")
-	flag.BoolVar(&opts.CorseOn, "cors", env.Bool("CORS", true), "enable or disable CORS")
-	flag.IntVar(&opts.Port, "port", env.ServicePort("PORT", 8080), "port to listen on")
-	flag.StringVar(&opts.AuthnNS, "authn-store-namespace",
+	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "dump verbose output")
+	corsOn := flag.Bool("cors", env.Bool("CORS", true), "enable or disable CORS")
+	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
+	authnNS := flag.String("authn-store-namespace",
 		env.String("AUTHN_STORE_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
 
@@ -42,12 +49,48 @@ func main() {
 	flag.Parse()
 
 	logLevel := slog.LevelInfo
-	if opts.Debug {
+	if *debugOn {
 		logLevel = slog.LevelDebug
 	}
-	opts.Log = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
+	log := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
 
-	srv := cmd.NewServer(context.Background(), opts)
+	if *debugOn {
+		log.Debug("environment variables", slog.Any("env", os.Environ()))
+	}
+
+	base := middlewares.NewChain(middlewares.Logger(log))
+	if *corsOn {
+		base = base.Append(middlewares.CORS(cors.Options{
+			AllowedOrigins: []string{"*"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders: []string{
+				"Accept",
+				"Authorization",
+				"Content-Type",
+				"X-Auth-Code",
+				"X-Krateo-User",
+				"X-Krateo-Groups",
+			},
+			ExposedHeaders:   []string{"Link"},
+			AllowCredentials: true,
+			MaxAge:           300, // Maximum value not ignored by any of major browsers
+		}))
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("GET /health",
+		health.Check(serviceName, Build))
+	mux.Handle("GET /swagger/",
+		httpSwagger.WrapHandler)
+	mux.Handle("GET /list",
+		base.Append(middlewares.RESTConfig(*authnNS, *debugOn)).
+			Then(resources.List(*authnNS, *debugOn)))
+
+	//mux.Handle("GET /call", call.Call(*authnNS, *debugOn))
+	//mux.Handle("POST /call", call.Call(*authnNS, *debugOn))
+	//mux.Handle("PUT /call", call.Call(*authnNS, *debugOn))
+	//mux.Handle("DELETE /call", call.Call(*authnNS, *debugOn))
+	//mux.Handle("GET /api-info/names", info.Names())
 
 	ctx, stop := signal.NotifyContext(context.Background(), []os.Signal{
 		os.Interrupt,
@@ -59,28 +102,37 @@ func main() {
 	}...)
 	defer stop()
 
+	server := &http.Server{
+		Addr:         fmt.Sprintf(":%d", *port),
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 50 * time.Second,
+		IdleTimeout:  30 * time.Second,
+	}
+
 	go func() {
-		if err := srv.Run(); err != nil && err != http.ErrServerClosed {
-			opts.Log.Error("server cannot run",
-				slog.Int("port", opts.Port),
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error("server cannot run",
+				slog.String("addr", server.Addr),
 				slog.Any("err", err))
 		}
 	}()
 
 	// Listen for the interrupt signal.
-	opts.Log.Info("server is ready to handle requests", slog.Int("port", opts.Port))
+	log.Info("server is ready to handle requests", slog.String("addr", server.Addr))
 	<-ctx.Done()
 
 	// Restore default behavior on the interrupt signal and notify user of shutdown.
 	stop()
-	opts.Log.Info("server is shutting down gracefully, press Ctrl+C again to force")
+	log.Info("server is shutting down gracefully, press Ctrl+C again to force")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
-		opts.Log.Error("server forced to shutdown", slog.Any("err", err))
+	server.SetKeepAlivesEnabled(false)
+	if err := server.Shutdown(ctx); err != nil {
+		log.Error("server forced to shutdown", slog.Any("err", err))
 	}
 
-	opts.Log.Info("server gracefully stopped")
+	log.Info("server gracefully stopped")
 }

@@ -1,4 +1,4 @@
-package logger
+package middlewares
 
 import (
 	"context"
@@ -8,17 +8,17 @@ import (
 
 	"log/slog"
 
-	"github.com/google/uuid"
-	"github.com/krateoplatformops/snowplow/plumbing/server"
 	"github.com/krateoplatformops/snowplow/plumbing/server/traceid"
+	"github.com/krateoplatformops/snowplow/plumbing/shortid"
 )
 
-func New(log *slog.Logger) server.Middleware {
-	return func(next server.Handler) server.Handler {
-		return func(wri http.ResponseWriter, req *http.Request) {
+func Logger(log *slog.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(wri http.ResponseWriter, req *http.Request) {
+
 			tid := req.Header.Get("X-Request-Id")
 			if len(tid) == 0 {
-				tid = uuid.New().String()
+				tid = shortid.MustGenerate()
 			}
 
 			sub := req.Header.Get("X-Krateo-User")
@@ -38,13 +38,15 @@ func New(log *slog.Logger) server.Middleware {
 					))
 			}
 
-			next(wri, req.WithContext(ctx))
+			next.ServeHTTP(wri, req.WithContext(ctx))
 		}
+
+		return http.HandlerFunc(fn)
 	}
 }
 
-// Get retrieves the logger from the request context.
-func Get(ctx context.Context) *slog.Logger {
+// LogFromContext retrieves the logger from the request context.
+func LogFromContext(ctx context.Context) *slog.Logger {
 	log, ok := ctx.Value(logKey).(*slog.Logger)
 	if !ok {
 		log = slog.New(slog.NewJSONHandler(os.Stderr,
@@ -63,8 +65,6 @@ func ElapsedTime(ctx context.Context) string {
 
 	return time.Since(start).Round(time.Microsecond).String()
 }
-
-type contextKey string
 
 const (
 	logKey       contextKey = "x-request-log"
