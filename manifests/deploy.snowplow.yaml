@@ -52,6 +52,7 @@ spec:
         imagePullPolicy: Never
         args:
           - --debug=true
+          - --blizzard=false
           - --port=8081
           - --authn-store-namespace=demo-system
         ports:

@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
 	"time"
 
+	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 )
 
@@ -97,23 +97,35 @@ func parseProxyURL(proxyURL string) (*url.URL, error) {
 	return u, nil
 }
 
+type traceIdRoundTripper struct {
+	delegatedRoundTripper http.RoundTripper
+}
+
+func (rt *traceIdRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	traceId := req.Header.Get(xcontext.LabelKrateoTraceId)
+	if len(traceId) == 0 {
+		traceId = xcontext.TraceId(req.Context(), true)
+	}
+	req.Header.Set(xcontext.LabelKrateoTraceId, traceId)
+
+	return rt.delegatedRoundTripper.RoundTrip(req)
+}
+
 type debuggingRoundTripper struct {
 	delegatedRoundTripper http.RoundTripper
 }
 
 func (rt *debuggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	log := xcontext.Logger(req.Context())
+
 	b, err := httputil.DumpRequestOut(req, true)
 	if err != nil {
 		return nil, err
 	}
-	os.Stderr.Write(b)
-	os.Stderr.WriteString("\n\n")
+	log.Debug("request details", "wire", string(b))
 
 	resp, err := rt.delegatedRoundTripper.RoundTrip(req)
-
-	// If an error was returned, dump it to os.Stderr.
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		return resp, err
 	}
 
@@ -121,8 +133,7 @@ func (rt *debuggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, e
 	if err != nil {
 		return nil, err
 	}
-	os.Stderr.Write(b)
-	os.Stderr.Write([]byte{'\n'})
+	log.Debug("response details", "wire", string(b))
 
 	return resp, err
 }

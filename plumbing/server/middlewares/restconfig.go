@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
@@ -17,20 +18,20 @@ import (
 func RESTConfig(authnNS string, verbose bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(wri http.ResponseWriter, req *http.Request) {
-			sub := req.Header.Get("X-Krateo-User")
-			orgs := strings.Split(req.Header.Get("X-Krateo-Groups"), ",")
+			sub := req.Header.Get(xcontext.LabelKrateoUser)
+			orgs := strings.Split(req.Header.Get(xcontext.LabelKrateoGroups), ",")
 
 			if len(sub) == 0 {
-				status.BadRequest(wri, fmt.Errorf("missing 'X-Krateo-User' header"))
+				status.BadRequest(wri, fmt.Errorf("missing '%s' header", xcontext.LabelKrateoUser))
 				return
 			}
 
 			if len(orgs) == 0 {
-				status.BadRequest(wri, fmt.Errorf("missing 'X-Krateo-Groups' header"))
+				status.BadRequest(wri, fmt.Errorf("missing '%s' header", xcontext.LabelKrateoGroups))
 				return
 			}
 
-			log := LogFromContext(req.Context())
+			log := xcontext.Logger(req.Context())
 
 			sarc, err := rest.InClusterConfig()
 			if err != nil {
@@ -51,7 +52,7 @@ func RESTConfig(authnNS string, verbose bool) func(http.Handler) http.Handler {
 				ep.Debug = true
 			}
 
-			rc, err := kubeconfig.NewClientConfig(context.Background(), ep)
+			rc, err := kubeconfig.NewClientConfig(req.Context(), ep)
 			if err != nil {
 				log.Error("unable to create user client config", slog.Any("err", err))
 				status.InternalError(wri, err)
@@ -59,7 +60,9 @@ func RESTConfig(authnNS string, verbose bool) func(http.Handler) http.Handler {
 			}
 
 			// Store the *rest.Config in the context
-			ctx := context.WithValue(req.Context(), clientConfigContextKey, rc)
+			ctx := xcontext.BuildContext(req.Context(),
+				xcontext.WithRESTConfig(rc),
+			)
 
 			next.ServeHTTP(wri, req.WithContext(ctx))
 		}
@@ -67,19 +70,3 @@ func RESTConfig(authnNS string, verbose bool) func(http.Handler) http.Handler {
 		return http.HandlerFunc(fn)
 	}
 }
-
-// RESTConfigFromContext retrieves the user *rest.Config from the context.
-func RESTConfigFromContext(ctx context.Context) (*rest.Config, error) {
-	rc, ok := ctx.Value(clientConfigContextKey).(*rest.Config)
-	if !ok {
-		return nil, fmt.Errorf("user *rest.Config not found in context")
-	}
-
-	return rc, nil
-}
-
-type contextKey string
-
-const (
-	clientConfigContextKey contextKey = "clientconfig"
-)
