@@ -5,17 +5,16 @@ import (
 	"net/http"
 
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
-	"github.com/krateoplatformops/snowplow/plumbing/server/traceid"
 )
 
 func HTTPClientForEndpoint(authn *endpoints.Endpoint) (*http.Client, error) {
 	rt, err := tlsConfigFor(authn)
 	if err != nil {
 		return &http.Client{
-			Transport: traceid.Transport(defaultTransport()),
+			Transport: &traceIdRoundTripper{defaultTransport()},
 		}, err
 	}
-	rt = traceid.Transport(rt)
+	rt = &traceIdRoundTripper{rt}
 
 	if authn.Debug {
 		rt = &debuggingRoundTripper{

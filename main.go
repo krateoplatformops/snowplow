@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	Build string
+	build string
 )
 
 // @title SnowPlow API
@@ -34,12 +34,13 @@ var (
 // @description This the total new Krateo backend.
 // @BasePath /
 func main() {
-	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "dump verbose output")
+	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "enable or disable debug logs")
 	corsOn := flag.Bool("cors", env.Bool("CORS", true), "enable or disable CORS")
 	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
 	authnNS := flag.String("authn-store-namespace",
 		env.String("AUTHN_STORE_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
+	blizzard := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
 
 	flag.Usage = func() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
@@ -55,10 +56,14 @@ func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
 
 	if *debugOn {
+		if *blizzard {
+			os.Setenv("BLIZZARD", "true")
+		}
+
 		log.Debug("environment variables", slog.Any("env", os.Environ()))
 	}
 
-	base := middlewares.NewChain(middlewares.Logger(log))
+	var base middlewares.Chain
 	if *corsOn {
 		base = base.Append(middlewares.CORS(cors.Options{
 			AllowedOrigins: []string{"*"},
@@ -68,6 +73,7 @@ func main() {
 				"Authorization",
 				"Content-Type",
 				"X-Auth-Code",
+				"X-Krateo-TraceId",
 				"X-Krateo-User",
 				"X-Krateo-Groups",
 			},
@@ -76,10 +82,11 @@ func main() {
 			MaxAge:           300, // Maximum value not ignored by any of major browsers
 		}))
 	}
+	base = base.Append(middlewares.TraceId(), middlewares.Logger(log))
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /health",
-		health.Check(serviceName, Build))
+		health.Check(serviceName, build))
 	mux.Handle("GET /swagger/",
 		httpSwagger.WrapHandler)
 	mux.Handle("GET /list",

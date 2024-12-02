@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
+	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
-	"github.com/krateoplatformops/snowplow/plumbing/server/middlewares"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -38,9 +38,9 @@ func List(authnNS string, verbose bool) http.HandlerFunc {
 			return
 		}
 
-		log := middlewares.LogFromContext(req.Context())
+		log := xcontext.Logger(req.Context())
 
-		rc, err := middlewares.RESTConfigFromContext(req.Context())
+		rc, err := xcontext.RESTConfig(req.Context())
 		if err != nil {
 			log.Error("unable to get user client config", slog.Any("err", err))
 			status.Unauthorized(wri, err)

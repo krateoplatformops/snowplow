@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 
+	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
@@ -55,6 +56,7 @@ func Do(ctx context.Context, opts Options) (res Result) {
 		res.Status = status.New(http.StatusInternalServerError, err)
 		return
 	}
+	req.Header.Set(xcontext.LabelKrateoTraceId, xcontext.TraceId(ctx, true))
 
 	if len(opts.Headers) > 0 {
 		for _, el := range opts.Headers {
