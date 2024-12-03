@@ -38,7 +38,7 @@ func TestCallNoProxy(t *testing.T) {
 			"X-Data-2: YYYYYY",
 		},
 		Payload:  ptr.To(`{"name": "John", "surname": "Doe"}`),
-		Endpoint: authn,
+		Endpoint: &authn,
 	})
 
 	spew.Dump(res)

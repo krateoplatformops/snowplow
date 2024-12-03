@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+const (
+	AuthnNamespace = "AUTHN_NAMESPACE"
+)
+
 func String(key, defaultValue string) string {
 	val, ok := os.LookupEnv(key)
 	if !ok {

@@ -13,10 +13,10 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func FromSecret(ctx context.Context, rc *rest.Config, name, namespace string) (*Endpoint, error) {
+func FromSecret(ctx context.Context, rc *rest.Config, name, namespace string) (Endpoint, error) {
 	cli, err := newSecretsRESTClient(rc)
 	if err != nil {
-		return nil, err
+		return Endpoint{}, err
 	}
 
 	sec, err := getSecret(ctx, getSecretOptions{
@@ -25,10 +25,10 @@ func FromSecret(ctx context.Context, rc *rest.Config, name, namespace string) (*
 		namespace: namespace,
 	})
 	if err != nil {
-		return nil, err
+		return Endpoint{}, err
 	}
 
-	res := &Endpoint{}
+	res := Endpoint{}
 	if v, ok := sec.Data["server-url"]; ok {
 		res.ServerURL = string(v)
 	} else {
