@@ -1,4 +1,4 @@
-package resources
+package handlers
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -28,7 +29,7 @@ import (
 // @Failure 404 {object} status.Status
 // @Failure 500 {object} status.Status
 // @Router /list [get]
-func List(authnNS string, verbose bool) http.HandlerFunc {
+func List() http.HandlerFunc {
 	return func(wri http.ResponseWriter, req *http.Request) {
 		cat := req.URL.Query().Get("category")
 		ns := req.URL.Query().Get("ns")
@@ -40,10 +41,17 @@ func List(authnNS string, verbose bool) http.HandlerFunc {
 
 		log := xcontext.Logger(req.Context())
 
-		rc, err := xcontext.RESTConfig(req.Context())
+		ep, err := xcontext.UserConfig(req.Context())
 		if err != nil {
-			log.Error("unable to get user client config", slog.Any("err", err))
+			log.Error("unable to get user endpoint", slog.Any("err", err))
 			status.Unauthorized(wri, err)
+			return
+		}
+
+		rc, err := kubeconfig.NewClientConfig(req.Context(), ep)
+		if err != nil {
+			log.Error("unable to create user client config", slog.Any("err", err))
+			status.InternalError(wri, err)
 			return
 		}
 

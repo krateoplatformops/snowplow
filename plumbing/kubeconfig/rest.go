@@ -14,10 +14,11 @@ import (
 	"k8s.io/client-go/transport"
 )
 
-func NewClientConfig(ctx context.Context, ep *endpoints.Endpoint) (*rest.Config, error) {
+func NewClientConfig(ctx context.Context, ep endpoints.Endpoint) (*rest.Config, error) {
+	ep.Debug = env.Bool("DEBUG", false)
 	ep.ServerURL = "https://kubernetes.default.svc"
 
-	dat, err := Marshal(ep)
+	dat, err := Marshal(&ep)
 	if err != nil {
 		return nil, err
 	}

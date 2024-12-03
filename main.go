@@ -11,11 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krateoplatformops/snowplow/internal/handlers/health"
-	"github.com/krateoplatformops/snowplow/internal/handlers/resources"
+	"github.com/krateoplatformops/snowplow/internal/handlers"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/server/middlewares"
-	"github.com/krateoplatformops/snowplow/plumbing/server/middlewares/cors"
+	"github.com/krateoplatformops/snowplow/plumbing/server/use"
+	"github.com/krateoplatformops/snowplow/plumbing/server/use/cors"
 
 	_ "github.com/krateoplatformops/snowplow/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -35,12 +34,11 @@ var (
 // @BasePath /
 func main() {
 	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "enable or disable debug logs")
-	corsOn := flag.Bool("cors", env.Bool("CORS", true), "enable or disable CORS")
+	blizzard := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
 	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
 	authnNS := flag.String("authn-store-namespace",
 		env.String("AUTHN_STORE_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
-	blizzard := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
 
 	flag.Usage = func() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
@@ -49,6 +47,8 @@ func main() {
 
 	flag.Parse()
 
+	os.Setenv(env.AuthnNamespace, *authnNS)
+
 	logLevel := slog.LevelInfo
 	if *debugOn {
 		logLevel = slog.LevelDebug
@@ -56,6 +56,7 @@ func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
 
 	if *debugOn {
+		os.Setenv("DEBUG", "true")
 		if *blizzard {
 			os.Setenv("BLIZZARD", "true")
 		}
@@ -63,9 +64,8 @@ func main() {
 		log.Debug("environment variables", slog.Any("env", os.Environ()))
 	}
 
-	var base middlewares.Chain
-	if *corsOn {
-		base = base.Append(middlewares.CORS(cors.Options{
+	chain := use.NewChain(
+		use.CORS(cors.Options{
 			AllowedOrigins: []string{"*"},
 			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders: []string{
@@ -80,24 +80,23 @@ func main() {
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: true,
 			MaxAge:           300, // Maximum value not ignored by any of major browsers
-		}))
-	}
-	base = base.Append(middlewares.TraceId(), middlewares.Logger(log))
+		}),
+
+		use.TraceId(),
+		use.Logger(log),
+	)
 
 	mux := http.NewServeMux()
-	mux.Handle("GET /health",
-		health.Check(serviceName, build))
-	mux.Handle("GET /swagger/",
-		httpSwagger.WrapHandler)
-	mux.Handle("GET /list",
-		base.Append(middlewares.RESTConfig(*authnNS, *debugOn)).
-			Then(resources.List(*authnNS, *debugOn)))
+	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 
-	//mux.Handle("GET /call", call.Call(*authnNS, *debugOn))
-	//mux.Handle("POST /call", call.Call(*authnNS, *debugOn))
-	//mux.Handle("PUT /call", call.Call(*authnNS, *debugOn))
-	//mux.Handle("DELETE /call", call.Call(*authnNS, *debugOn))
-	//mux.Handle("GET /api-info/names", info.Names())
+	mux.Handle("GET /health", handlers.HealthCheck(serviceName, build))
+	mux.Handle("GET /api-info/names", chain.Then(handlers.Plurals()))
+	mux.Handle("GET /list", chain.Append(use.UserConfig()).Then(handlers.List()))
+
+	mux.Handle("GET /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
+	mux.Handle("POST /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
+	mux.Handle("PUT /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
+	mux.Handle("DELETE /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
 
 	ctx, stop := signal.NotifyContext(context.Background(), []os.Signal{
 		os.Interrupt,

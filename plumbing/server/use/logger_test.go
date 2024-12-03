@@ -1,17 +1,22 @@
-package middlewares
+package use
 
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 )
 
-func TestTraceIdMiddleware(t *testing.T) {
+func TestLoggerMiddleware(t *testing.T) {
 	buf := bytes.Buffer{}
+
+	log := slog.New(slog.NewJSONHandler(&buf,
+		&slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// Create a simple handler that uses the logger.
 	sillyHandler := http.HandlerFunc(
@@ -19,11 +24,13 @@ func TestTraceIdMiddleware(t *testing.T) {
 			log := xcontext.Logger(r.Context())
 			log.Info("Processing a lot...")
 			log.Debug("for devs only")
+			time.Sleep(1 * time.Second)
 			w.Write([]byte("Hello, World!"))
-			log.Info("Done!")
+
+			log.Info("Done!", "eta", xcontext.RequestElapsedTime(r.Context()))
 		})
 
-	route := NewChain(TraceId()).Then(sillyHandler)
+	route := NewChain(Logger(log)).Then(sillyHandler)
 
 	// Create a test request.
 	req := httptest.NewRequest("GET", "/", nil)

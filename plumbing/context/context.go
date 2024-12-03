@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/shortid"
-	"k8s.io/client-go/rest"
 )
 
 const (
@@ -41,14 +41,13 @@ func TraceId(ctx context.Context, generate bool) string {
 	return traceId
 }
 
-// RESTConfig retrieves the user *rest.Config from the context.
-func RESTConfig(ctx context.Context) (*rest.Config, error) {
-	rc, ok := ctx.Value(contextKeyRESTConfig).(*rest.Config)
+func UserConfig(ctx context.Context) (endpoints.Endpoint, error) {
+	ep, ok := ctx.Value(contextKeyUserConfig).(endpoints.Endpoint)
 	if !ok {
-		return nil, fmt.Errorf("user *rest.Config not found in context")
+		return endpoints.Endpoint{}, fmt.Errorf("user *Endpoint not found in context")
 	}
 
-	return rc, nil
+	return ep, nil
 }
 
 func RequestElapsedTime(ctx context.Context) string {
@@ -83,9 +82,9 @@ func WithRequestStartedAt(t time.Time) WithContextFunc {
 	}
 }
 
-func WithRESTConfig(rc *rest.Config) WithContextFunc {
+func WithUserConfig(ep endpoints.Endpoint) WithContextFunc {
 	return func(ctx context.Context) context.Context {
-		return context.WithValue(ctx, contextKeyRESTConfig, rc)
+		return context.WithValue(ctx, contextKeyUserConfig, ep)
 	}
 }
 
@@ -106,8 +105,9 @@ func (c contextKey) String() string {
 }
 
 var (
-	contextKeyTraceId        = contextKey("traceId")
-	contextKeyLogger         = contextKey("logger")
-	contextKeyRESTConfig     = contextKey("restConfig")
+	contextKeyTraceId = contextKey("traceId")
+	contextKeyLogger  = contextKey("logger")
+	//contextKeyRESTConfig     = contextKey("restConfig")
+	contextKeyUserConfig     = contextKey("userConfig")
 	contextKeyRequestStartAt = contextKey("requestStartedAt")
 )
