@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/krateoplatformops/snowplow/internal/handlers"
+	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use/cors"
@@ -93,7 +94,10 @@ func main() {
 	mux.Handle("GET /api-info/names", chain.Then(handlers.Plurals()))
 	mux.Handle("GET /list", chain.Append(use.UserConfig()).Then(handlers.List()))
 
-	mux.Handle("GET /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
+	mux.Handle("GET /call", chain.Append(
+		use.UserConfig(),
+		handlers.Dispatcher(dispatchers.Empty())).
+		Then(handlers.Call()))
 	mux.Handle("POST /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
 	mux.Handle("PUT /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
 	mux.Handle("DELETE /call", chain.Append(use.UserConfig()).Then(handlers.Call()))

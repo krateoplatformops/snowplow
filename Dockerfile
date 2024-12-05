@@ -19,10 +19,11 @@ COPY go.sum go.sum
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
-#COPY apis/ apis/
+COPY apis/ apis/
 COPY docs/ docs/
 COPY cmd/ cmd/
 COPY internal/ internal/
+COPY plumbing/ plumbing/
 COPY main.go main.go
 
 # Get the current commit hash
