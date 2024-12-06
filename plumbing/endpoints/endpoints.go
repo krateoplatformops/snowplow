@@ -6,10 +6,7 @@ import (
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
 )
 
@@ -19,7 +16,7 @@ func FromSecret(ctx context.Context, rc *rest.Config, name, namespace string) (E
 		return Endpoint{}, err
 	}
 
-	sec, err := getSecret(ctx, getSecretOptions{
+	sec, err := getSecret(ctx, clientOptions{
 		cli:       cli,
 		name:      name,
 		namespace: namespace,
@@ -29,103 +26,99 @@ func FromSecret(ctx context.Context, rc *rest.Config, name, namespace string) (E
 	}
 
 	res := Endpoint{}
-	if v, ok := sec.Data["server-url"]; ok {
+	if v, ok := sec.Data[serverUrlLabel]; ok {
 		res.ServerURL = string(v)
 	} else {
 		return res, fmt.Errorf("missed required attribute for endpoint: server-url")
 	}
 
-	if v, ok := sec.Data["proxy-url"]; ok {
+	if v, ok := sec.Data[proxyUrlLabel]; ok {
 		res.ProxyURL = string(v)
 	}
 
-	if v, ok := sec.Data["token"]; ok {
+	if v, ok := sec.Data[tokenLabel]; ok {
 		res.Token = string(v)
 	}
 
-	if v, ok := sec.Data["username"]; ok {
+	if v, ok := sec.Data[usernameLabel]; ok {
 		res.Username = string(v)
 	}
 
-	if v, ok := sec.Data["password"]; ok {
+	if v, ok := sec.Data[passwordLabel]; ok {
 		res.Password = string(v)
 	}
 
-	if v, ok := sec.Data["certificate-authority-data"]; ok {
+	if v, ok := sec.Data[caLabel]; ok {
 		res.CertificateAuthorityData = string(v)
 	}
 
-	if v, ok := sec.Data["client-key-data"]; ok {
+	if v, ok := sec.Data[clientKeyLabel]; ok {
 		res.ClientKeyData = string(v)
 	}
 
-	if v, ok := sec.Data["client-certificate-data"]; ok {
+	if v, ok := sec.Data[clientCertLabel]; ok {
 		res.ClientCertificateData = string(v)
 	}
 
-	if v, ok := sec.Data["debug"]; ok {
+	if v, ok := sec.Data[debugLabel]; ok {
 		res.Debug, _ = strconv.ParseBool(string(v))
 	}
 
 	return res, nil
 }
 
-func newSecretsRESTClient(rc *rest.Config) (*rest.RESTClient, error) {
-	gv := schema.GroupVersion{
-		Group:   "",
-		Version: "v1",
+func Store(ctx context.Context, rc *rest.Config, ns string, ep Endpoint) error {
+	sec := corev1.Secret{}
+	sec.SetName(fmt.Sprintf(secretNameFmt, ep.Username))
+	sec.SetNamespace(ns)
+	sec.StringData = map[string]string{
+		usernameLabel:   ep.Username,
+		passwordLabel:   ep.Password,
+		tokenLabel:      ep.Token,
+		caLabel:         ep.CertificateAuthorityData,
+		clientCertLabel: ep.ClientCertificateData,
+		clientKeyLabel:  ep.ClientKeyData,
+		serverUrlLabel:  ep.ServerURL,
+		proxyUrlLabel:   ep.ProxyURL,
+		debugLabel:      strconv.FormatBool(ep.Debug),
 	}
 
-	sb := runtime.NewSchemeBuilder(
-		func(reg *runtime.Scheme) error {
-			reg.AddKnownTypes(
-				gv,
-				&corev1.Secret{},
-				&corev1.SecretList{},
-				&metav1.ListOptions{},
-				&metav1.GetOptions{},
-				&metav1.DeleteOptions{},
-				&metav1.CreateOptions{},
-				&metav1.UpdateOptions{},
-				&metav1.PatchOptions{},
-				&metav1.Status{},
-			)
-			return nil
-		})
-
-	s := runtime.NewScheme()
-	sb.AddToScheme(s)
-
-	config := *rc
-	config.APIPath = "/api"
-	config.GroupVersion = &gv
-	config.NegotiatedSerializer = serializer.NewCodecFactory(s).
-		WithoutConversion()
-	config.UserAgent = rest.DefaultKubernetesUserAgent()
-
-	cli, err := rest.RESTClientFor(&config)
+	cli, err := newSecretsRESTClient(rc)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	err = createSecret(ctx, &sec, clientOptions{
+		cli:       cli,
+		name:      sec.Name,
+		namespace: ns,
+	})
+	if err == nil {
+		return nil
 	}
 
-	//pc := runtime.NewParameterCodec(s)
+	if err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return err
+		}
+	}
 
-	return cli, nil
+	return updateSecret(ctx, &sec, clientOptions{
+		cli:       cli,
+		name:      sec.Name,
+		namespace: ns,
+	})
 }
 
-type getSecretOptions struct {
-	cli       *rest.RESTClient
-	name      string
-	namespace string
-}
+const (
+	clientCertLabel = "client-certificate-data"
+	clientKeyLabel  = "client-key-data"
+	caLabel         = "certificate-authority-data"
+	proxyUrlLabel   = "proxy-url"
+	serverUrlLabel  = "server-url"
+	debugLabel      = "debug"
+	passwordLabel   = "password"
+	usernameLabel   = "username"
+	tokenLabel      = "token"
 
-func getSecret(ctx context.Context, opts getSecretOptions) (result *corev1.Secret, err error) {
-	result = &corev1.Secret{}
-	err = opts.cli.Get().
-		Namespace(opts.namespace).
-		Resource("secrets").
-		Name(opts.name).
-		Do(ctx).
-		Into(result)
-	return
-}
+	secretNameFmt = "%s-clientconfig"
+)
