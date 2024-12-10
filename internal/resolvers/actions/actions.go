@@ -73,7 +73,8 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templates.ActionTempla
 		})
 		if !ok {
 			xcontext.Logger(ctx).Error("action not allowed",
-				slog.String("kind", gvk.Kind),
+				slog.String("verb", verb),
+				slog.String("group", gvr.Group),
 				slog.String("resource", gvr.Resource),
 				slog.String("namespace", in.Namespace))
 			continue

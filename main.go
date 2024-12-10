@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -49,19 +50,12 @@ func main() {
 	flag.Parse()
 
 	os.Setenv(env.AuthnNamespace, *authnNS)
-
-	logLevel := slog.LevelInfo
-	if *debugOn {
-		logLevel = slog.LevelDebug
-	}
-	log := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
+	os.Setenv("DEBUG", strconv.FormatBool(*debugOn))
+	os.Setenv("BLIZZARD", strconv.FormatBool(*blizzard))
 
 	if *debugOn {
-		os.Setenv("DEBUG", "true")
-		if *blizzard {
-			os.Setenv("BLIZZARD", "true")
-		}
-
+		log := slog.New(slog.NewJSONHandler(os.Stderr,
+			&slog.HandlerOptions{Level: slog.LevelDebug}))
 		log.Debug("environment variables", slog.Any("env", os.Environ()))
 	}
 
@@ -84,7 +78,7 @@ func main() {
 		}),
 
 		use.TraceId(),
-		use.Logger(log),
+		use.Logger(nil),
 	)
 
 	mux := http.NewServeMux()
@@ -122,12 +116,14 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 			log.Error("server cannot run",
 				slog.String("addr", server.Addr),
 				slog.Any("err", err))
 		}
 	}()
 
+	log := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 	// Listen for the interrupt signal.
 	log.Info("server is ready to handle requests", slog.String("addr", server.Addr))
 	<-ctx.Done()

@@ -4,53 +4,62 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"testing"
 	"time"
 
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
+	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
+	"github.com/krateoplatformops/snowplow/plumbing/log"
 
-	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
+	"sigs.k8s.io/e2e-framework/pkg/types"
 	"sigs.k8s.io/yaml"
 )
 
-func Logger() env.Func {
-	return func(ctx context.Context, c *envconf.Config) (context.Context, error) {
-		log := slog.New(slog.NewJSONHandler(os.Stdout,
-			&slog.HandlerOptions{Level: slog.LevelDebug})).
-			With("traceId", xcontext.TraceId(ctx, true))
+func Logger(traceId string) types.StepFunc {
+	logLevel := slog.LevelInfo
+	if env.Bool("DEBUG", false) {
+		logLevel = slog.LevelDebug
+	}
 
+	handler := log.NewPrettyJSONHandler(os.Stderr, &slog.HandlerOptions{
+		Level: logLevel,
+	})
+
+	return func(ctx context.Context, _ *testing.T, _ *envconf.Config) context.Context {
 		return xcontext.BuildContext(ctx,
-			xcontext.WithLogger(log),
-		), nil
+			xcontext.WithTraceId(traceId),
+			xcontext.WithLogger(slog.New(handler)),
+		)
 	}
 }
 
-func SignUp(user string, groups []string) env.Func {
-	return func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
+func SignUp(user string, groups []string) types.StepFunc {
+	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		dat, err := os.ReadFile(cfg.KubeconfigFile())
 		if err != nil {
-			return ctx, err
+			t.Fatal(err)
 		}
 
 		in := kubeconfig.KubeConfig{}
 		if err := yaml.Unmarshal(dat, &in); err != nil {
-			return ctx, err
+			t.Fatal(err)
 		}
 
 		handler := &signupHandler{
 			restconfig:   cfg.Client().RESTConfig(),
 			namespace:    cfg.Namespace(),
 			caData:       in.Clusters[0].Cluster.CertificateAuthorityData,
-			serverURL:    "https://kubernetes.default.svc",
+			serverURL:    in.Clusters[0].Cluster.Server, //"https://kubernetes.default.svc",
 			certDuration: time.Minute * 30,
 		}
 
 		ep, err := handler.SignUp(user, groups)
 		if err != nil {
-			return ctx, err
+			t.Fatal(err)
 		}
 
-		return xcontext.BuildContext(ctx, xcontext.WithUserConfig(ep)), nil
+		return xcontext.BuildContext(ctx, xcontext.WithUserConfig(ep))
 	}
 }

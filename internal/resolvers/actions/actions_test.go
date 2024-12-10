@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/krateoplatformops/snowplow/apis"
 	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
@@ -33,16 +32,16 @@ var (
 
 func TestMain(m *testing.M) {
 	const (
-		crdsPath = "../../../crds"
+		crdPath = "../../../crds"
 	)
 
-	namespace = "test-system"
+	namespace = "demo-system"
 	clusterName = envconf.RandomName("krateo", 16)
 	testenv = env.New()
 
 	testenv.Setup(
 		envfuncs.CreateCluster(kind.NewProvider(), clusterName),
-		envfuncs.SetupCRDs(crdsPath, "templates.krateo.io_customforms.yaml"),
+		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
 		envfuncs.CreateNamespace(namespace),
 
 		func(ctx context.Context, _ *envconf.Config) (context.Context, error) {
@@ -53,7 +52,7 @@ func TestMain(m *testing.M) {
 		},
 	).Finish(
 		envfuncs.DeleteNamespace(namespace),
-		envfuncs.TeardownCRDs(crdsPath, "*"),
+		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
 		envfuncs.DestroyCluster(clusterName),
 	)
 
@@ -62,12 +61,17 @@ func TestMain(m *testing.M) {
 
 func TestCustomFormActions(t *testing.T) {
 	const (
-		testdata = "../../../testdata/customforms"
+		manifestsPath = "../../../testdata/customforms"
 	)
 
-	f := features.New("custom form").
-		Setup(func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			r, err := resources.New(c.Client().RESTConfig())
+	os.Setenv("DEBUG", "false")
+
+	f := features.New("Setup").
+		Setup(e2e.Logger("test")).
+		Setup(e2e.SignUp("cyberjoker", []string{"devs"})).
+		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+
+			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {
 				t.Fail()
 			}
@@ -77,7 +81,7 @@ func TestCustomFormActions(t *testing.T) {
 			r.WithNamespace(namespace)
 
 			err = decoder.DecodeEachFile(
-				ctx, os.DirFS(testdata), "*",
+				ctx, os.DirFS(manifestsPath), "*.yaml",
 				decoder.CreateHandler(r),
 				decoder.MutateNamespace(namespace),
 			)
@@ -86,7 +90,7 @@ func TestCustomFormActions(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Check If Resource created", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+		Assess("Resolve actions", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			r, err := resources.New(c.Client().RESTConfig())
 			if err != nil {
 				t.Fail()
@@ -94,47 +98,26 @@ func TestCustomFormActions(t *testing.T) {
 			r.WithNamespace(namespace)
 			apis.AddToScheme(r.GetScheme())
 
-			cf := &v1alpha1.CustomForm{}
-			err = r.Get(ctx, "fireworksapp", namespace, cf)
+			cr := v1alpha1.CustomForm{}
+			err = r.Get(ctx, "fireworksapp", namespace, &cr)
 			if err != nil {
 				t.Fail()
 			}
 
 			log := xcontext.Logger(ctx)
-			log.Info("CR Details", slog.Any("cr", cf))
+
+			log.Info("Actions in Spec", slog.Any("actions", cr.Spec.Actions))
+
+			res, err := Resolve(ctx, cr.Spec.Actions)
+			if err != nil {
+				log.Error("unable to resolve actions", slog.Any("err", err))
+				t.Fail()
+			} else {
+				log.Info("Actions in Status", slog.Any("actions", res))
+			}
 
 			return ctx
 		}).Feature()
 
-	testenv.
-		Setup(e2e.Logger(), e2e.SignUp("cyberjoker", []string{"devs"})).
-		Test(t, f)
-}
-
-func TestResolveActions(t *testing.T) {
-	log := slog.New(slog.NewJSONHandler(os.Stdout,
-		&slog.HandlerOptions{Level: slog.LevelDebug}))
-
-	ctx := xcontext.BuildContext(context.TODO(),
-		xcontext.WithTraceId("test"),
-		xcontext.WithLogger(log),
-	)
-
-	res, err := Resolve(ctx, []*v1alpha1.Action{
-		{
-			Template: &v1alpha1.ActionTemplate{
-				ID:         "test-id",
-				Name:       "nginx",
-				Namespace:  "demo-system",
-				Resource:   "deployments",
-				APIVersion: "apps/v1",
-				Verb:       "put",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	spew.Dump(res)
+	testenv.Test(t, f)
 }

@@ -15,7 +15,7 @@ spec:
         namespace: demo-system
         apiVersion: composition.krateo.io/v1-1-3
         resource: fireworksapps
-        verb: put
+        verb: PUT
         payloadToOverride:
         - name: metadata.name
           value: ${ git.toRepo.name }

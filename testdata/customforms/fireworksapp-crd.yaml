@@ -1,0 +1,744 @@
+# kubectl --kubeconfig=$PWD/cyberjoker.json get cform fireworksapp-tgz-customform -n demo-system
+#
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+  name: fireworksapps.composition.krateo.io
+spec:
+  # conversion:
+  #   strategy: Webhook
+  #   webhook:
+  #     clientConfig:
+  #       caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURvRENDQW9pZ0F3SUJBZ0lVSFdPaXFYOTVtak9FQkZrNWoyRkFPU2NvNjlvd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09qRTRNRFlHQTFVRUF3d3ZZMjl5WlMxd2NtOTJhV1JsY2kxM1pXSm9iMjlyTFhObGNuWnBZMlV1YTNKaApkR1Z2TFhONWMzUmxiUzV6ZG1Nd0hoY05NalF3T1RNd01USTFNakUyV2hjTk1qVXdPVE13TVRJMU1qRTJXakE2Ck1UZ3dOZ1lEVlFRRERDOWpiM0psTFhCeWIzWnBaR1Z5TFhkbFltaHZiMnN0YzJWeWRtbGpaUzVyY21GMFpXOHQKYzNsemRHVnRMbk4yWXpDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBUCtUSDFUTgpjTnMzeTJiOWtaMEs5SnhYU0M2TmZqbm01T1k4ckw0cXZNUnRWS2ROY2ZmaVRvK3IwY1ZQWWYwVXdSckZSTFdSCkoyODVUS2VWYlUyNHlsVFVyMk9hYVgzU0pGTWhpdWtaT3BYVmhjWjEvMkxmaXlsTEZFcHh6ZFU3M3YrRXhNcXMKMW9BaTRTSGtPYTc5YkJwT1lmV2pXOGxXMXljRXdZcUExWjJvVkJYNVNURjNVemxOVHAwMFVvVGd5a1MrOWhoKwpRd08yT29mMmE0WENySHlRR202QlBsSllzZHlyc3JVN0dXS2pkSFQ3OHpBVkJNQURQZVUrUUxrbXQ4VzFka21JCklXUHNUS1hyMkFMa0dpd1d0ZVhMWVRFVUR1SDhXUkt5NmNVRlpqSC92ZCtOY0o1TVNHdjdsOXN5UmpoZUx4WnAKRmsvSDJ2ZWtnckxMUEFVQ0F3RUFBYU9CblRDQm1qQnJCZ05WSFJFRVpEQmlnaTlqYjNKbExYQnliM1pwWkdWeQpMWGRsWW1odmIyc3RjMlZ5ZG1salpTNXJjbUYwWlc4dGMzbHpkR1Z0TG5OMlk0SXZZMjl5WlMxd2NtOTJhV1JsCmNpMTNaV0pvYjI5ckxYTmxjblpwWTJVdWEzSmhkR1Z2TFhONWMzUmxiUzV6ZG1Nd0RBWURWUjBUQkFVd0F3RUIKL3pBZEJnTlZIUTRFRmdRVWY2Zmc2Y1pOUUhqUkR0R29IeWVUWWRCTUMrSXdEUVlKS29aSWh2Y05BUUVMQlFBRApnZ0VCQU51Z3ZpS1RDcjBmdjU1U3hiVVFvVEpFa1QzTDRNV1ovN1d6UC9XZXU4TDU0Yyt2YU9CcXZIS1JaOXlMCjAzK2I4QTBsNy9CRWdLTThyVW5lVExlSGh4RGQ0S01qLzYrYUtTMEx6T0hSZEdpZEttZ2p4eUF3VlFlREVUSHcKcW5BNWNwczVwV21Fb1QwWERQYnBmT3hVRnFzWjcyU0NybTA3d1Q4ZjQ0Y1Boc01aYnNVRTZkZWJRLzIwZE5JUAorUTlORFY0MWlRSERGV0E4dmFrM3d0R1BrN2VUcCtEdFJueGZRNmFWNVJQSlJaM05sWE9aZGFldzZ1QzdSRDE2CmZMcUNrbFdUNXU1Tk1nU21JWEljOFUyZFFqbGhjRXpNdzhXKy9MS0dVRXMvY3drYWZITFpXQjRlSlg5djUzSEwKRE11MlhBVUJ3bFU5NXk1cmhzRUVVNHBVTVdnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  #       service:
+  #         name: core-provider-webhook-service
+  #         namespace: krateo-system
+  #         path: /convert
+  #         port: 9443
+  #     conversionReviewVersions:
+  #     - v1
+  #     - v1alpha1
+  #     - v1alpha2
+  group: composition.krateo.io
+  names:
+    categories:
+    - compositions
+    - comps
+    kind: FireworksApp
+    listKind: FireworksAppList
+    plural: fireworksapps
+    singular: fireworksapp
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    name: v1-1-3
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          spec:
+            properties:
+              app:
+                properties:
+                  service:
+                    properties:
+                      port:
+                        default: 31180
+                        maximum: 32767
+                        minimum: 30000
+                        type: integer
+                      type:
+                        default: NodePort
+                        enum:
+                        - NodePort
+                        - LoadBalancer
+                        type: string
+                    required:
+                    - port
+                    - type
+                    type: object
+                required:
+                - service
+                type: object
+              argocd:
+                properties:
+                  application:
+                    properties:
+                      destination:
+                        properties:
+                          namespace:
+                            default: fireworks-app
+                            type: string
+                          server:
+                            default: https://kubernetes.default.svc
+                            type: string
+                        required:
+                        - namespace
+                        - server
+                        type: object
+                      project:
+                        default: default
+                        type: string
+                      source:
+                        properties:
+                          path:
+                            default: chart/
+                            type: string
+                        required:
+                        - path
+                        type: object
+                      syncPolicy:
+                        properties:
+                          automated:
+                            properties:
+                              prune:
+                                default: true
+                                type: boolean
+                              selfHeal:
+                                default: true
+                                type: boolean
+                            required:
+                            - prune
+                            - selfHeal
+                            type: object
+                        required:
+                        - automated
+                        type: object
+                    required:
+                    - destination
+                    - project
+                    - source
+                    - syncPolicy
+                    type: object
+                  namespace:
+                    default: krateo-system
+                    type: string
+                required:
+                - application
+                - namespace
+                type: object
+              deletionPolicy:
+                default: Delete
+                description: |-
+                  DeletionPolicy specifies what will happen to the underlying external
+                  when this managed resource is deleted - either "Delete" or "Orphan" the
+                  external resource.
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              git:
+                properties:
+                  deletionPolicy:
+                    default: Orphan
+                    enum:
+                    - Delete
+                    - Orphan
+                    type: string
+                  fromRepo:
+                    properties:
+                      branch:
+                        default: main
+                        type: string
+                      credentials:
+                        properties:
+                          authMethod:
+                            default: basic
+                            enum:
+                            - basic
+                            - bearer
+                            type: string
+                          secretRef:
+                            properties:
+                              key:
+                                default: token
+                                type: string
+                              name:
+                                default: github-repo-creds
+                                type: string
+                              namespace:
+                                default: krateo-system
+                                type: string
+                            required:
+                            - key
+                            - name
+                            - namespace
+                            type: object
+                        required:
+                        - authMethod
+                        - secretRef
+                        type: object
+                      name:
+                        default: krateo-v2-template-fireworksapp
+                        type: string
+                      org:
+                        default: krateoplatformops
+                        type: string
+                      path:
+                        default: skeleton/
+                        type: string
+                      scmUrl:
+                        default: https://github.com
+                        type: string
+                    required:
+                    - branch
+                    - credentials
+                    - name
+                    - org
+                    - path
+                    - scmUrl
+                    type: object
+                  insecure:
+                    default: true
+                    type: boolean
+                  toRepo:
+                    properties:
+                      apiUrl:
+                        default: https://api.github.com
+                        type: string
+                      branch:
+                        default: main
+                        type: string
+                      credentials:
+                        properties:
+                          authMethod:
+                            default: basic
+                            enum:
+                            - basic
+                            - bearer
+                            type: string
+                          secretRef:
+                            properties:
+                              key:
+                                default: token
+                                type: string
+                              name:
+                                default: github-repo-creds
+                                type: string
+                              namespace:
+                                default: krateo-system
+                                type: string
+                            required:
+                            - key
+                            - name
+                            - namespace
+                            type: object
+                        required:
+                        - authMethod
+                        - secretRef
+                        type: object
+                      deletionPolicy:
+                        default: Delete
+                        enum:
+                        - Delete
+                        - Orphan
+                        type: string
+                      initialize:
+                        default: true
+                        type: boolean
+                      name:
+                        default: fireworksapp-test-v2
+                        type: string
+                      org:
+                        default: krateoplatformops-archive
+                        type: string
+                      path:
+                        default: /
+                        type: string
+                      private:
+                        default: false
+                        type: boolean
+                      scmUrl:
+                        default: https://github.com
+                        type: string
+                    required:
+                    - apiUrl
+                    - branch
+                    - credentials
+                    - deletionPolicy
+                    - initialize
+                    - name
+                    - org
+                    - path
+                    - private
+                    - scmUrl
+                    type: object
+                  unsupportedCapabilities:
+                    default: true
+                    type: boolean
+                required:
+                - deletionPolicy
+                - fromRepo
+                - insecure
+                - toRepo
+                - unsupportedCapabilities
+                type: object
+            required:
+            - app
+            - argocd
+            - git
+            type: object
+          status:
+            properties:
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        LastTransitionTime is the last time this condition transitioned from one
+                        status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        A Message containing details about this condition's last transition from
+                        one status to another, if any.
+                      type: string
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                    type:
+                      description: |-
+                        Type of this condition. At most one of each condition type may apply to
+                        a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              failedObjectRef:
+                properties:
+                  apiVersion:
+                    description: 'APIVersion: API version of the object.'
+                    type: string
+                  kind:
+                    description: 'Kind: Kind of the object.'
+                    type: string
+                  name:
+                    description: 'Name: Name of the object.'
+                    type: string
+                  namespace:
+                    description: 'Namespace: Namespace of the object.'
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                - namespace
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
+    name: v1-1-2
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          spec:
+            properties:
+              app:
+                properties:
+                  service:
+                    properties:
+                      port:
+                        default: 31180
+                        maximum: 32767
+                        minimum: 30000
+                        type: integer
+                      type:
+                        default: NodePort
+                        enum:
+                        - NodePort
+                        - LoadBalancer
+                        type: string
+                    required:
+                    - port
+                    - type
+                    type: object
+                required:
+                - service
+                type: object
+              argocd:
+                properties:
+                  application:
+                    properties:
+                      destination:
+                        properties:
+                          namespace:
+                            default: fireworks-app
+                            type: string
+                          server:
+                            default: https://kubernetes.default.svc
+                            type: string
+                        required:
+                        - namespace
+                        - server
+                        type: object
+                      project:
+                        default: default
+                        type: string
+                      source:
+                        properties:
+                          path:
+                            default: chart/
+                            type: string
+                        required:
+                        - path
+                        type: object
+                      syncPolicy:
+                        properties:
+                          automated:
+                            properties:
+                              prune:
+                                default: true
+                                type: boolean
+                              selfHeal:
+                                default: true
+                                type: boolean
+                            required:
+                            - prune
+                            - selfHeal
+                            type: object
+                        required:
+                        - automated
+                        type: object
+                    required:
+                    - destination
+                    - project
+                    - source
+                    - syncPolicy
+                    type: object
+                  namespace:
+                    default: krateo-system
+                    type: string
+                required:
+                - application
+                - namespace
+                type: object
+              deletionPolicy:
+                default: Delete
+                description: |-
+                  DeletionPolicy specifies what will happen to the underlying external
+                  when this managed resource is deleted - either "Delete" or "Orphan" the
+                  external resource.
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              git:
+                properties:
+                  deletionPolicy:
+                    default: Orphan
+                    enum:
+                    - Delete
+                    - Orphan
+                    type: string
+                  fromRepo:
+                    properties:
+                      branch:
+                        default: main
+                        type: string
+                      credentials:
+                        properties:
+                          authMethod:
+                            default: basic
+                            enum:
+                            - basic
+                            - bearer
+                            type: string
+                          secretRef:
+                            properties:
+                              key:
+                                default: token
+                                type: string
+                              name:
+                                default: github-repo-creds
+                                type: string
+                              namespace:
+                                default: krateo-system
+                                type: string
+                            required:
+                            - key
+                            - name
+                            - namespace
+                            type: object
+                        required:
+                        - authMethod
+                        - secretRef
+                        type: object
+                      name:
+                        default: krateo-v2-template-fireworksapp
+                        type: string
+                      org:
+                        default: krateoplatformops
+                        type: string
+                      path:
+                        default: skeleton/
+                        type: string
+                      scmUrl:
+                        default: https://github.com
+                        type: string
+                    required:
+                    - branch
+                    - credentials
+                    - name
+                    - org
+                    - path
+                    - scmUrl
+                    type: object
+                  insecure:
+                    default: true
+                    type: boolean
+                  toRepo:
+                    properties:
+                      apiUrl:
+                        default: https://api.github.com
+                        type: string
+                      branch:
+                        default: main
+                        type: string
+                      credentials:
+                        properties:
+                          authMethod:
+                            default: basic
+                            enum:
+                            - basic
+                            - bearer
+                            type: string
+                          secretRef:
+                            properties:
+                              key:
+                                default: token
+                                type: string
+                              name:
+                                default: github-repo-creds
+                                type: string
+                              namespace:
+                                default: krateo-system
+                                type: string
+                            required:
+                            - key
+                            - name
+                            - namespace
+                            type: object
+                        required:
+                        - authMethod
+                        - secretRef
+                        type: object
+                      deletionPolicy:
+                        default: Delete
+                        enum:
+                        - Delete
+                        - Orphan
+                        type: string
+                      initialize:
+                        default: true
+                        type: boolean
+                      name:
+                        default: fireworksapp-test-v2
+                        type: string
+                      org:
+                        default: krateoplatformops-archive
+                        type: string
+                      path:
+                        default: /
+                        type: string
+                      private:
+                        default: false
+                        type: boolean
+                      scmUrl:
+                        default: https://github.com
+                        type: string
+                    required:
+                    - apiUrl
+                    - branch
+                    - credentials
+                    - deletionPolicy
+                    - initialize
+                    - name
+                    - org
+                    - path
+                    - private
+                    - scmUrl
+                    type: object
+                  unsupportedCapabilities:
+                    default: true
+                    type: boolean
+                required:
+                - deletionPolicy
+                - fromRepo
+                - insecure
+                - toRepo
+                - unsupportedCapabilities
+                type: object
+            required:
+            - app
+            - argocd
+            - git
+            type: object
+          status:
+            properties:
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        LastTransitionTime is the last time this condition transitioned from one
+                        status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        A Message containing details about this condition's last transition from
+                        one status to another, if any.
+                      type: string
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                    type:
+                      description: |-
+                        Type of this condition. At most one of each condition type may apply to
+                        a resource at any point in time.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              failedObjectRef:
+                properties:
+                  apiVersion:
+                    description: 'APIVersion: API version of the object.'
+                    type: string
+                  kind:
+                    description: 'Kind: Kind of the object.'
+                    type: string
+                  name:
+                    description: 'Name: Name of the object.'
+                    type: string
+                  namespace:
+                    description: 'Namespace: Namespace of the object.'
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                - namespace
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - name: vacuum
+    schema:
+      openAPIV3Schema:
+        description: This is a vacuum version to storage different versions
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+          status:
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
+        type: object
+    served: false
+    storage: true
+status:
+  acceptedNames:
+    categories:
+    - compositions
+    - comps
+    kind: FireworksApp
+    listKind: FireworksAppList
+    plural: fireworksapps
+    singular: fireworksapp
+  conditions:
+  - lastTransitionTime: "2024-09-30T13:01:27Z"
+    message: no conflicts found
+    reason: NoConflicts
+    status: "True"
+    type: NamesAccepted
+  - lastTransitionTime: "2024-09-30T13:01:27Z"
+    message: the initial names have been accepted
+    reason: InitialNamesAccepted
+    status: "True"
+    type: Established
+  storedVersions:
+  - v1-1-3
+  - vacuum
