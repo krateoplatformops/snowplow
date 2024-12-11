@@ -19,8 +19,8 @@ import (
 
 func Call() http.Handler {
 	return &callHandler{
-		authnNS: env.String(env.AuthnNamespace, "krateo-system"),
-		verbose: env.Bool("DEBUG", false),
+		authnNS: env.String("AUTHN_NAMESPACE", ""),
+		verbose: env.True("DEBUG"),
 	}
 }
 
@@ -72,7 +72,7 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		status.Unauthorized(wri, err)
 		return
 	}
-	ep.Debug = env.Bool("DEBUG", false)
+	ep.Debug = r.verbose
 	ep.ServerURL = "https://kubernetes.default.svc"
 
 	callOpts := request.Options{

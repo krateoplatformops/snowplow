@@ -42,24 +42,32 @@ func CACrt(ctx context.Context, rc *rest.Config) (string, error) {
 		return "", err
 	}
 
-	cli, err := kubernetes.NewForConfig(rc)
+	data, err := ConfigMapData(ctx, rc, name, namespace)
 	if err != nil {
 		return "", err
 	}
 
-	res, err := cli.CoreV1().ConfigMaps(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return "", fmt.Errorf("configmaps '%s' not found (namespace: %s)", name, namespace)
-		}
-		return "", err
-	}
-
-	crt, ok := res.Data["ca.crt"]
+	crt, ok := data["ca.crt"]
 	if !ok {
 		return "", fmt.Errorf("ca.crt key not found in configmaps '%s' (namespace: %s)", name, namespace)
 	}
 
 	enc := base64.StdEncoding.EncodeToString([]byte(crt))
 	return enc, err
+}
+
+func ConfigMapData(ctx context.Context, rc *rest.Config, name, namespace string) (map[string]string, error) {
+	cli, err := kubernetes.NewForConfig(rc)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := cli.CoreV1().ConfigMaps(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("configmaps '%s' not found (namespace: %s)", name, namespace)
+		}
+		return nil, err
+	}
+	return res.Data, nil
 }

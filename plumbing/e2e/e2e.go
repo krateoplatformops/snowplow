@@ -8,7 +8,6 @@ import (
 	"time"
 
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
 	"github.com/krateoplatformops/snowplow/plumbing/log"
 
@@ -17,14 +16,17 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func Logger(traceId string) types.StepFunc {
-	logLevel := slog.LevelInfo
-	if env.Bool("DEBUG", false) {
-		logLevel = slog.LevelDebug
+func JQTemplate() types.StepFunc {
+	return func(ctx context.Context, _ *testing.T, _ *envconf.Config) context.Context {
+		return xcontext.BuildContext(ctx,
+			xcontext.WithJQTemplate(),
+		)
 	}
+}
 
+func Logger(traceId string) types.StepFunc {
 	handler := log.NewPrettyJSONHandler(os.Stderr, &slog.HandlerOptions{
-		Level: logLevel,
+		Level: slog.LevelDebug,
 	})
 
 	return func(ctx context.Context, _ *testing.T, _ *envconf.Config) context.Context {
@@ -35,7 +37,7 @@ func Logger(traceId string) types.StepFunc {
 	}
 }
 
-func SignUp(user string, groups []string) types.StepFunc {
+func SignUp(user string, groups []string, namespace string) types.StepFunc {
 	return func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		dat, err := os.ReadFile(cfg.KubeconfigFile())
 		if err != nil {
@@ -49,7 +51,7 @@ func SignUp(user string, groups []string) types.StepFunc {
 
 		handler := &signupHandler{
 			restconfig:   cfg.Client().RESTConfig(),
-			namespace:    cfg.Namespace(),
+			namespace:    namespace,
 			caData:       in.Clusters[0].Cluster.CertificateAuthorityData,
 			serverURL:    in.Clusters[0].Cluster.Server, //"https://kubernetes.default.svc",
 			certDuration: time.Minute * 30,

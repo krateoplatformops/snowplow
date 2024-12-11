@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package actions
+package customforms
 
 import (
 	"context"
@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 	os.Exit(testenv.Run(m))
 }
 
-func TestCustomFormActions(t *testing.T) {
+func TestCustomForm(t *testing.T) {
 	const (
 		manifestsPath = "../../../testdata/customforms"
 	)
@@ -90,7 +90,7 @@ func TestCustomFormActions(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve actions", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+		Assess("Resolve custom form", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			r, err := resources.New(c.Client().RESTConfig())
 			if err != nil {
 				t.Fail()
@@ -106,14 +106,18 @@ func TestCustomFormActions(t *testing.T) {
 
 			log := xcontext.Logger(ctx)
 
-			log.Info("Actions in Spec", slog.Any("actions", cr.Spec.Actions))
-
-			res, err := Resolve(ctx, cr.Spec.Actions)
+			res, err := Resolve(ctx, ResolveOptions{
+				In:         &cr,
+				SArc:       c.Client().RESTConfig(),
+				AuthnNS:    namespace,
+				Username:   "cyberjoker",
+				UserGroups: []string{"devs"},
+			})
 			if err != nil {
-				log.Error("unable to resolve actions", slog.Any("err", err))
+				log.Error("unable to resolve custom form", slog.Any("err", err))
 				t.Fail()
 			} else {
-				log.Info("Actions in Status", slog.Any("actions", res))
+				log.Info("resolved custom form", slog.Any("result", res))
 			}
 
 			return ctx

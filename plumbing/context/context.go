@@ -14,6 +14,11 @@ import (
 )
 
 const (
+	Trace uint = 1 << iota // 1 << 0 = 1
+	Debug                  // 1 << 1 = 2
+)
+
+const (
 	LabelKrateoTraceId = "X-Krateo-TraceId"
 	LabelKrateoUser    = "X-Krateo-User"
 	LabelKrateoGroups  = "X-Krateo-Groups"
@@ -28,6 +33,14 @@ func Logger(ctx context.Context) *slog.Logger {
 	}
 
 	return log
+}
+
+func AuthnNS(ctx context.Context) string {
+	ns, ok := ctx.Value(contextKeyAuthnNS).(string)
+	if ok {
+		return ""
+	}
+	return ns
 }
 
 func TraceId(ctx context.Context, generate bool) string {
@@ -84,7 +97,7 @@ func WithLogger(root *slog.Logger) WithContextFunc {
 	return func(ctx context.Context) context.Context {
 		if root == nil {
 			logLevel := slog.LevelInfo
-			if env.Bool("DEBUG", false) {
+			if env.True("DEBUG") {
 				logLevel = slog.LevelDebug
 			}
 			root = slog.New(slog.NewJSONHandler(os.Stderr,
@@ -102,6 +115,13 @@ func WithRequestStartedAt(t time.Time) WithContextFunc {
 	}
 }
 
+/*
+	func WithAuthnNS(ns string) WithContextFunc {
+		return func(ctx context.Context) context.Context {
+			return context.WithValue(ctx, contextKeyAuthnNS, ns)
+		}
+	}
+*/
 func WithUserConfig(ep endpoints.Endpoint) WithContextFunc {
 	return func(ctx context.Context) context.Context {
 		return context.WithValue(ctx, contextKeyUserConfig, ep)
@@ -142,4 +162,5 @@ var (
 	contextKeyUserConfig     = contextKey("userConfig")
 	contextKeyRequestStartAt = contextKey("requestStartedAt")
 	contextKeyJQTemplate     = contextKey("jqTemplateEngine")
+	contextKeyAuthnNS        = contextKey("authnNS")
 )

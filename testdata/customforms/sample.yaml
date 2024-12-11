@@ -1,3 +1,15 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: fireworksapp
+  namespace: demo-system
+data:
+  onSubmitName: submit
+  onSubmitVerb: POST
+  title: Brian Ingerson
+  description: The co-inventor of YAML
+---
 apiVersion: templates.krateo.io/v1alpha1
 kind: CustomForm
 metadata:

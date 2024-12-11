@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package actions
+package api
 
 import (
 	"context"
@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 	)
 
 	namespace = "demo-system"
-	clusterName = "krateo" //envconf.RandomName("krateo", 16)
+	clusterName = "krateo"
 	testenv = env.New()
 
 	testenv.Setup(
@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 	os.Exit(testenv.Run(m))
 }
 
-func TestCustomFormActions(t *testing.T) {
+func TestCustomFormAPI(t *testing.T) {
 	const (
 		manifestsPath = "../../../testdata/customforms"
 	)
@@ -68,6 +68,7 @@ func TestCustomFormActions(t *testing.T) {
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
+		Setup(e2e.JQTemplate()).
 		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 
@@ -90,8 +91,8 @@ func TestCustomFormActions(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve actions", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			r, err := resources.New(c.Client().RESTConfig())
+		Assess("Resolve API", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {
 				t.Fail()
 			}
@@ -106,14 +107,19 @@ func TestCustomFormActions(t *testing.T) {
 
 			log := xcontext.Logger(ctx)
 
-			log.Info("Actions in Spec", slog.Any("actions", cr.Spec.Actions))
+			log.Info("API in Spec", slog.Any("api", cr.Spec.API))
 
-			res, err := Resolve(ctx, cr.Spec.Actions)
+			res, err := Resolve(ctx, cr.Spec.API, ResolveOptions{
+				SARc:       cfg.Client().RESTConfig(),
+				AuthnNS:    cfg.Namespace(),
+				Username:   "cyberjoker",
+				UserGroups: []string{"devs"},
+			})
 			if err != nil {
-				log.Error("unable to resolve actions", slog.Any("err", err))
+				log.Error("unable to resolve api calls", slog.Any("err", err))
 				t.Fail()
 			} else {
-				log.Info("Actions in Status", slog.Any("actions", res))
+				log.Info("API call results", slog.Any("data", res))
 			}
 
 			return ctx

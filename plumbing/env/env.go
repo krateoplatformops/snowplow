@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-const (
-	AuthnNamespace = "AUTHN_NAMESPACE"
-)
-
 func String(key, defaultValue string) string {
 	val, ok := os.LookupEnv(key)
 	if !ok {
@@ -34,6 +30,20 @@ func Int(key string, defaultValue int) int {
 	if err != nil {
 		return defaultValue
 	}
+	return res
+}
+
+func True(key string) bool {
+	val, ok := os.LookupEnv(key)
+	if !ok {
+		return false
+	}
+
+	res, err := strconv.ParseBool(strings.TrimSpace(val))
+	if err != nil {
+		return false
+	}
+
 	return res
 }
 

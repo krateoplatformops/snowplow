@@ -12,13 +12,12 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/krateoplatformops/snowplow/docs"
 	"github.com/krateoplatformops/snowplow/internal/handlers"
 	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use/cors"
-
-	_ "github.com/krateoplatformops/snowplow/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -36,11 +35,12 @@ var (
 // @BasePath /
 func main() {
 	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "enable or disable debug logs")
-	blizzard := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
+	blizzardOn := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
 	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
-	authnNS := flag.String("authn-store-namespace",
-		env.String("AUTHN_STORE_NAMESPACE", ""),
+	authnNS := flag.String("authn-namespace", env.String("AUTHN_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
+	skipOn := flag.Bool("skip", env.Bool("SKIP", false),
+		"enable or disable request dispatcher for templates.krateo.io resources")
 
 	flag.Usage = func() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
@@ -49,9 +49,9 @@ func main() {
 
 	flag.Parse()
 
-	os.Setenv(env.AuthnNamespace, *authnNS)
 	os.Setenv("DEBUG", strconv.FormatBool(*debugOn))
-	os.Setenv("BLIZZARD", strconv.FormatBool(*blizzard))
+	os.Setenv("TRACE", strconv.FormatBool(*blizzardOn))
+	os.Setenv("AUTHN_NAMESPACE", *authnNS)
 
 	if *debugOn {
 		log := slog.New(slog.NewJSONHandler(os.Stderr,
@@ -90,7 +90,7 @@ func main() {
 
 	mux.Handle("GET /call", chain.Append(
 		use.UserConfig(),
-		handlers.Dispatcher(dispatchers.Empty())).
+		handlers.Dispatcher(dispatchers.All(*skipOn))).
 		Then(handlers.Call()))
 	mux.Handle("POST /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
 	mux.Handle("PUT /call", chain.Append(use.UserConfig()).Then(handlers.Call()))

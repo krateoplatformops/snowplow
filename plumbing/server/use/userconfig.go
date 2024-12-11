@@ -36,9 +36,9 @@ func UserConfig() func(http.Handler) http.Handler {
 				return
 			}
 
+			authnNS := env.String("AUTHN_NAMESPACE", "")
 			ep, err := endpoints.FromSecret(context.Background(), sarc,
-				fmt.Sprintf("%s-clientconfig", sub),
-				env.String(env.AuthnNamespace, "krateo-system"))
+				fmt.Sprintf("%s-clientconfig", sub), authnNS)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					status.Unauthorized(wri, err)
