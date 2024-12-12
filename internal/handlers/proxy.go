@@ -40,7 +40,7 @@ func Dispatcher(handlers map[schema.GroupVersionResource]http.Handler) func(http
 				log.Warn("handler not found", slog.String("gvr", key.String()))
 				next.ServeHTTP(wri, req)
 			} else {
-				log.Warn("handler found, forwarding request", slog.String("gvr", key.String()))
+				log.Debug("handler found, forwarding request", slog.String("gvr", key.String()))
 				h.ServeHTTP(wri, req)
 			}
 		}

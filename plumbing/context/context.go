@@ -61,6 +61,7 @@ func UserConfig(ctx context.Context) (endpoints.Endpoint, error) {
 	if !ok {
 		return endpoints.Endpoint{}, fmt.Errorf("user *Endpoint not found in context")
 	}
+	ep.ServerURL = "https://kubernetes.default.svc"
 
 	return ep, nil
 }

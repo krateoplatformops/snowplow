@@ -36,16 +36,21 @@ func Resolve(ctx context.Context, apiList []*templates.API, opts ResolveOptions)
 	// Resolve all endpoints references
 	endpointMap := map[string]endpoints.Endpoint{}
 	for _, el := range apiList {
+		isInternal := false
 		if el.EndpointRef == nil {
 			el.EndpointRef = &templates.Reference{
 				Namespace: opts.AuthnNS,
 				Name:      fmt.Sprintf("%s-clientconfig", opts.Username),
 			}
+			isInternal = true
 		}
 
 		ep, err := endpoints.FromSecret(ctx, opts.SARc, el.EndpointRef.Name, el.EndpointRef.Namespace)
 		if err != nil {
 			return nil, err
+		}
+		if isInternal {
+			ep.ServerURL = "https://kubernetes.default.svc"
 		}
 
 		endpointMap[el.Name] = ep

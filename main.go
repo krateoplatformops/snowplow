@@ -53,9 +53,13 @@ func main() {
 	os.Setenv("TRACE", strconv.FormatBool(*blizzardOn))
 	os.Setenv("AUTHN_NAMESPACE", *authnNS)
 
+	logLevel := slog.LevelInfo
 	if *debugOn {
-		log := slog.New(slog.NewJSONHandler(os.Stderr,
-			&slog.HandlerOptions{Level: slog.LevelDebug}))
+		logLevel = slog.LevelDebug
+	}
+
+	log := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
+	if *debugOn {
 		log.Debug("environment variables", slog.Any("env", os.Environ()))
 	}
 
@@ -78,7 +82,7 @@ func main() {
 		}),
 
 		use.TraceId(),
-		use.Logger(nil),
+		use.Logger(log),
 	)
 
 	mux := http.NewServeMux()
@@ -116,14 +120,12 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 			log.Error("server cannot run",
 				slog.String("addr", server.Addr),
 				slog.Any("err", err))
 		}
 	}()
 
-	log := slog.New(slog.NewJSONHandler(os.Stderr, nil))
 	// Listen for the interrupt signal.
 	log.Info("server is ready to handle requests", slog.String("addr", server.Addr))
 	<-ctx.Done()

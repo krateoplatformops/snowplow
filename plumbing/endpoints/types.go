@@ -1,15 +1,15 @@
 package endpoints
 
 type Endpoint struct {
-	ServerURL                string
-	ProxyURL                 string
-	CertificateAuthorityData string
-	ClientCertificateData    string
-	ClientKeyData            string
-	Token                    string
-	Username                 string
-	Password                 string
-	Debug                    bool
+	ServerURL                string `json:"serverURL"`
+	ProxyURL                 string `json:"proxyURL,omitempty"`
+	CertificateAuthorityData string `json:"caData,omitempty"`
+	ClientCertificateData    string `json:"-"`
+	ClientKeyData            string `json:"-"`
+	Token                    string `json:"token,omitempty"`
+	Username                 string `json:"username,omitempty"`
+	Password                 string `json:"password,omitempty"`
+	Debug                    bool   `json:"debug"`
 }
 
 // HasCA returns whether the configuration has a certificate authority or not.

@@ -49,6 +49,15 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - templates.krateo.io
+  resources:
+  - customforms
+  verbs:
+  - get
+  - list
+  - post
+  - put
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

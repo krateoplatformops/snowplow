@@ -10,7 +10,6 @@ import (
 	"github.com/krateoplatformops/snowplow/internal/resolvers/api"
 	app "github.com/krateoplatformops/snowplow/internal/resolvers/app/customforms"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,6 +26,14 @@ type ResolveOptions struct {
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*templates.CustomForm, error) {
+	if opts.SArc == nil {
+		var err error
+		opts.SArc, err = rest.InClusterConfig()
+		if err != nil {
+			return opts.In, err
+		}
+	}
+
 	log := xcontext.Logger(ctx)
 
 	tpl := xcontext.JQTemplate(ctx)
@@ -34,23 +41,22 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.CustomForm, e
 		return opts.In, fmt.Errorf("missing jq template engine")
 	}
 
-	ep, err := xcontext.UserConfig(ctx)
-	if err != nil {
-		return opts.In, err
-	}
-	ep.Debug = opts.Verbose
-	//ep.ServerURL = "https://kubernetes.default.svc"
+	//ep, err := xcontext.UserConfig(ctx)
+	//if err != nil {
+	//	return opts.In, err
+	//}
+	//ep.Debug = opts.Verbose
 
-	rc, err := kubeconfig.NewClientConfig(ctx, ep)
-	if err != nil {
-		return opts.In, err
-	}
+	//rc, err := kubeconfig.NewClientConfig(ctx, ep)
+	//if err != nil {
+	//	return opts.In, err
+	//}
 
 	// Resolve 'in.Spec.PropsRef'
 	opts.In.Status.Props = map[string]string{}
 	if ref := opts.In.Spec.PropsRef; ref != nil {
 		var err error
-		opts.In.Status.Props, err = kubeutil.ConfigMapData(ctx, rc, ref.Name, ref.Namespace)
+		opts.In.Status.Props, err = kubeutil.ConfigMapData(ctx, opts.SArc, ref.Name, ref.Namespace)
 		if err != nil {
 			log.Error("unable resolve customform props",
 				slog.String("name", ref.Name),

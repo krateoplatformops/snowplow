@@ -48,6 +48,8 @@ func List() http.HandlerFunc {
 			return
 		}
 
+		log.Debug("user config succesfully loaded", slog.Any("endpoint", ep))
+
 		rc, err := kubeconfig.NewClientConfig(req.Context(), ep)
 		if err != nil {
 			log.Error("unable to create user client config", slog.Any("err", err))
