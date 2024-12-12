@@ -54,7 +54,7 @@ spec:
           - --debug=true
           - --blizzard=false
           - --port=8081
-          - --authn-store-namespace=demo-system
+          - --authn-namespace=demo-system
         ports:
         - name: http
           containerPort: 8081

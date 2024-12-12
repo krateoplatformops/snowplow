@@ -9,18 +9,20 @@ import (
 	"path"
 	"strings"
 
+	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/http/request"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func Call() http.Handler {
 	return &callHandler{
-		authnNS: env.String(env.AuthnNamespace, "krateo-system"),
-		verbose: env.Bool("DEBUG", false),
+		authnNS: env.String("AUTHN_NAMESPACE", ""),
+		verbose: env.True("DEBUG"),
 	}
 }
 
@@ -72,8 +74,9 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		status.Unauthorized(wri, err)
 		return
 	}
-	ep.Debug = env.Bool("DEBUG", false)
-	ep.ServerURL = "https://kubernetes.default.svc"
+	ep.Debug = r.verbose
+
+	log.Debug("user config succesfully loaded", slog.Any("endpoint", ep))
 
 	callOpts := request.Options{
 		Path: ptr.To(uri),
@@ -122,27 +125,13 @@ func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err 
 		return
 	}
 
-	opts.apiVersion = req.URL.Query().Get("apiVersion")
-	if len(opts.apiVersion) == 0 {
-		err = fmt.Errorf("missing 'apiVersion' query parameter")
+	opts.gvr, err = util.ParseGVR(req)
+	if err != nil {
 		return
 	}
 
-	opts.resource = req.URL.Query().Get("resource")
-	if len(opts.resource) == 0 {
-		err = fmt.Errorf("missing 'resource' query parameter")
-		return
-	}
-
-	opts.name = req.URL.Query().Get("name")
-	if len(opts.name) == 0 {
-		err = fmt.Errorf("missing 'name' query parameter")
-		return
-	}
-
-	opts.namespace = req.URL.Query().Get("namespace")
-	if len(opts.namespace) == 0 {
-		err = fmt.Errorf("missing 'namespace' query parameter")
+	opts.nsn, err = util.ParseNamespacedName(req)
+	if err != nil {
 		return
 	}
 
@@ -155,34 +144,27 @@ func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err 
 }
 
 type callOptions struct {
-	apiVersion string
-	resource   string
-	name       string
-	namespace  string
-	verb       string
-	subject    string
-	groups     []string
-	dat        []byte
+	gvr     schema.GroupVersionResource
+	nsn     types.NamespacedName
+	verb    string
+	subject string
+	groups  []string
+	dat     []byte
 }
 
 func buildURI(opts callOptions) (string, error) {
-	gv, err := schema.ParseGroupVersion(opts.apiVersion)
-	if err != nil {
-		return "", err
+	base := path.Join("/apis", opts.gvr.Group, opts.gvr.Version)
+	if len(opts.gvr.Group) == 0 {
+		base = path.Join("/api", opts.gvr.Version)
 	}
 
-	base := path.Join("/apis", gv.Group, gv.Version)
-	if len(gv.Group) == 0 {
-		base = path.Join("/api", gv.Version)
-	}
-
-	uri := path.Join(base, "namespaces", opts.namespace, opts.resource)
-	if strings.EqualFold("namespaces", opts.resource) {
-		uri = path.Join(base, opts.resource)
+	uri := path.Join(base, "namespaces", opts.nsn.Namespace, opts.gvr.Resource)
+	if strings.EqualFold("namespaces", opts.gvr.Resource) {
+		uri = path.Join(base, opts.gvr.Resource)
 	}
 
 	if has([]string{http.MethodDelete, http.MethodGet, http.MethodPut}, opts.verb) {
-		uri = path.Join(uri, opts.name)
+		uri = path.Join(uri, opts.nsn.Name)
 	}
 
 	return uri, nil

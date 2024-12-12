@@ -38,6 +38,17 @@ curl -v -G GET \
   "http://127.0.0.1:30081/call"
 
 
+Call (Dispatcher example)
+=========================
+curl -v -G GET \
+  -H 'x-krateo-user: cyberjoker' \
+  -H 'x-krateo-groups: devs' \
+  -d 'apiVersion=templates.krateo.io/v1alpha1' \
+  -d 'resource=customforms' \
+  -d 'namespace=demo-system' \
+  -d 'name=fireworksapp' \
+  "http://127.0.0.1:30081/call"
+
 Call (POST example)
 ==================
 

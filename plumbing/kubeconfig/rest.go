@@ -15,8 +15,7 @@ import (
 )
 
 func NewClientConfig(ctx context.Context, ep endpoints.Endpoint) (*rest.Config, error) {
-	ep.Debug = env.Bool("DEBUG", false)
-	ep.ServerURL = "https://kubernetes.default.svc"
+	//ep.ServerURL = "https://kubernetes.default.svc"
 
 	dat, err := Marshal(&ep)
 	if err != nil {
@@ -36,7 +35,9 @@ func NewClientConfig(ctx context.Context, ep endpoints.Endpoint) (*rest.Config, 
 	log := xcontext.Logger(ctx)
 	traceId := xcontext.TraceId(ctx, true)
 
-	res.Wrap(newDebuggingRoundTripper(log, traceId, env.Bool("BLIZZARD", false)))
+	if env.True("DEBUG") {
+		res.Wrap(newDebuggingRoundTripper(log, traceId, env.True("TRACE")))
+	}
 
 	return res, nil
 }
