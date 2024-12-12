@@ -21,7 +21,6 @@ RUN go mod download
 
 COPY apis/ apis/
 COPY docs/ docs/
-COPY cmd/ cmd/
 COPY internal/ internal/
 COPY plumbing/ plumbing/
 COPY main.go main.go
