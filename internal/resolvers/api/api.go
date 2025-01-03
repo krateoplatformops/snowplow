@@ -12,6 +12,7 @@ import (
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	httpcall "github.com/krateoplatformops/snowplow/plumbing/http/request"
 	httpstatus "github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 	"k8s.io/client-go/rest"
 )
@@ -40,7 +41,7 @@ func Resolve(ctx context.Context, apiList []*templates.API, opts ResolveOptions)
 		if el.EndpointRef == nil {
 			el.EndpointRef = &templates.Reference{
 				Namespace: opts.AuthnNS,
-				Name:      fmt.Sprintf("%s-clientconfig", opts.Username),
+				Name:      fmt.Sprintf("%s-clientconfig", kubeutil.MakeDNS1123Compatible(opts.Username)),
 			}
 			isInternal = true
 		}
