@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: composition-admin
+  name: customforms-rbac
 rules:
 - apiGroups:
   - composition.krateo.io
@@ -11,18 +11,15 @@ rules:
   verbs:
   - get
   - list
-  - create
-  - update
-  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: composition-admin
+  name: customforms-rbac
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name:  composition-admin
+  name:  customforms-rbac
 subjects:
 - kind: Group
   name: devs

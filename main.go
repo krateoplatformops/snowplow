@@ -64,23 +64,6 @@ func main() {
 	}
 
 	chain := use.NewChain(
-		use.CORS(cors.Options{
-			AllowedOrigins: []string{"*"},
-			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders: []string{
-				"Accept",
-				"Authorization",
-				"Content-Type",
-				"X-Auth-Code",
-				"X-Krateo-TraceId",
-				"X-Krateo-User",
-				"X-Krateo-Groups",
-			},
-			ExposedHeaders:   []string{"Link"},
-			AllowCredentials: true,
-			MaxAge:           300, // Maximum value not ignored by any of major browsers
-		}),
-
 		use.TraceId(),
 		use.Logger(log),
 	)
@@ -111,8 +94,23 @@ func main() {
 	defer stop()
 
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", *port),
-		Handler:      mux,
+		Addr: fmt.Sprintf(":%d", *port),
+		Handler: use.CORS(cors.Options{
+			AllowedOrigins: []string{"*"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders: []string{
+				"Accept",
+				"Authorization",
+				"Content-Type",
+				"X-Auth-Code",
+				"X-Krateo-TraceId",
+				"X-Krateo-User",
+				"X-Krateo-Groups",
+			},
+			ExposedHeaders:   []string{"Link"},
+			AllowCredentials: true,
+			MaxAge:           300, // Maximum value not ignored by any of major browsers
+		})(mux),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 50 * time.Second,
 		IdleTimeout:  30 * time.Second,

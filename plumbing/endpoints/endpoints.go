@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
@@ -69,7 +70,7 @@ func FromSecret(ctx context.Context, rc *rest.Config, name, namespace string) (E
 
 func Store(ctx context.Context, rc *rest.Config, ns string, ep Endpoint) error {
 	sec := corev1.Secret{}
-	sec.SetName(fmt.Sprintf(secretNameFmt, ep.Username))
+	sec.SetName(fmt.Sprintf("%s-clientconfig", kubeutil.MakeDNS1123Compatible(ep.Username)))
 	sec.SetNamespace(ns)
 	sec.StringData = map[string]string{
 		usernameLabel:   ep.Username,
@@ -96,10 +97,8 @@ func Store(ctx context.Context, rc *rest.Config, ns string, ep Endpoint) error {
 		return nil
 	}
 
-	if err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			return err
-		}
+	if !apierrors.IsAlreadyExists(err) {
+		return err
 	}
 
 	return updateSecret(ctx, &sec, clientOptions{
@@ -119,6 +118,4 @@ const (
 	passwordLabel   = "password"
 	usernameLabel   = "username"
 	tokenLabel      = "token"
-
-	secretNameFmt = "%s-clientconfig"
 )

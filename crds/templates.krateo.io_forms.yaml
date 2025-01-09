@@ -1,0 +1,134 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.5
+  name: forms.templates.krateo.io
+spec:
+  group: templates.krateo.io
+  names:
+    kind: Form
+    listKind: FormList
+    plural: forms
+    singular: form
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              compositionDefinitionRef:
+                description: Reference to a named object.
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                  namespace:
+                    description: Namespace of the referenced object.
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              schemaDefinitionRef:
+                description: Reference to a named object.
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                  namespace:
+                    description: Namespace of the referenced object.
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+            type: object
+          status:
+            properties:
+              actions:
+                items:
+                  description: Action wraps an action template.
+                  properties:
+                    template:
+                      description: ActionTemplate defines a template for an action.
+                      properties:
+                        apiVersion:
+                          description: APIVersion for the related resource
+                          type: string
+                        id:
+                          description: ID for the action.
+                          type: string
+                        name:
+                          description: Name of the related resource.
+                          type: string
+                        namespace:
+                          description: Namespace of the related resource.
+                          type: string
+                        payloadToOverride:
+                          description: PayloadToOverride a list of values to override.
+                          items:
+                            description: Data is a key value pair.
+                            properties:
+                              asString:
+                                description: AsString if true the value will be considered
+                                  verbatim as string.
+                                type: boolean
+                              name:
+                                description: Name of the data
+                                type: string
+                              value:
+                                description: Value of the data. Can be also a JQ expression.
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          type: array
+                          x-kubernetes-list-type: atomic
+                        resource:
+                          description: Resource on which the action will act.
+                          type: string
+                        verb:
+                          description: Verb is the HTTP request verb.
+                          type: string
+                      type: object
+                  type: object
+                type: array
+                x-kubernetes-list-type: atomic
+              content:
+                properties:
+                  apiVersion:
+                    type: string
+                  instance:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  kind:
+                    type: string
+                  schema:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true

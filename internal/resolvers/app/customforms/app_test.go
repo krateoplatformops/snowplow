@@ -15,6 +15,7 @@ import (
 	apiresolver "github.com/krateoplatformops/snowplow/internal/resolvers/api"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
+	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
 
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -35,6 +36,8 @@ func TestMain(m *testing.M) {
 	const (
 		crdPath = "../../../../crds"
 	)
+
+	xenv.SetTestMode(true)
 
 	namespace = "demo-system"
 	clusterName = "krateo" // envconf.RandomName("krateo", 16)

@@ -35,14 +35,6 @@ func Logger(ctx context.Context) *slog.Logger {
 	return log
 }
 
-func AuthnNS(ctx context.Context) string {
-	ns, ok := ctx.Value(contextKeyAuthnNS).(string)
-	if ok {
-		return ""
-	}
-	return ns
-}
-
 func TraceId(ctx context.Context, generate bool) string {
 	traceId, ok := ctx.Value(contextKeyTraceId).(string)
 	if ok {
@@ -61,8 +53,9 @@ func UserConfig(ctx context.Context) (endpoints.Endpoint, error) {
 	if !ok {
 		return endpoints.Endpoint{}, fmt.Errorf("user *Endpoint not found in context")
 	}
-	ep.ServerURL = "https://kubernetes.default.svc"
-
+	if !env.TestMode() {
+		ep.ServerURL = "https://kubernetes.default.svc"
+	}
 	return ep, nil
 }
 
@@ -116,13 +109,6 @@ func WithRequestStartedAt(t time.Time) WithContextFunc {
 	}
 }
 
-/*
-	func WithAuthnNS(ns string) WithContextFunc {
-		return func(ctx context.Context) context.Context {
-			return context.WithValue(ctx, contextKeyAuthnNS, ns)
-		}
-	}
-*/
 func WithUserConfig(ep endpoints.Endpoint) WithContextFunc {
 	return func(ctx context.Context) context.Context {
 		return context.WithValue(ctx, contextKeyUserConfig, ep)

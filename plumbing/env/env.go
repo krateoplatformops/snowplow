@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+const (
+	testModeKey = "TEST_MODE"
+)
+
 func String(key, defaultValue string) string {
 	val, ok := os.LookupEnv(key)
 	if !ok {
@@ -31,6 +35,14 @@ func Int(key string, defaultValue int) int {
 		return defaultValue
 	}
 	return res
+}
+
+func TestMode() bool {
+	return True(testModeKey)
+}
+
+func SetTestMode(val bool) {
+	os.Setenv(testModeKey, strconv.FormatBool(val))
 }
 
 func True(key string) bool {
