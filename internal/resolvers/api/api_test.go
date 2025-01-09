@@ -7,6 +7,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
+	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
 
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -34,6 +36,8 @@ func TestMain(m *testing.M) {
 	const (
 		crdPath = "../../../crds"
 	)
+
+	xenv.SetTestMode(true)
 
 	namespace = "demo-system"
 	clusterName = "krateo"
@@ -61,7 +65,7 @@ func TestMain(m *testing.M) {
 
 func TestCustomFormAPI(t *testing.T) {
 	const (
-		manifestsPath = "../../../testdata/customforms"
+		testdataPath = "../../../testdata"
 	)
 
 	os.Setenv("DEBUG", "false")
@@ -82,7 +86,7 @@ func TestCustomFormAPI(t *testing.T) {
 			r.WithNamespace(namespace)
 
 			err = decoder.DecodeEachFile(
-				ctx, os.DirFS(manifestsPath), "*.yaml",
+				ctx, os.DirFS(filepath.Join(testdataPath, "customforms")), "*.yaml",
 				decoder.CreateHandler(r),
 				decoder.MutateNamespace(namespace),
 			)

@@ -50,7 +50,7 @@ func Resolve(ctx context.Context, apiList []*templates.API, opts ResolveOptions)
 		if err != nil {
 			return nil, err
 		}
-		if isInternal {
+		if isInternal && !env.TestMode() {
 			ep.ServerURL = "https://kubernetes.default.svc"
 		}
 
@@ -93,7 +93,7 @@ func Resolve(ctx context.Context, apiList []*templates.API, opts ResolveOptions)
 			Endpoint: &ep,
 		})
 		if res.Status.Status == httpstatus.StatusFailure {
-			return dict, fmt.Errorf("unable to perform api call %q: %s", api.Name, res.Status.Reason)
+			return dict, fmt.Errorf("unable to perform api call %q: %s", api.Name, res.Status.Message)
 		}
 
 		dict[name] = res.Map

@@ -1,0 +1,13 @@
+---
+apiVersion: templates.krateo.io/v1alpha1
+kind: Form
+metadata:
+  name: fireworksapp
+  namespace: demo-system
+spec:
+  # schemaDefinitionRef:
+  #   name: fireworksapp
+  #   namespace: demo-system
+  compositionDefinitionRef:
+    name: fireworksapp
+    namespace: demo-system

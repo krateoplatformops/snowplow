@@ -65,6 +65,28 @@ metadata:
   name: snowplow
 rules:
 - apiGroups:
+  - core.krateo.io
+  resources:
+  - compositiondefinitions
+  - schemadefinitions
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - templates.krateo.io
+  resources:
+  - "*"
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+- apiGroups:
   - ""
   resources:
   - namespaces
