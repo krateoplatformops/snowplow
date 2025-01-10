@@ -13,7 +13,7 @@ import (
 
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 )
 
@@ -29,7 +29,7 @@ type Options struct {
 
 type Result struct {
 	Map    map[string]any
-	Status status.Status
+	Status *response.Status
 }
 
 func Do(ctx context.Context, opts Options) (res Result) {
@@ -40,7 +40,7 @@ func Do(ctx context.Context, opts Options) (res Result) {
 
 	u, err := url.Parse(uri)
 	if err != nil {
-		res.Status = status.New(http.StatusInternalServerError, err)
+		res.Status = response.New(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -53,7 +53,7 @@ func Do(ctx context.Context, opts Options) (res Result) {
 
 	req, err := http.NewRequestWithContext(ctx, verb, u.String(), body)
 	if err != nil {
-		res.Status = status.New(http.StatusInternalServerError, err)
+		res.Status = response.New(http.StatusInternalServerError, err)
 		return
 	}
 	req.Header.Set(xcontext.LabelKrateoTraceId, xcontext.TraceId(ctx, true))
@@ -70,14 +70,14 @@ func Do(ctx context.Context, opts Options) (res Result) {
 
 	cli, err := HTTPClientForEndpoint(opts.Endpoint)
 	if err != nil {
-		res.Status = status.New(http.StatusInternalServerError,
+		res.Status = response.New(http.StatusInternalServerError,
 			fmt.Errorf("unable to create HTTP Client for endpoint: %w", err))
 		return
 	}
 
 	respo, err := cli.Do(req)
 	if err != nil {
-		res.Status = status.New(http.StatusInternalServerError, err)
+		res.Status = response.New(http.StatusInternalServerError, err)
 		return
 	}
 	defer respo.Body.Close()
@@ -86,12 +86,12 @@ func Do(ctx context.Context, opts Options) (res Result) {
 	if !statusOK {
 		dat, err := io.ReadAll(io.LimitReader(respo.Body, maxUnstructuredResponseTextBytes))
 		if err != nil {
-			res.Status = status.New(http.StatusInternalServerError, err)
+			res.Status = response.New(http.StatusInternalServerError, err)
 			return
 		}
 
 		if err := json.Unmarshal(dat, &res.Status); err != nil {
-			res.Status = status.New(res.Status.Code, fmt.Errorf("%s", string(dat)))
+			res.Status = response.New(res.Status.Code, fmt.Errorf("%s", string(dat)))
 			return
 		}
 
@@ -100,12 +100,12 @@ func Do(ctx context.Context, opts Options) (res Result) {
 
 	dict, err := decodeResponseBody(respo)
 	if err != nil {
-		res.Status = status.New(http.StatusInternalServerError, err)
+		res.Status = response.New(http.StatusInternalServerError, err)
 		return
 	}
 
 	res.Map = dict
-	res.Status = status.New(http.StatusOK, nil)
+	res.Status = response.New(http.StatusOK, nil)
 	return
 }
 

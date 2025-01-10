@@ -13,7 +13,7 @@ import (
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/http/request"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -56,13 +56,13 @@ type callHandler struct {
 func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	opts, err := r.validateRequest(req)
 	if err != nil {
-		status.BadRequest(wri, err)
+		response.BadRequest(wri, err)
 		return
 	}
 
 	uri, err := buildURI(opts)
 	if err != nil {
-		status.InternalError(wri, err)
+		response.InternalError(wri, err)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	ep, err := xcontext.UserConfig(req.Context())
 	if err != nil {
 		log.Error("unable to get user endpoint", slog.Any("err", err))
-		status.Unauthorized(wri, err)
+		response.Unauthorized(wri, err)
 		return
 	}
 	ep.Debug = r.verbose
@@ -91,12 +91,12 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	}
 
 	rt := request.Do(req.Context(), callOpts)
-	if rt.Status.Status == status.StatusFailure {
+	if rt.Status.Status == response.StatusFailure {
 		log.Error("unable to call endpoint",
 			slog.String("verb", strings.ToUpper(opts.verb)),
 			slog.String("uri", uri),
 			slog.String("err", rt.Status.Message))
-		status.Encode(wri, rt.Status)
+		response.Encode(wri, rt.Status)
 		return
 	}
 

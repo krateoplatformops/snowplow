@@ -17,5 +17,10 @@ func All(skip bool) map[schema.GroupVersionResource]http.Handler {
 			Version:  "v1alpha1",
 			Resource: "customforms",
 		}: CustomForm(),
+		{
+			Group:    "templates.krateo.io",
+			Version:  "v1alpha1",
+			Resource: "collections",
+		}: Collection(),
 	}
 }

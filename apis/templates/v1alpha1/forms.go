@@ -25,6 +25,9 @@ type FormStatus struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:resource:scope=Namespaced,shortName=form,categories={krateo,forms}
 
 type Form struct {
 	metav1.TypeMeta   `json:",inline"`

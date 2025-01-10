@@ -9,7 +9,7 @@ import (
 
 	"github.com/krateoplatformops/snowplow/plumbing/cache"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
@@ -42,7 +42,7 @@ type pluralsHandler struct {
 func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	gvk, err := r.validateRequest(req)
 	if err != nil {
-		status.BadRequest(wri, err)
+		response.BadRequest(wri, err)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Error("unable to discover API names",
 				slog.String("gvk", gvk.String()), slog.Any("err", err))
-			status.InternalError(wri, err)
+			response.InternalError(wri, err)
 			return
 		}
 
@@ -67,7 +67,7 @@ func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	if len(tmp.Plural) == 0 {
 		msg := fmt.Sprintf("no names found for %q", gvk.GroupVersion().String())
 		log.Warn(msg)
-		status.NotFound(wri, fmt.Errorf(msg))
+		response.NotFound(wri, fmt.Errorf(msg))
 		return
 	}
 

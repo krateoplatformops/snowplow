@@ -64,7 +64,7 @@ type CustomFormStatus struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:resource:scope=Namespaced,shortName=cform,categories={krateo,customforms}
 
 // CustomForm design a custom form.
 type CustomForm struct {

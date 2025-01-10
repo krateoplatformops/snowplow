@@ -22,7 +22,6 @@ type ResolveOptions struct {
 	AuthnNS    string
 	Username   string
 	UserGroups []string
-	Verbose    bool
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*templates.CustomForm, error) {
@@ -40,17 +39,6 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.CustomForm, e
 	if tpl == nil {
 		return opts.In, fmt.Errorf("missing jq template engine")
 	}
-
-	//ep, err := xcontext.UserConfig(ctx)
-	//if err != nil {
-	//	return opts.In, err
-	//}
-	//ep.Debug = opts.Verbose
-
-	//rc, err := kubeconfig.NewClientConfig(ctx, ep)
-	//if err != nil {
-	//	return opts.In, err
-	//}
 
 	// Resolve 'in.Spec.PropsRef'
 	opts.In.Status.Props = map[string]string{}

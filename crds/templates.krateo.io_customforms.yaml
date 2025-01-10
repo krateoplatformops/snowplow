@@ -8,9 +8,14 @@ metadata:
 spec:
   group: templates.krateo.io
   names:
+    categories:
+    - krateo
+    - customforms
     kind: CustomForm
     listKind: CustomFormList
     plural: customforms
+    shortNames:
+    - cform
     singular: customform
   scope: Namespaced
   versions:

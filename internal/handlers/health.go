@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	"k8s.io/client-go/rest"
 )
@@ -18,7 +18,7 @@ import (
 func HealthCheck(serviceName, build string) http.HandlerFunc {
 	return func(wri http.ResponseWriter, req *http.Request) {
 		if _, err := rest.InClusterConfig(); err != nil {
-			status.ServiceUnavailable(wri, err)
+			response.ServiceUnavailable(wri, err)
 			return
 		}
 

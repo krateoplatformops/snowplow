@@ -9,7 +9,7 @@ import (
 
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -35,7 +35,7 @@ func List() http.HandlerFunc {
 		ns := req.URL.Query().Get("ns")
 
 		if len(cat) == 0 {
-			status.BadRequest(wri, fmt.Errorf("missing 'category' params"))
+			response.BadRequest(wri, fmt.Errorf("missing 'category' params"))
 			return
 		}
 
@@ -44,7 +44,7 @@ func List() http.HandlerFunc {
 		ep, err := xcontext.UserConfig(req.Context())
 		if err != nil {
 			log.Error("unable to get user endpoint", slog.Any("err", err))
-			status.Unauthorized(wri, err)
+			response.Unauthorized(wri, err)
 			return
 		}
 
@@ -53,14 +53,14 @@ func List() http.HandlerFunc {
 		rc, err := kubeconfig.NewClientConfig(req.Context(), ep)
 		if err != nil {
 			log.Error("unable to create user client config", slog.Any("err", err))
-			status.InternalError(wri, err)
+			response.InternalError(wri, err)
 			return
 		}
 
 		cli, err := dynamic.NewClient(rc)
 		if err != nil {
 			log.Error("cannot create dynamic client", slog.Any("err", err))
-			status.InternalError(wri, err)
+			response.InternalError(wri, err)
 			return
 		}
 
@@ -68,7 +68,7 @@ func List() http.HandlerFunc {
 		res, err := cli.Discover(context.Background(), cat)
 		if err != nil {
 			log.Error("discovery failed", slog.Any("err", err))
-			status.InternalError(wri, err)
+			response.InternalError(wri, err)
 			return
 		}
 		log.Debug(fmt.Sprintf("discovery terminated (found: %d)", len(res)))
@@ -86,7 +86,7 @@ func List() http.HandlerFunc {
 				log.Error("cannot list resources",
 					slog.String("gvr", gvr.String()), slog.Any("err", err))
 				if apierrors.IsForbidden(err) {
-					status.Forbidden(wri, err)
+					response.Forbidden(wri, err)
 					return
 				}
 				continue

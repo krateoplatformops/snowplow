@@ -11,7 +11,7 @@ import (
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	httpcall "github.com/krateoplatformops/snowplow/plumbing/http/request"
-	httpstatus "github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 	"k8s.io/client-go/rest"
@@ -92,7 +92,7 @@ func Resolve(ctx context.Context, apiList []*templates.API, opts ResolveOptions)
 			Payload:  api.Payload,
 			Endpoint: &ep,
 		})
-		if res.Status.Status == httpstatus.StatusFailure {
+		if res.Status.Status == response.StatusFailure {
 			return dict, fmt.Errorf("unable to perform api call %q: %s", api.Name, res.Status.Message)
 		}
 
