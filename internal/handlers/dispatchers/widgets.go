@@ -11,7 +11,7 @@ import (
 	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/objects"
-	"github.com/krateoplatformops/snowplow/internal/resolvers/customforms"
+	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
@@ -19,21 +19,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func CustomForm() http.Handler {
+func Widget() http.Handler {
 	return &customformHandler{
 		authnNS: env.String("AUTHN_NAMESPACE", ""),
 		verbose: env.True("DEBUG"),
 	}
 }
 
-type customformHandler struct {
+type widgetHandler struct {
 	authnNS string
 	verbose bool
 }
 
-var _ http.Handler = (*customformHandler)(nil)
+var _ http.Handler = (*widgetHandler)(nil)
 
-func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
+func (r *widgetHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	log := xcontext.Logger(req.Context())
 
 	gvr, err := util.ParseGVR(req)
@@ -60,13 +60,13 @@ func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 		return
 	}
 
-	res, err := ResolveCustomForm(req.Context(), got.Unstructured, ResolveCustomFormOptions{
+	res, err := ResolveWidget(req.Context(), got.Unstructured, ResolveWidgetOptions{
 		Username:   req.Header.Get(xcontext.LabelKrateoUser),
 		UserGroups: strings.Split(req.Header.Get(xcontext.LabelKrateoGroups), ","),
 		AuthnNS:    r.authnNS,
 	})
 	if err != nil {
-		log.Error("unable to resolve custom form",
+		log.Error("unable to resolve widget",
 			slog.String("name", nsn.String()), slog.String("gvr", gvr.String()), slog.Any("err", err))
 		response.InternalError(wri, err)
 		return
@@ -79,26 +79,26 @@ func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 	enc.Encode(res)
 }
 
-type ResolveCustomFormOptions struct {
+type ResolveWidgetOptions struct {
 	AuthnNS    string
 	Username   string
 	UserGroups []string
 }
 
-func ResolveCustomForm(ctx context.Context, in *unstructured.Unstructured, opts ResolveCustomFormOptions) (runtime.Object, error) {
+func ResolveWidget(ctx context.Context, in *unstructured.Unstructured, opts ResolveWidgetOptions) (runtime.Object, error) {
 	scheme := runtime.NewScheme()
 	if err := apis.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
-	var cr v1alpha1.CustomForm
+	var cr v1alpha1.Widget
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(in.Object, &cr)
 	if err != nil {
 		return nil, err
 	}
 
 	ctx = xcontext.BuildContext(ctx, xcontext.WithJQTemplate())
-	return customforms.Resolve(ctx, customforms.ResolveOptions{
+	return widgets.Resolve(ctx, widgets.ResolveOptions{
 		In:         &cr,
 		Username:   opts.Username,
 		UserGroups: opts.UserGroups,

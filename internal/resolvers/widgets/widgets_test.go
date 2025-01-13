@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package customforms
+package widgets
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 
 	"github.com/krateoplatformops/snowplow/apis"
 	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
-	apiresolver "github.com/krateoplatformops/snowplow/internal/resolvers/api"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
+	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -27,15 +27,15 @@ import (
 	"sigs.k8s.io/e2e-framework/support/kind"
 )
 
-const (
-	crdPath      = "../../../../crds"
-	testdataPath = "../../../../testdata"
-)
-
 var (
 	testenv     env.Environment
 	clusterName string
 	namespace   string
+)
+
+const (
+	crdPath       = "../../../crds"
+	manifestsPath = "../../../testdata"
 )
 
 func TestMain(m *testing.M) {
@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 
 	testenv.Setup(
 		envfuncs.CreateCluster(kind.NewProvider(), clusterName),
-		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
+		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_widgets.yaml"),
 		e2e.CreateNamespace(namespace),
 
 		func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
@@ -57,10 +57,11 @@ func TestMain(m *testing.M) {
 			}
 			r.WithNamespace(namespace)
 
-			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
+			err = decoder.ApplyWithManifestDir(ctx, r, manifestsPath, "rbac.yaml", []resources.CreateOption{})
 			if err != nil {
 				return ctx, err
 			}
+
 			// TODO: add a wait.For conditional helper that can
 			// check and wait for the existence of a CRD resource
 			time.Sleep(2 * time.Second)
@@ -68,14 +69,14 @@ func TestMain(m *testing.M) {
 		},
 	).Finish(
 		envfuncs.DeleteNamespace(namespace),
-		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
+		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_widgets.yaml"),
 		envfuncs.DestroyCluster(clusterName),
 	)
 
 	os.Exit(testenv.Run(m))
 }
 
-func TestCustomFormApp(t *testing.T) {
+func TestWidget(t *testing.T) {
 	os.Setenv("DEBUG", "false")
 
 	f := features.New("Setup").
@@ -83,17 +84,17 @@ func TestCustomFormApp(t *testing.T) {
 		Setup(e2e.JQTemplate()).
 		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-
 			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {
 				t.Fail()
 			}
-			r.WithNamespace(namespace)
 
 			apis.AddToScheme(r.GetScheme())
 
+			r.WithNamespace(namespace)
+
 			err = decoder.DecodeEachFile(
-				ctx, os.DirFS(filepath.Join(testdataPath, "customforms")), "*.yaml",
+				ctx, os.DirFS(filepath.Join(manifestsPath, "widgets")), "*.yaml",
 				decoder.CreateHandler(r),
 				decoder.MutateNamespace(namespace),
 			)
@@ -102,46 +103,38 @@ func TestCustomFormApp(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve app.spec", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			log := xcontext.Logger(ctx)
-
-			r, err := resources.New(cfg.Client().RESTConfig())
+		Assess("Resolve Widget", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			r, err := resources.New(c.Client().RESTConfig())
 			if err != nil {
-				log.Error(err.Error())
 				t.Fail()
 			}
 			r.WithNamespace(namespace)
 			apis.AddToScheme(r.GetScheme())
 
-			cr := v1alpha1.CustomForm{}
-			err = r.Get(ctx, "fireworksapp", namespace, &cr)
+			cr := v1alpha1.Widget{}
+			err = r.Get(ctx, "external-api", namespace, &cr)
 			if err != nil {
-				t.Fatal(err)
+				t.Fail()
 			}
 
-			//log.Debug("customform manifest", slog.Any("cr", cr))
-			dict, err := apiresolver.Resolve(ctx, cr.Spec.API, apiresolver.ResolveOptions{
-				SARc:       cfg.Client().RESTConfig(),
+			res, err := Resolve(ctx, ResolveOptions{
+				In:         &cr,
+				SArc:       c.Client().RESTConfig(),
 				AuthnNS:    namespace,
 				Username:   "cyberjoker",
 				UserGroups: []string{"devs"},
 			})
 			if err != nil {
-				log.Error("unable to resolve api", slog.Any("err", err))
+				log := xcontext.Logger(ctx)
+				log.Error("unable to resolve widget", slog.Any("err", err))
 				t.Fail()
 			}
 
-			res, err := Resolve(ctx, cr.Spec.App.Template, dict)
-			if err != nil {
-				log.Error("unable to resolve app template", slog.Any("err", err))
-				t.Fail()
-			} else {
-				log.Info("App in Status", slog.Any("app", res))
+			res.Kind = "Widget"
+			res.APIVersion = v1alpha1.SchemeGroupVersion.String()
+			if err := kubeutil.ToYAML(os.Stderr, res); err != nil {
+				t.Fatal(err)
 			}
-
-			log.Info("Resolved CustomForm spec.app",
-				slog.String("name", cr.Name), slog.String("namespace", cr.Namespace),
-				slog.Any("app", res))
 
 			return ctx
 		}).Feature()

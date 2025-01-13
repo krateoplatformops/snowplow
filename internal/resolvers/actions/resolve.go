@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func Resolve(ctx context.Context, actions []*templates.Action) (all []*templates.ActionResult, err error) {
+func Resolve(ctx context.Context, actions []*templates.ActionTemplate) (all []*templates.ActionResult, err error) {
 	log := xcontext.Logger(ctx)
 
 	ep, err := xcontext.UserConfig(ctx)
@@ -31,11 +31,7 @@ func Resolve(ctx context.Context, actions []*templates.Action) (all []*templates
 	}
 
 	for _, el := range actions {
-		if el.Template == nil {
-			continue
-		}
-
-		res, err2 := resolveOne(ctx, rc, el.Template)
+		res, err2 := resolveOne(ctx, rc, el)
 		if err2 != nil {
 			err = errors.Join(err, err2)
 			continue

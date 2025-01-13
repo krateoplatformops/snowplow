@@ -1,4 +1,4 @@
-package status
+package response
 
 import "net/http"
 
@@ -108,8 +108,8 @@ type Status struct {
 	Code int `json:"code,omitempty"`
 }
 
-func New(code int, err error) Status {
-	res := Status{
+func New(code int, err error) *Status {
+	res := &Status{
 		Kind:       "Status",
 		APIVersion: "v1",
 		Code:       code,

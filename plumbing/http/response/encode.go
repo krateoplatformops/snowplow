@@ -1,4 +1,4 @@
-package status
+package response
 
 import (
 	"encoding/json"
@@ -33,8 +33,8 @@ func Forbidden(w http.ResponseWriter, err error) error {
 	return Encode(w, New(http.StatusForbidden, err))
 }
 
-func Encode(w http.ResponseWriter, status Status) error {
+func Encode(w http.ResponseWriter, status *Status) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status.Code)
-	return json.NewEncoder(w).Encode(&status)
+	return json.NewEncoder(w).Encode(status)
 }

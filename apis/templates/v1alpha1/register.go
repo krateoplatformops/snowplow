@@ -1,8 +1,6 @@
 package v1alpha1
 
 import (
-	"reflect"
-
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
@@ -21,23 +19,11 @@ var (
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 )
 
-// CustomForm type metadata.
-
-var (
-	CustomFormKind             = reflect.TypeOf(CustomForm{}).Name()
-	CustomFormGroupKind        = schema.GroupKind{Group: Group, Kind: CustomFormKind}.String()
-	CustomFormKindAPIVersion   = CustomFormKind + "." + SchemeGroupVersion.String()
-	CustomFormGroupVersionKind = SchemeGroupVersion.WithKind(CustomFormKind)
-
-	FormKind             = reflect.TypeOf(Form{}).Name()
-	FormGroupKind        = schema.GroupKind{Group: Group, Kind: FormKind}.String()
-	FormKindAPIVersion   = FormKind + "." + SchemeGroupVersion.String()
-	FormGroupVersionKind = SchemeGroupVersion.WithKind(FormKind)
-)
-
 func init() {
 	SchemeBuilder.Register(
+		&Widget{}, &WidgetList{},
 		&CustomForm{}, &CustomFormList{},
 		&Form{}, &FormList{},
+		&Collection{}, &CollectionList{},
 	)
 }

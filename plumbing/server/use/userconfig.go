@@ -9,7 +9,7 @@ import (
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response/status"
+	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
 )
@@ -21,18 +21,18 @@ func UserConfig() func(http.Handler) http.Handler {
 			orgs := strings.Split(req.Header.Get(xcontext.LabelKrateoGroups), ",")
 
 			if len(sub) == 0 {
-				status.BadRequest(wri, fmt.Errorf("missing '%s' header", xcontext.LabelKrateoUser))
+				response.BadRequest(wri, fmt.Errorf("missing '%s' header", xcontext.LabelKrateoUser))
 				return
 			}
 
 			if len(orgs) == 0 {
-				status.BadRequest(wri, fmt.Errorf("missing '%s' header", xcontext.LabelKrateoGroups))
+				response.BadRequest(wri, fmt.Errorf("missing '%s' header", xcontext.LabelKrateoGroups))
 				return
 			}
 
 			sarc, err := rest.InClusterConfig()
 			if err != nil {
-				status.InternalError(wri, fmt.Errorf("unable to create in cluster config: %w", err))
+				response.InternalError(wri, fmt.Errorf("unable to create in cluster config: %w", err))
 				return
 			}
 
@@ -41,10 +41,10 @@ func UserConfig() func(http.Handler) http.Handler {
 				fmt.Sprintf("%s-clientconfig", sub), authnNS)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					status.Unauthorized(wri, err)
+					response.Unauthorized(wri, err)
 					return
 				}
-				status.InternalError(wri, err)
+				response.InternalError(wri, err)
 				return
 			}
 

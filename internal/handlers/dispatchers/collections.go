@@ -11,7 +11,7 @@ import (
 	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/objects"
-	"github.com/krateoplatformops/snowplow/internal/resolvers/customforms"
+	"github.com/krateoplatformops/snowplow/internal/resolvers/collections"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
@@ -19,21 +19,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func CustomForm() http.Handler {
+func Collection() http.Handler {
 	return &customformHandler{
 		authnNS: env.String("AUTHN_NAMESPACE", ""),
 		verbose: env.True("DEBUG"),
 	}
 }
 
-type customformHandler struct {
+type collectionHandler struct {
 	authnNS string
 	verbose bool
 }
 
-var _ http.Handler = (*customformHandler)(nil)
+var _ http.Handler = (*collectionHandler)(nil)
 
-func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
+func (r *collectionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	log := xcontext.Logger(req.Context())
 
 	gvr, err := util.ParseGVR(req)
@@ -60,13 +60,13 @@ func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 		return
 	}
 
-	res, err := ResolveCustomForm(req.Context(), got.Unstructured, ResolveCustomFormOptions{
+	res, err := ResolveCollection(req.Context(), got.Unstructured, ResolveCollectionOptions{
 		Username:   req.Header.Get(xcontext.LabelKrateoUser),
 		UserGroups: strings.Split(req.Header.Get(xcontext.LabelKrateoGroups), ","),
 		AuthnNS:    r.authnNS,
 	})
 	if err != nil {
-		log.Error("unable to resolve custom form",
+		log.Error("unable to resolve collection",
 			slog.String("name", nsn.String()), slog.String("gvr", gvr.String()), slog.Any("err", err))
 		response.InternalError(wri, err)
 		return
@@ -79,26 +79,26 @@ func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 	enc.Encode(res)
 }
 
-type ResolveCustomFormOptions struct {
+type ResolveCollectionOptions struct {
 	AuthnNS    string
 	Username   string
 	UserGroups []string
 }
 
-func ResolveCustomForm(ctx context.Context, in *unstructured.Unstructured, opts ResolveCustomFormOptions) (runtime.Object, error) {
+func ResolveCollection(ctx context.Context, in *unstructured.Unstructured, opts ResolveCollectionOptions) (runtime.Object, error) {
 	scheme := runtime.NewScheme()
 	if err := apis.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
-	var cr v1alpha1.CustomForm
+	var cr v1alpha1.Collection
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(in.Object, &cr)
 	if err != nil {
 		return nil, err
 	}
 
 	ctx = xcontext.BuildContext(ctx, xcontext.WithJQTemplate())
-	return customforms.Resolve(ctx, customforms.ResolveOptions{
+	return collections.Resolve(ctx, collections.ResolveOptions{
 		In:         &cr,
 		Username:   opts.Username,
 		UserGroups: opts.UserGroups,

@@ -8,13 +8,22 @@ metadata:
 spec:
   group: templates.krateo.io
   names:
+    categories:
+    - krateo
+    - forms
     kind: Form
     listKind: FormList
     plural: forms
+    shortNames:
+    - form
     singular: form
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         properties:
@@ -68,8 +77,9 @@ spec:
             properties:
               actions:
                 items:
-                  description: Action wraps an action template.
                   properties:
+                    iterator:
+                      type: string
                     template:
                       description: ActionTemplate defines a template for an action.
                       properties:
@@ -132,3 +142,5 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}

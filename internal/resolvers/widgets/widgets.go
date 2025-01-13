@@ -1,4 +1,4 @@
-package customforms
+package widgets
 
 import (
 	"context"
@@ -8,11 +8,10 @@ import (
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/actions"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/api"
-	app "github.com/krateoplatformops/snowplow/internal/resolvers/app/customforms"
+	app "github.com/krateoplatformops/snowplow/internal/resolvers/app/widgets"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
-	"github.com/krateoplatformops/snowplow/plumbing/ptr"
-	"k8s.io/apimachinery/pkg/runtime"
+
 	"k8s.io/client-go/rest"
 )
 
@@ -21,27 +20,34 @@ const (
 )
 
 type ResolveOptions struct {
-	In         *templates.CustomForm
+	In         *templates.Widget
 	SArc       *rest.Config
 	AuthnNS    string
 	Username   string
 	UserGroups []string
 }
 
-func Resolve(ctx context.Context, opts ResolveOptions) (*templates.CustomForm, error) {
+func Resolve(ctx context.Context, opts ResolveOptions) (*templates.Widget, error) {
 	if opts.SArc == nil {
 		var err error
 		opts.SArc, err = rest.InClusterConfig()
 		if err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to get serviceaccount RESTCconfig",
+				slog.String("name", opts.In.Name),
+				slog.String("namespace", opts.In.Namespace),
+				slog.Any("err", err))
 			return opts.In, err
 		}
 	}
 
-	log := xcontext.Logger(ctx)
-
 	tpl := xcontext.JQTemplate(ctx)
 	if tpl == nil {
-		return opts.In, fmt.Errorf("missing jq template engine")
+		log := xcontext.Logger(ctx)
+		log.Error("unable to find jq template engine in context",
+			slog.String("name", opts.In.Name),
+			slog.String("namespace", opts.In.Namespace))
+		return opts.In, fmt.Errorf("unable to find jq template engine in context")
 	}
 
 	// Resolve 'in.Spec.PropsRef'
@@ -50,15 +56,16 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.CustomForm, e
 		var err error
 		opts.In.Status.Props, err = kubeutil.ConfigMapData(ctx, opts.SArc, ref.Name, ref.Namespace)
 		if err != nil {
-			log.Error("unable resolve customform props",
-				slog.String("name", ref.Name),
-				slog.String("namespace", ref.Namespace),
+			log := xcontext.Logger(ctx)
+			log.Error("unable resolve widget props",
+				slog.String("name", opts.In.Name),
+				slog.String("namespace", opts.In.Namespace),
 				slog.Any("err", err))
 			return opts.In, err
 		}
 	}
 
-	opts.In.Status.UID = ptr.To(string(opts.In.UID))
+	opts.In.Status.UID = string(opts.In.UID)
 	opts.In.Status.Name = opts.In.Name
 	opts.In.Status.Type = opts.In.Spec.Type
 
@@ -76,39 +83,25 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.CustomForm, e
 		dict = map[string]any{}
 	}
 
-	// Resolve app
-	schema, err := app.Resolve(ctx, opts.In.Spec.App.Template, dict)
-	if err != nil {
-		return opts.In, err
-	}
-
-	opts.In.Status.Content = &templates.CustomFormStatusContent{
-		Schema: &runtime.RawExtension{
-			Object: schema,
-		},
-	}
-
-	// Resolve actions (eventually)
-	if len(opts.In.Spec.Actions) == 0 {
-		return opts.In, nil
-	}
+	traits := app.Resolve(ctx, opts.In.Spec.App, dict)
 
 	exp := actions.Expand(ctx, map[string]any{}, opts.In.Spec.Actions...)
 	all, err := actions.Resolve(ctx, exp)
 	if err != nil {
+		log := xcontext.Logger(ctx)
+		log.Error("unable resolve widget actions",
+			slog.String("name", opts.In.Name),
+			slog.String("namespace", opts.In.Namespace),
+			slog.Any("err", err))
 		return opts.In, err
 	}
 
-	opts.In.Status.Actions = make([]*templates.ActionResultTemplate, 0, len(all))
-	for _, el := range all {
-		if el.Payload != nil && el.Payload.MetaData != nil {
-			el.Payload.MetaData.Name = opts.In.Spec.Type
+	opts.In.Status.Items = make([]*templates.WidgetResult, len(traits))
+	for i, el := range traits {
+		opts.In.Status.Items[i] = &templates.WidgetResult{
+			Traits:  el,
+			Actions: all,
 		}
-
-		opts.In.Status.Actions = append(opts.In.Status.Actions,
-			&templates.ActionResultTemplate{
-				Template: el,
-			})
 	}
 
 	if opts.In.Annotations != nil {

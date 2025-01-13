@@ -1,7 +1,7 @@
 package v1alpha1
 
-// Action wraps an action template.
-type Action struct {
+type ActionTemplateIterator struct {
+	Iterator *string         `json:"iterator,omitempty"`
 	Template *ActionTemplate `json:"template,omitempty"`
 }
 

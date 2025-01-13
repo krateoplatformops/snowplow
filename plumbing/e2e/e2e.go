@@ -8,6 +8,7 @@ import (
 	"time"
 
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
+	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
 	"github.com/krateoplatformops/snowplow/plumbing/log"
 
@@ -25,9 +26,12 @@ func JQTemplate() types.StepFunc {
 }
 
 func Logger(traceId string) types.StepFunc {
-	handler := log.NewPrettyJSONHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
+	logLevel := slog.LevelInfo
+	if env.True("DEBUG") {
+		logLevel = slog.LevelDebug
+	}
+	handler := log.NewPrettyJSONHandler(os.Stderr,
+		&slog.HandlerOptions{Level: logLevel})
 
 	return func(ctx context.Context, _ *testing.T, _ *envconf.Config) context.Context {
 		return xcontext.BuildContext(ctx,

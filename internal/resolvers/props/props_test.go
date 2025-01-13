@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package customforms
+package props
 
 import (
 	"context"
@@ -13,7 +13,6 @@ import (
 
 	"github.com/krateoplatformops/snowplow/apis"
 	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
-	apiresolver "github.com/krateoplatformops/snowplow/internal/resolvers/api"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
@@ -28,8 +27,8 @@ import (
 )
 
 const (
-	crdPath      = "../../../../crds"
-	testdataPath = "../../../../testdata"
+	crdPath       = "../../../crds"
+	manifestsPath = "../../../testdata"
 )
 
 var (
@@ -42,12 +41,12 @@ func TestMain(m *testing.M) {
 	xenv.SetTestMode(true)
 
 	namespace = "demo-system"
-	clusterName = "krateo"
+	clusterName = "krateo" // envconf.RandomName("krateo", 16)
 	testenv = env.New()
 
 	testenv.Setup(
 		envfuncs.CreateCluster(kind.NewProvider(), clusterName),
-		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
+		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_widgets.yaml"),
 		e2e.CreateNamespace(namespace),
 
 		func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
@@ -57,10 +56,11 @@ func TestMain(m *testing.M) {
 			}
 			r.WithNamespace(namespace)
 
-			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
+			err = decoder.ApplyWithManifestDir(ctx, r, manifestsPath, "rbac.yaml", []resources.CreateOption{})
 			if err != nil {
 				return ctx, err
 			}
+
 			// TODO: add a wait.For conditional helper that can
 			// check and wait for the existence of a CRD resource
 			time.Sleep(2 * time.Second)
@@ -68,14 +68,14 @@ func TestMain(m *testing.M) {
 		},
 	).Finish(
 		envfuncs.DeleteNamespace(namespace),
-		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
+		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_widgets.yaml"),
 		envfuncs.DestroyCluster(clusterName),
 	)
 
 	os.Exit(testenv.Run(m))
 }
 
-func TestCustomFormApp(t *testing.T) {
+func TestWidgetProps(t *testing.T) {
 	os.Setenv("DEBUG", "false")
 
 	f := features.New("Setup").
@@ -83,7 +83,6 @@ func TestCustomFormApp(t *testing.T) {
 		Setup(e2e.JQTemplate()).
 		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-
 			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {
 				t.Fail()
@@ -93,55 +92,24 @@ func TestCustomFormApp(t *testing.T) {
 			apis.AddToScheme(r.GetScheme())
 
 			err = decoder.DecodeEachFile(
-				ctx, os.DirFS(filepath.Join(testdataPath, "customforms")), "*.yaml",
+				ctx, os.DirFS(filepath.Join(manifestsPath, "widgets")), "*.yaml",
 				decoder.CreateHandler(r),
 				decoder.MutateNamespace(namespace),
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			return ctx
 		}).
-		Assess("Resolve app.spec", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("Resolve props", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			log := xcontext.Logger(ctx)
 
-			r, err := resources.New(cfg.Client().RESTConfig())
-			if err != nil {
-				log.Error(err.Error())
-				t.Fail()
-			}
-			r.WithNamespace(namespace)
-			apis.AddToScheme(r.GetScheme())
-
-			cr := v1alpha1.CustomForm{}
-			err = r.Get(ctx, "fireworksapp", namespace, &cr)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			//log.Debug("customform manifest", slog.Any("cr", cr))
-			dict, err := apiresolver.Resolve(ctx, cr.Spec.API, apiresolver.ResolveOptions{
-				SARc:       cfg.Client().RESTConfig(),
-				AuthnNS:    namespace,
-				Username:   "cyberjoker",
-				UserGroups: []string{"devs"},
+			props := Resolve(ctx, &v1alpha1.Reference{
+				Name: "card-props", Namespace: namespace,
 			})
-			if err != nil {
-				log.Error("unable to resolve api", slog.Any("err", err))
-				t.Fail()
-			}
 
-			res, err := Resolve(ctx, cr.Spec.App.Template, dict)
-			if err != nil {
-				log.Error("unable to resolve app template", slog.Any("err", err))
-				t.Fail()
-			} else {
-				log.Info("App in Status", slog.Any("app", res))
-			}
-
-			log.Info("Resolved CustomForm spec.app",
-				slog.String("name", cr.Name), slog.String("namespace", cr.Namespace),
-				slog.Any("app", res))
+			log.Info("props resolved", slog.Any("props", props))
 
 			return ctx
 		}).Feature()

@@ -1,0 +1,26 @@
+apiVersion: templates.krateo.io/v1alpha1
+kind: Widget
+metadata:
+  name: static
+  namespace: demo-system
+spec:
+  type: card
+  propsRef:
+    name: card-props
+    namespace: demo-system 
+  actions:
+  - template:
+      apiVersion: templates.krateo.io/v1alpha1
+      resource: forms
+      name: fireworksapp
+      namespace: demo-system
+  app:
+    template:
+      color: red
+      title: Lorem Ipsum
+      content: |-
+        Nulla quam lectus, venenatis at nunc nec, suscipit convallis sapien. 
+        Suspendisse id venenatis orci, a semper ante. 
+        Mauris convallis sagittis tincidunt. 
+        Aenean egestas auctor interdum.
+      tags: lorem,ipsum

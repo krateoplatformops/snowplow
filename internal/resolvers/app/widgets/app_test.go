@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package customforms
+package widgets
 
 import (
 	"context"
@@ -47,20 +47,10 @@ func TestMain(m *testing.M) {
 
 	testenv.Setup(
 		envfuncs.CreateCluster(kind.NewProvider(), clusterName),
-		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
+		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_widgets.yaml"),
 		e2e.CreateNamespace(namespace),
 
-		func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
-			r, err := resources.New(cfg.Client().RESTConfig())
-			if err != nil {
-				return ctx, err
-			}
-			r.WithNamespace(namespace)
-
-			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
-			if err != nil {
-				return ctx, err
-			}
+		func(ctx context.Context, _ *envconf.Config) (context.Context, error) {
 			// TODO: add a wait.For conditional helper that can
 			// check and wait for the existence of a CRD resource
 			time.Sleep(2 * time.Second)
@@ -68,7 +58,7 @@ func TestMain(m *testing.M) {
 		},
 	).Finish(
 		envfuncs.DeleteNamespace(namespace),
-		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
+		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_widgets.yaml"),
 		envfuncs.DestroyCluster(clusterName),
 	)
 
@@ -93,7 +83,7 @@ func TestCustomFormApp(t *testing.T) {
 			apis.AddToScheme(r.GetScheme())
 
 			err = decoder.DecodeEachFile(
-				ctx, os.DirFS(filepath.Join(testdataPath, "customforms")), "*.yaml",
+				ctx, os.DirFS(filepath.Join(testdataPath, "widgets")), "*.yaml",
 				decoder.CreateHandler(r),
 				decoder.MutateNamespace(namespace),
 			)
@@ -102,7 +92,7 @@ func TestCustomFormApp(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve app.spec", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("Resolve Widget->spec.app", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			log := xcontext.Logger(ctx)
 
 			r, err := resources.New(cfg.Client().RESTConfig())
@@ -113,13 +103,14 @@ func TestCustomFormApp(t *testing.T) {
 			r.WithNamespace(namespace)
 			apis.AddToScheme(r.GetScheme())
 
-			cr := v1alpha1.CustomForm{}
-			err = r.Get(ctx, "fireworksapp", namespace, &cr)
+			cr := v1alpha1.Widget{}
+			err = r.Get(ctx, "external-api", namespace, &cr)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			//log.Debug("customform manifest", slog.Any("cr", cr))
+			//log.Debug("widget manifest", slog.Any("cr", cr))
+
 			dict, err := apiresolver.Resolve(ctx, cr.Spec.API, apiresolver.ResolveOptions{
 				SARc:       cfg.Client().RESTConfig(),
 				AuthnNS:    namespace,
@@ -131,7 +122,7 @@ func TestCustomFormApp(t *testing.T) {
 				t.Fail()
 			}
 
-			res, err := Resolve(ctx, cr.Spec.App.Template, dict)
+			res := Resolve(ctx, cr.Spec.App, dict)
 			if err != nil {
 				log.Error("unable to resolve app template", slog.Any("err", err))
 				t.Fail()
@@ -139,7 +130,7 @@ func TestCustomFormApp(t *testing.T) {
 				log.Info("App in Status", slog.Any("app", res))
 			}
 
-			log.Info("Resolved CustomForm spec.app",
+			log.Info("Resolved Widget spec.app",
 				slog.String("name", cr.Name), slog.String("namespace", cr.Namespace),
 				slog.Any("app", res))
 

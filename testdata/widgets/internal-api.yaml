@@ -1,0 +1,28 @@
+apiVersion: templates.krateo.io/v1alpha1
+kind: Widget
+metadata:
+  name: internal-api
+  namespace: demo-system
+spec:
+  type: card
+  propsRef:
+    name: card-props
+    namespace: demo-system 
+  actions:
+  - iterator: .allPods.items[:3]
+    template:
+      apiVersion: v1
+      resource: pods
+      name: ${ .metadata.name }
+      namespace: ${ .metadata.namespace }
+  app:
+    iterator: .allPods.items[:5]
+    template:
+      title: ${ .metadata.name }
+      content: ${ .spec.containers[0] | .image }
+  api:
+  - name: allPods
+    path: "/api/v1/pods"
+    verb: GET
+    headers:
+    - 'Accept: application/json'

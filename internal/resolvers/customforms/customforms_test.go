@@ -16,6 +16,7 @@ import (
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
+	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -32,15 +33,16 @@ var (
 	namespace   string
 )
 
-func TestMain(m *testing.M) {
-	const (
-		crdPath = "../../../crds"
-	)
+const (
+	crdPath       = "../../../crds"
+	manifestsPath = "../../../testdata"
+)
 
+func TestMain(m *testing.M) {
 	xenv.SetTestMode(true)
 
 	namespace = "demo-system"
-	clusterName = "krateo" //envconf.RandomName("krateo", 16)
+	clusterName = "krateo"
 	testenv = env.New()
 
 	testenv.Setup(
@@ -48,12 +50,21 @@ func TestMain(m *testing.M) {
 		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_customforms.yaml"),
 		e2e.CreateNamespace(namespace),
 
-		func(ctx context.Context, _ *envconf.Config) (context.Context, error) {
+		func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
+			r, err := resources.New(cfg.Client().RESTConfig())
+			if err != nil {
+				return ctx, err
+			}
+			r.WithNamespace(namespace)
+
+			err = decoder.ApplyWithManifestDir(ctx, r, manifestsPath, "rbac.yaml", []resources.CreateOption{})
+			if err != nil {
+				return ctx, err
+			}
+
 			// TODO: add a wait.For conditional helper that can
 			// check and wait for the existence of a CRD resource
 			time.Sleep(2 * time.Second)
-
-			ctx = xcontext.BuildContext(ctx, xcontext.WithJQTemplate())
 			return ctx, nil
 		},
 	).Finish(
@@ -66,14 +77,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestCustomForm(t *testing.T) {
-	const (
-		testdataPath = "../../../testdata"
-	)
-
 	os.Setenv("DEBUG", "false")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
+		Setup(e2e.JQTemplate()).
 		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r, err := resources.New(cfg.Client().RESTConfig())
@@ -86,7 +94,7 @@ func TestCustomForm(t *testing.T) {
 			r.WithNamespace(namespace)
 
 			err = decoder.DecodeEachFile(
-				ctx, os.DirFS(filepath.Join(testdataPath, "customforms")), "*.yaml",
+				ctx, os.DirFS(filepath.Join(manifestsPath, "customforms")), "*.yaml",
 				decoder.CreateHandler(r),
 				decoder.MutateNamespace(namespace),
 			)
@@ -109,8 +117,6 @@ func TestCustomForm(t *testing.T) {
 				t.Fail()
 			}
 
-			log := xcontext.Logger(ctx)
-
 			res, err := Resolve(ctx, ResolveOptions{
 				In:         &cr,
 				SArc:       c.Client().RESTConfig(),
@@ -119,10 +125,15 @@ func TestCustomForm(t *testing.T) {
 				UserGroups: []string{"devs"},
 			})
 			if err != nil {
+				log := xcontext.Logger(ctx)
 				log.Error("unable to resolve custom form", slog.Any("err", err))
 				t.Fail()
-			} else {
-				log.Info("resolved custom form", slog.Any("result", res))
+			}
+
+			res.Kind = "CustomForm"
+			res.APIVersion = v1alpha1.SchemeGroupVersion.String()
+			if err := kubeutil.ToYAML(os.Stderr, res); err != nil {
+				t.Fatal(err)
 			}
 
 			return ctx
