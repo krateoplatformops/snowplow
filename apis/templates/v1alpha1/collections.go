@@ -18,7 +18,7 @@ type CollectionSpec struct {
 	Type string `json:"type"`
 	//+listType=atomic
 	// TemplateIterators array of template iterator references.
-	TemplateIterators []*TemplateIterator `json:"templateIterators,omitempty"`
+	TemplateIterators []*TemplateIterator `json:"widgetsRefs,omitempty"`
 	// PropsRef reference to a config map of extra properties for this Collection.
 	PropsRef *Reference `json:"propsRef,omitempty"`
 	//+listType=atomic

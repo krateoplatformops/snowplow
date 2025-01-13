@@ -21,6 +21,7 @@ var (
 
 func init() {
 	SchemeBuilder.Register(
+		&Widget{}, &WidgetList{},
 		&CustomForm{}, &CustomFormList{},
 		&Form{}, &FormList{},
 		&Collection{}, &CollectionList{},

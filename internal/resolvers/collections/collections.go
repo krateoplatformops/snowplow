@@ -15,6 +15,7 @@ import (
 	"github.com/krateoplatformops/snowplow/internal/resolvers/api"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/customforms"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/templaterefs"
+	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,8 +63,6 @@ func (r *collectionResolver) resolve(ctx context.Context, in *templates.Collecti
 		}
 	}
 
-	log := xcontext.Logger(ctx)
-
 	// Resolve API calls
 	dict, err := api.Resolve(ctx, in.Spec.API, api.ResolveOptions{
 		SARc:       r.sarc,
@@ -83,7 +82,8 @@ func (r *collectionResolver) resolve(ctx context.Context, in *templates.Collecti
 		var err error
 		in.Status.Props, err = kubeutil.ConfigMapData(ctx, r.sarc, ref.Name, ref.Namespace)
 		if err != nil {
-			log.Error("unable resolve customform props",
+			log := xcontext.Logger(ctx)
+			log.Error("unable resolve collection props",
 				slog.String("name", ref.Name),
 				slog.String("namespace", ref.Namespace),
 				slog.Any("err", err))
@@ -130,10 +130,9 @@ func (r *collectionResolver) resolveReference(ctx context.Context, in *templates
 		return &runtime.RawExtension{Raw: []byte{}}
 	}
 
-	log := xcontext.Logger(ctx)
-
 	gv, err := schema.ParseGroupVersion(in.APIVersion)
 	if err != nil {
+		log := xcontext.Logger(ctx)
 		log.Error("unable to parse group version", slog.Any("reference", in), slog.Any("err", err))
 		return &runtime.RawExtension{Raw: []byte{}}
 	}
@@ -145,16 +144,40 @@ func (r *collectionResolver) resolveReference(ctx context.Context, in *templates
 		Resource:   gvr.Resource,
 	})
 	if got.Err != nil {
+		log := xcontext.Logger(ctx)
 		log.Error(got.Err.Message, slog.Any("reference", in), slog.Any("err", err))
 		return &runtime.RawExtension{Raw: []byte{}}
 	}
 
 	var obj runtime.Object
 	switch apis.GetTemplateKind(gvr.GroupResource()) {
+	case apis.CollectionTemplate:
+		var cr v1alpha1.Collection
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(got.Unstructured.Object, &cr)
+		if err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to convert collection template from unstructured",
+				slog.Any("reference", in), slog.Any("err", err))
+			return &runtime.RawExtension{Raw: []byte{}}
+		}
+
+		ctx = xcontext.BuildContext(ctx, xcontext.WithJQTemplate())
+		obj, err = Resolve(ctx, ResolveOptions{
+			In:         &cr,
+			Username:   r.userName,
+			UserGroups: r.userGroups,
+			AuthnNS:    r.authnNS,
+		})
+		if err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to resolve template reference", slog.Any("err", err))
+			return &runtime.RawExtension{Raw: []byte{}}
+		}
 	case apis.CustomFormTemplate:
 		var cr v1alpha1.CustomForm
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(got.Unstructured.Object, &cr)
 		if err != nil {
+			log := xcontext.Logger(ctx)
 			log.Error("unable to convert custom form template from unstructured",
 				slog.Any("reference", in), slog.Any("err", err))
 			return &runtime.RawExtension{Raw: []byte{}}
@@ -168,10 +191,34 @@ func (r *collectionResolver) resolveReference(ctx context.Context, in *templates
 			AuthnNS:    r.authnNS,
 		})
 		if err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to resolve template reference", slog.Any("err", err))
+			return &runtime.RawExtension{Raw: []byte{}}
+		}
+	case apis.WidgetTemplate:
+		var cr v1alpha1.Widget
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(got.Unstructured.Object, &cr)
+		if err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to convert widget template from unstructured",
+				slog.Any("reference", in), slog.Any("err", err))
+			return &runtime.RawExtension{Raw: []byte{}}
+		}
+
+		ctx = xcontext.BuildContext(ctx, xcontext.WithJQTemplate())
+		obj, err = widgets.Resolve(ctx, widgets.ResolveOptions{
+			In:         &cr,
+			Username:   r.userName,
+			UserGroups: r.userGroups,
+			AuthnNS:    r.authnNS,
+		})
+		if err != nil {
+			log := xcontext.Logger(ctx)
 			log.Error("unable to resolve template reference", slog.Any("err", err))
 			return &runtime.RawExtension{Raw: []byte{}}
 		}
 	default:
+		log := xcontext.Logger(ctx)
 		log.Error("template reference resolution not implemented", slog.Any("reference", in))
 		return &runtime.RawExtension{Raw: []byte{}}
 	}
@@ -181,12 +228,14 @@ func (r *collectionResolver) resolveReference(ctx context.Context, in *templates
 		serializer.SerializerOptions{Yaml: false, Pretty: true, Strict: false})
 	err = s.Encode(obj, &buf)
 	if err != nil {
+		log := xcontext.Logger(ctx)
 		log.Error("unable to serialize object", slog.Any("reference", in), slog.Any("err", err))
 		return &runtime.RawExtension{Raw: []byte{}}
 	}
 
 	dat, err := jq(".status | {status: .}", buf.Bytes())
 	if err != nil {
+		log := xcontext.Logger(ctx)
 		log.Error("unable to jq object status", slog.Any("reference", in), slog.Any("err", err))
 		return &runtime.RawExtension{
 			Raw: buf.Bytes(),

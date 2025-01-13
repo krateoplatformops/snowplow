@@ -25,7 +25,7 @@ func TestMapVerbs(t *testing.T) {
 		})
 
 		if diff := cmp.Diff(got, tc.out); len(diff) > 0 {
-			t.Fatalf(diff)
+			t.Fatal(diff)
 		}
 	}
 }

@@ -4,19 +4,19 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
-  name: customforms.templates.krateo.io
+  name: widgets.templates.krateo.io
 spec:
   group: templates.krateo.io
   names:
     categories:
     - krateo
-    - customforms
-    kind: CustomForm
-    listKind: CustomFormList
-    plural: customforms
+    - widgets
+    kind: Widget
+    listKind: WidgetList
+    plural: widgets
     shortNames:
-    - cform
-    singular: customform
+    - wdg
+    singular: widget
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -26,7 +26,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: CustomForm design a custom form.
+        description: Widget is ui widgets configuration.
         properties:
           apiVersion:
             description: |-
@@ -46,7 +46,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: CustomFormSpec is the custom form app specification.
+            description: WidgetSpec defines widget specifications.
             properties:
               actions:
                 description: Actions is an array of actions.
@@ -145,44 +145,15 @@ spec:
                 type: array
                 x-kubernetes-list-type: atomic
               app:
-                description: App defines app properties.
+                description: App is the app template
                 properties:
+                  iterator:
+                    description: Iterator defines a field on which iterate.
+                    type: string
                   template:
-                    description: CustomFormAppTemplate is the custom form app template.
-                    properties:
-                      propertiesToHide:
-                        description: PropertiesToHide a list of schema values to hide.
-                        items:
-                          type: string
-                        type: array
-                        x-kubernetes-list-type: atomic
-                      propertiesToOverride:
-                        description: PropertiesToOverride a list of schema values
-                          to override.
-                        items:
-                          description: Data is a key value pair.
-                          properties:
-                            asString:
-                              description: AsString if true the value will be considered
-                                verbatim as string.
-                              type: boolean
-                            name:
-                              description: Name of the data
-                              type: string
-                            value:
-                              description: Value of the data. Can be also a JQ expression.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-type: atomic
-                      schema:
-                        description: Schema holds the JQ expression to retrieve the
-                          schema of this form.
-                        type: string
-                    required:
-                    - schema
+                    additionalProperties:
+                      type: string
+                    description: Template to use during iteration.
                     type: object
                 type: object
               propsRef:
@@ -205,79 +176,81 @@ spec:
             - type
             type: object
           status:
-            description: CustomFormStatus wraps the custom form response.
+            description: WidgetStatus contains the Widget results.
             properties:
-              actions:
-                description: Actions is the array of all available actions.
+              items:
+                description: Items array of expanded widget details.
                 items:
-                  description: Action wraps results of an action template.
+                  description: WidgetResult contains all widget details
                   properties:
-                    template:
-                      description: ActionResult defines the action result after evaluating
-                        a template.
-                      properties:
-                        id:
-                          description: ID of this action.
-                          type: string
-                        path:
-                          description: Path is the HTTP request path.
-                          type: string
-                        payload:
-                          description: Payload the payload for the action result
-                          properties:
-                            apiVersion:
-                              type: string
-                            kind:
-                              type: string
-                            metadata:
-                              description: Reference to a named object.
+                    actions:
+                      description: Actions is the array of all available actions.
+                      items:
+                        description: ActionResult defines the action result after
+                          evaluating a template.
+                        properties:
+                          id:
+                            description: ID of this action.
+                            type: string
+                          path:
+                            description: Path is the HTTP request path.
+                            type: string
+                          payload:
+                            description: Payload the payload for the action result
+                            properties:
+                              apiVersion:
+                                type: string
+                              kind:
+                                type: string
+                              metadata:
+                                description: Reference to a named object.
+                                properties:
+                                  name:
+                                    description: Name of the referenced object.
+                                    type: string
+                                  namespace:
+                                    description: Namespace of the referenced object.
+                                    type: string
+                                required:
+                                - name
+                                - namespace
+                                type: object
+                            type: object
+                          payloadToOverride:
+                            description: PayloadToOverride a list of values to override.
+                            items:
+                              description: Data is a key value pair.
                               properties:
+                                asString:
+                                  description: AsString if true the value will be
+                                    considered verbatim as string.
+                                  type: boolean
                                 name:
-                                  description: Name of the referenced object.
+                                  description: Name of the data
                                   type: string
-                                namespace:
-                                  description: Namespace of the referenced object.
+                                value:
+                                  description: Value of the data. Can be also a JQ
+                                    expression.
                                   type: string
                               required:
                               - name
-                              - namespace
                               type: object
-                          type: object
-                        payloadToOverride:
-                          description: PayloadToOverride a list of values to override.
-                          items:
-                            description: Data is a key value pair.
-                            properties:
-                              asString:
-                                description: AsString if true the value will be considered
-                                  verbatim as string.
-                                type: boolean
-                              name:
-                                description: Name of the data
-                                type: string
-                              value:
-                                description: Value of the data. Can be also a JQ expression.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-type: atomic
-                        verb:
-                          description: Verb is the HTTP request verb.
-                          type: string
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          verb:
+                            description: Verb is the HTTP request verb.
+                            type: string
+                        type: object
+                      type: array
+                      x-kubernetes-list-type: atomic
+                    app:
+                      additionalProperties:
+                        type: string
+                      description: Traits is the expandend map of the widget properties.
                       type: object
                   type: object
                 type: array
                 x-kubernetes-list-type: atomic
-              content:
-                description: CustomFormStatusContent wraps the custom form content
-                properties:
-                  schema:
-                    description: Schema holds this custom form schema.
-                    type: object
-                    x-kubernetes-preserve-unknown-fields: true
-                type: object
               name:
                 description: Name user defined name of this object.
                 type: string
@@ -292,9 +265,6 @@ spec:
               uid:
                 description: UID is the uinique identifier of this object.
                 type: string
-            required:
-            - name
-            - type
             type: object
         type: object
     served: true

@@ -106,7 +106,10 @@ spec:
                 - name
                 - namespace
                 type: object
-              templateIterators:
+              type:
+                description: Type of this object.
+                type: string
+              widgetsRefs:
                 description: TemplateIterators array of template iterator references.
                 items:
                   properties:
@@ -133,9 +136,6 @@ spec:
                   type: object
                 type: array
                 x-kubernetes-list-type: atomic
-              type:
-                description: Type of this object.
-                type: string
             required:
             - type
             type: object

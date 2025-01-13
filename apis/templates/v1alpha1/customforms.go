@@ -30,7 +30,7 @@ type CustomFormSpec struct {
 	PropsRef *Reference `json:"propsRef,omitempty"`
 	//+listType=atomic
 	// Actions is an array of actions.
-	Actions []*Action `json:"actions,omitempty"`
+	Actions []*ActionTemplateIterator `json:"actions,omitempty"`
 	// App defines app properties.
 	App *CustomFormApp `json:"app,omitempty"`
 	//+listType=atomic

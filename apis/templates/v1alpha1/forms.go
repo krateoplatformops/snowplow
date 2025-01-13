@@ -20,7 +20,7 @@ type FormStatusContent struct {
 type FormStatus struct {
 	Content *FormStatusContent `json:"content,omitempty"`
 	//+listType=atomic
-	Actions []*Action `json:"actions,omitempty"`
+	Actions []*ActionTemplateIterator `json:"actions,omitempty"`
 }
 
 // +genclient
