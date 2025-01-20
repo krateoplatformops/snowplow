@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/krateoplatformops/snowplow/apis"
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
@@ -105,7 +105,7 @@ func TestWidgetProps(t *testing.T) {
 		Assess("Resolve props", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			log := xcontext.Logger(ctx)
 
-			props := Resolve(ctx, &v1alpha1.Reference{
+			props := Resolve(ctx, &v1.Reference{
 				Name: "card-props", Namespace: namespace,
 			})
 

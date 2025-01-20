@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 type ActionTemplateIterator struct {
 	Iterator *string         `json:"iterator,omitempty"`

@@ -1,7 +1,7 @@
 package apis
 
 import (
-	templates "github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 

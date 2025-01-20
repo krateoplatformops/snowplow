@@ -8,8 +8,7 @@ import (
 
 	"github.com/itchyny/gojq"
 	"github.com/krateoplatformops/snowplow/apis"
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
-	templates "github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 
 	"github.com/krateoplatformops/snowplow/internal/objects"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/api"
@@ -65,7 +64,7 @@ func (r *collectionResolver) resolve(ctx context.Context, in *templates.Collecti
 
 	// Resolve API calls
 	dict, err := api.Resolve(ctx, in.Spec.API, api.ResolveOptions{
-		SARc:       r.sarc,
+		RC:         r.sarc,
 		AuthnNS:    r.authnNS,
 		Username:   r.userName,
 		UserGroups: r.userGroups,
@@ -152,7 +151,7 @@ func (r *collectionResolver) resolveReference(ctx context.Context, in *templates
 	var obj runtime.Object
 	switch apis.GetTemplateKind(gvr.GroupResource()) {
 	case apis.CollectionTemplate:
-		var cr v1alpha1.Collection
+		var cr templates.Collection
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(got.Unstructured.Object, &cr)
 		if err != nil {
 			log := xcontext.Logger(ctx)
@@ -174,7 +173,7 @@ func (r *collectionResolver) resolveReference(ctx context.Context, in *templates
 			return &runtime.RawExtension{Raw: []byte{}}
 		}
 	case apis.CustomFormTemplate:
-		var cr v1alpha1.CustomForm
+		var cr templates.CustomForm
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(got.Unstructured.Object, &cr)
 		if err != nil {
 			log := xcontext.Logger(ctx)
@@ -196,7 +195,7 @@ func (r *collectionResolver) resolveReference(ctx context.Context, in *templates
 			return &runtime.RawExtension{Raw: []byte{}}
 		}
 	case apis.WidgetTemplate:
-		var cr v1alpha1.Widget
+		var cr templates.Widget
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(got.Unstructured.Object, &cr)
 		if err != nil {
 			log := xcontext.Logger(ctx)

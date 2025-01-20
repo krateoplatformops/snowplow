@@ -4,19 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
-  name: collections.templates.krateo.io
+  name: restactions.templates.krateo.io
 spec:
   group: templates.krateo.io
   names:
     categories:
     - krateo
-    - collections
-    kind: Collection
-    listKind: CollectionList
-    plural: collections
+    - rest
+    - actions
+    kind: RESTAction
+    listKind: RESTActionList
+    plural: restactions
     shortNames:
-    - coll
-    singular: collection
+    - ra
+    singular: restaction
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -26,6 +27,8 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
+        description: RESTAction allows users to declaratively define calls to APIs
+          that may in turn depend on other calls.
         properties:
           apiVersion:
             description: |-
@@ -45,10 +48,9 @@ spec:
           metadata:
             type: object
           spec:
-            description: CollectionSpec defines specifications for a Collection.
+            description: RESTActionSpec defines the api handler specifications.
             properties:
               api:
-                description: API array of api calls.
                 items:
                   description: API represents a request to an HTTP service
                   properties:
@@ -97,80 +99,11 @@ spec:
                   type: object
                 type: array
                 x-kubernetes-list-type: atomic
-              propsRef:
-                description: PropsRef reference to a config map of extra properties
-                  for this Collection.
-                properties:
-                  name:
-                    description: Name of the referenced object.
-                    type: string
-                  namespace:
-                    description: Namespace of the referenced object.
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-              type:
-                description: Type of this object.
-                type: string
-              widgetsRefs:
-                description: TemplateIterators array of template iterator references.
-                items:
-                  properties:
-                    iterator:
-                      description: Iterator defines a field on which iterate.
-                      type: string
-                    template:
-                      description: Template to use during iteration.
-                      properties:
-                        apiVersion:
-                          type: string
-                        name:
-                          description: Name of the referenced object.
-                          type: string
-                        namespace:
-                          description: Namespace of the referenced object.
-                          type: string
-                        resource:
-                          type: string
-                      required:
-                      - name
-                      - namespace
-                      type: object
-                  type: object
-                type: array
-                x-kubernetes-list-type: atomic
-            required:
-            - type
             type: object
           status:
-            description: CollectionStatus defines a status for this CollectionIterator.
-            properties:
-              items:
-                description: Items array of expanded widgets.
-                items:
-                  type: object
-                  x-kubernetes-preserve-unknown-fields: true
-                type: array
-                x-kubernetes-list-type: atomic
-              name:
-                description: Name user defined name of this collection.
-                type: string
-              props:
-                additionalProperties:
-                  type: string
-                description: Props are user defined extra attributes.
-                type: object
-              type:
-                description: Type of this collection.
-                type: string
-              uid:
-                description: UID is the uinique identifier of this object.
-                type: string
             type: object
+            x-kubernetes-preserve-unknown-fields: true
         type: object
-        x-kubernetes-map-type: atomic
     served: true
     storage: true
     subresources:

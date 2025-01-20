@@ -23,7 +23,7 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    name: v1alpha1
+    name: v1
     schema:
       openAPIV3Schema:
         description: Widget is ui widgets configuration.
@@ -121,12 +121,17 @@ spec:
                       - name
                       - namespace
                       type: object
+                    filter:
+                      type: string
                     headers:
                       description: Headers is an array of custom request headers
                       items:
                         type: string
                       type: array
                       x-kubernetes-list-type: atomic
+                    iterator:
+                      description: Iterator defines a field on which iterate.
+                      type: string
                     name:
                       description: Name is a (unique) identifier
                       type: string

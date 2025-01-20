@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/krateoplatformops/snowplow/apis"
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
@@ -111,7 +111,7 @@ func TestCustomForm(t *testing.T) {
 			r.WithNamespace(namespace)
 			apis.AddToScheme(r.GetScheme())
 
-			cr := v1alpha1.CustomForm{}
+			cr := v1.CustomForm{}
 			err = r.Get(ctx, "fireworksapp", namespace, &cr)
 			if err != nil {
 				t.Fail()
@@ -131,7 +131,7 @@ func TestCustomForm(t *testing.T) {
 			}
 
 			res.Kind = "CustomForm"
-			res.APIVersion = v1alpha1.SchemeGroupVersion.String()
+			res.APIVersion = v1.SchemeGroupVersion.String()
 			if err := kubeutil.ToYAML(os.Stderr, res); err != nil {
 				t.Fatal(err)
 			}

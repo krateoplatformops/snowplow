@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	templates "github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/actions"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/api"
 	app "github.com/krateoplatformops/snowplow/internal/resolvers/app/widgets"
@@ -71,7 +71,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.Widget, error
 
 	// Resolve API calls
 	dict, err := api.Resolve(ctx, opts.In.Spec.API, api.ResolveOptions{
-		SARc:       opts.SArc,
+		RC:         opts.SArc,
 		AuthnNS:    opts.AuthnNS,
 		Username:   opts.Username,
 		UserGroups: opts.UserGroups,

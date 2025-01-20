@@ -56,6 +56,7 @@ func TestJQTemplate(t *testing.T) {
 		{"hello world", "hello world"},
 		{`${ .hobbies | join(",") }`, "chess,netflix"},
 		{`${ .id }`, "1"},
+		{`${ "/todos/" + (.id|tostring) }`, "/todos/1"},
 		{`${ "/todos/" + (.id|tostring) +  "/comments" }`, "/todos/1/comments"},
 		{`${ .__internal_ep_ref_name }`, "tizio-clientconfig"},
 		{`${ .__internal_ep_ref_namespace }`, "demo-system"},

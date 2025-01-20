@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -8,7 +8,7 @@ import (
 // Package type metadata.
 const (
 	Group   = "templates.krateo.io"
-	Version = "v1alpha1"
+	Version = "v1"
 )
 
 var (
@@ -21,6 +21,7 @@ var (
 
 func init() {
 	SchemeBuilder.Register(
+		&RESTAction{}, &RESTActionList{},
 		&Widget{}, &WidgetList{},
 		&CustomForm{}, &CustomFormList{},
 		&Form{}, &FormList{},

@@ -17,6 +17,7 @@ rules:
   resources:
   - namespaces
   - configmaps
+  - pods
   verbs:
   - get
   - list

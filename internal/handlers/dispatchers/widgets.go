@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/krateoplatformops/snowplow/apis"
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/objects"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
@@ -91,7 +91,7 @@ func ResolveWidget(ctx context.Context, in *unstructured.Unstructured, opts Reso
 		return nil, err
 	}
 
-	var cr v1alpha1.Widget
+	var cr v1.Widget
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(in.Object, &cr)
 	if err != nil {
 		return nil, err

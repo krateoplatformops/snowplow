@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: typicode-endpoint
+  namespace: demo-system
+stringData:
+  server-url: https://jsonplaceholder.typicode.com
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: external-api
+  namespace: demo-system
+  annotations:
+    "krateo.io/verbose": "true"
+spec:
+  api:
+  - name: users
+    path: "/users"
+    endpointRef:
+      name: typicode-endpoint
+      namespace: demo-system
+  - name: todos
+    dependOn: users
+    iterator: .users.items[:3]
+    path: ${ "/todos?userId=" + (.id|tostring) }
+    endpointRef:
+      name: typicode-endpoint
+      namespace: demo-system

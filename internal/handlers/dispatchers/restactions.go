@@ -11,7 +11,7 @@ import (
 	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/objects"
-	"github.com/krateoplatformops/snowplow/internal/resolvers/customforms"
+	"github.com/krateoplatformops/snowplow/internal/resolvers/restactions"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
@@ -19,21 +19,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func CustomForm() http.Handler {
+func RESTAction() http.Handler {
 	return &customformHandler{
 		authnNS: env.String("AUTHN_NAMESPACE", ""),
 		verbose: env.True("DEBUG"),
 	}
 }
 
-type customformHandler struct {
+type restActionHandler struct {
 	authnNS string
 	verbose bool
 }
 
-var _ http.Handler = (*customformHandler)(nil)
+var _ http.Handler = (*restActionHandler)(nil)
 
-func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
+func (r *restActionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	log := xcontext.Logger(req.Context())
 
 	gvr, err := util.ParseGVR(req)
@@ -60,7 +60,7 @@ func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 		return
 	}
 
-	res, err := ResolveCustomForm(req.Context(), got.Unstructured, ResolveCustomFormOptions{
+	res, err := ResolveRESTAction(req.Context(), got.Unstructured, ResolveRESTActionOptions{
 		Username:   req.Header.Get(xcontext.LabelKrateoUser),
 		UserGroups: strings.Split(req.Header.Get(xcontext.LabelKrateoGroups), ","),
 		AuthnNS:    r.authnNS,
@@ -79,26 +79,26 @@ func (r *customformHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 	enc.Encode(res)
 }
 
-type ResolveCustomFormOptions struct {
+type ResolveRESTActionOptions struct {
 	AuthnNS    string
 	Username   string
 	UserGroups []string
 }
 
-func ResolveCustomForm(ctx context.Context, in *unstructured.Unstructured, opts ResolveCustomFormOptions) (runtime.Object, error) {
+func ResolveRESTAction(ctx context.Context, in *unstructured.Unstructured, opts ResolveRESTActionOptions) (runtime.Object, error) {
 	scheme := runtime.NewScheme()
 	if err := apis.AddToScheme(scheme); err != nil {
 		return nil, err
 	}
 
-	var cr v1.CustomForm
+	var cr v1.RESTAction
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(in.Object, &cr)
 	if err != nil {
 		return nil, err
 	}
 
 	ctx = xcontext.BuildContext(ctx, xcontext.WithJQTemplate())
-	return customforms.Resolve(ctx, customforms.ResolveOptions{
+	return restactions.Resolve(ctx, restactions.ResolveOptions{
 		In:         &cr,
 		Username:   opts.Username,
 		UserGroups: opts.UserGroups,

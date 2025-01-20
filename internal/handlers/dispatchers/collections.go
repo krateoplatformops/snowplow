@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/krateoplatformops/snowplow/apis"
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/objects"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/collections"
@@ -91,7 +91,7 @@ func ResolveCollection(ctx context.Context, in *unstructured.Unstructured, opts 
 		return nil, err
 	}
 
-	var cr v1alpha1.Collection
+	var cr v1.Collection
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(in.Object, &cr)
 	if err != nil {
 		return nil, err

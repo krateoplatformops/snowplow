@@ -1,10 +1,9 @@
-package v1alpha1
+package v1
 
 // Reference to a named object.
 type Reference struct {
 	// Name of the referenced object.
 	Name string `json:"name"`
-
 	// Namespace of the referenced object.
 	Namespace string `json:"namespace"`
 }
@@ -14,7 +13,7 @@ type API struct {
 	// Name is a (unique) identifier
 	Name string `json:"name"`
 	// Path is the request URI path
-	Path *string `json:"path,omitempty"`
+	Path string `json:"path,omitempty"`
 	// Verb is the request method (GET if omitted)
 	Verb *string `json:"verb,omitempty"`
 	//+listType=atomic
@@ -26,6 +25,9 @@ type API struct {
 	EndpointRef *Reference `json:"endpointRef,omitempty"`
 	// DependOn reference to the identifier (name) of another API on which this depends
 	DependOn *string `json:"dependOn,omitempty"`
+	// Iterator defines a field on which iterate.
+	Iterator *string `json:"iterator,omitempty"`
+	Filter   *string `json:"filter,omitempty"`
 }
 
 // ObjectReference is a reference to a named object in a specified namespace.

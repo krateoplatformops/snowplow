@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 )
 
 func TestMapVerbs(t *testing.T) {
@@ -20,7 +20,7 @@ func TestMapVerbs(t *testing.T) {
 	}
 
 	for _, tc := range table {
-		got := mapVerbs(&v1alpha1.ActionTemplate{
+		got := mapVerbs(&v1.ActionTemplate{
 			Verb: tc.in,
 		})
 

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/krateoplatformops/snowplow/apis"
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	apiresolver "github.com/krateoplatformops/snowplow/internal/resolvers/api"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
@@ -103,7 +103,7 @@ func TestCustomFormApp(t *testing.T) {
 			r.WithNamespace(namespace)
 			apis.AddToScheme(r.GetScheme())
 
-			cr := v1alpha1.Widget{}
+			cr := v1.Widget{}
 			err = r.Get(ctx, "external-api", namespace, &cr)
 			if err != nil {
 				t.Fatal(err)
@@ -112,7 +112,7 @@ func TestCustomFormApp(t *testing.T) {
 			//log.Debug("widget manifest", slog.Any("cr", cr))
 
 			dict, err := apiresolver.Resolve(ctx, cr.Spec.API, apiresolver.ResolveOptions{
-				SARc:       cfg.Client().RESTConfig(),
+				RC:         cfg.Client().RESTConfig(),
 				AuthnNS:    namespace,
 				Username:   "cyberjoker",
 				UserGroups: []string{"devs"},
