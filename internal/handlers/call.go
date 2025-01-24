@@ -81,7 +81,7 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	dict := map[string]any{}
 	callOpts := request.RequestOptions{
-		Path: ptr.To(uri),
+		Path: uri,
 		Verb: ptr.To(strings.ToUpper(opts.verb)),
 		Headers: []string{
 			"Accept: application/json",

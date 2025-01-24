@@ -20,7 +20,7 @@ import (
 func JQTemplate() types.StepFunc {
 	return func(ctx context.Context, _ *testing.T, _ *envconf.Config) context.Context {
 		return xcontext.BuildContext(ctx,
-			xcontext.WithJQTemplate(),
+			xcontext.WithJQ(),
 		)
 	}
 }

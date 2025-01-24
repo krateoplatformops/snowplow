@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
-	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 )
 
 func topologicalSort(items []*templates.API) ([]string, error) {
@@ -15,7 +14,11 @@ func topologicalSort(items []*templates.API) ([]string, error) {
 	for _, item := range items {
 		itemSet[item.Name] = true
 
-		if dep := ptr.Deref(item.DependOn, ""); dep != "" {
+		if item.DependsOn == nil {
+			continue
+		}
+
+		if dep := item.DependsOn.Name; len(dep) > 0 {
 			graph[dep] = append(graph[dep], item.Name)
 			inDegree[item.Name]++
 		}

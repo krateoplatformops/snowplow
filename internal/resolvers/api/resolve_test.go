@@ -33,7 +33,8 @@ var (
 
 func TestMain(m *testing.M) {
 	const (
-		crdPath = "../../../crds"
+		crdPath      = "../../../crds"
+		testdataPath = "../../../testdata"
 	)
 
 	xenv.SetTestMode(true)
@@ -47,9 +48,18 @@ func TestMain(m *testing.M) {
 		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
 		e2e.CreateNamespace(namespace),
 
-		func(ctx context.Context, _ *envconf.Config) (context.Context, error) {
-			// TODO: add a wait.For conditional helper that can
-			// check and wait for the existence of a CRD resource
+		func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
+			r, err := resources.New(cfg.Client().RESTConfig())
+			if err != nil {
+				return ctx, err
+			}
+			r.WithNamespace(namespace)
+
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
+			if err != nil {
+				return ctx, err
+			}
+
 			time.Sleep(2 * time.Second)
 			return ctx, nil
 		},
@@ -66,8 +76,7 @@ func TestResolveAPI(t *testing.T) {
 	const (
 		testdataPath = "../../../testdata"
 	)
-
-	os.Setenv("DEBUG", "false")
+	os.Setenv("DEBUG", "0")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
@@ -103,12 +112,12 @@ func TestResolveAPI(t *testing.T) {
 			apis.AddToScheme(r.GetScheme())
 
 			cr := v1.RESTAction{}
-			err = r.Get(ctx, "external-api", namespace, &cr)
+			err = r.Get(ctx, "internal-api", namespace, &cr)
 			if err != nil {
 				t.Fail()
 			}
 
-			res, err := Resolve(ctx, ResolveOptions{
+			res := Resolve(ctx, ResolveOptions{
 				RC:         cfg.Client().RESTConfig(),
 				AuthnNS:    cfg.Namespace(),
 				Username:   "cyberjoker",

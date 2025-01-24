@@ -77,7 +77,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestRESTAction(t *testing.T) {
-	os.Setenv("DEBUG", "1")
+	os.Setenv("DEBUG", "0")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
@@ -103,7 +103,7 @@ func TestRESTAction(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve external-api", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+		Assess("Resolve internal-api", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			r, err := resources.New(c.Client().RESTConfig())
 			if err != nil {
 				t.Fail()

@@ -55,7 +55,7 @@ func ExampleExpand() {
 
 	ctx := xcontext.BuildContext(context.Background(),
 		xcontext.WithLogger(nil),
-		xcontext.WithJQTemplate(),
+		xcontext.WithJQ(),
 	)
 
 	all := Expand(ctx, ExpandOptions{

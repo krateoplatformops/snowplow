@@ -14,7 +14,7 @@ metadata:
   name: external-api
   namespace: demo-system
   annotations:
-    "krateo.io/verbose": "true"
+    "krateo.io/verbose": "false"
 spec:
   api:
   - name: users
@@ -23,8 +23,9 @@ spec:
       name: typicode-endpoint
       namespace: demo-system
   - name: todos
-    dependOn: users
-    iterator: .users.items[:3]
+    dependsOn: 
+      name: users
+      iterator: .users[:3]
     path: ${ "/todos?userId=" + (.id|tostring) }
     endpointRef:
       name: typicode-endpoint

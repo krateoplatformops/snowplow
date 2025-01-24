@@ -26,8 +26,7 @@ type ResolveOptions struct {
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, error) {
-	// Resolve API calls
-	dict, err := api.Resolve(ctx, api.ResolveOptions{
+	dict := api.Resolve(ctx, api.ResolveOptions{
 		RC:         opts.SArc,
 		AuthnNS:    opts.AuthnNS,
 		Username:   opts.Username,
@@ -35,9 +34,6 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 		Verbose:    isVerbose(opts.In),
 		Items:      opts.In.Spec.API,
 	})
-	if err != nil {
-		return opts.In, err
-	}
 	if dict == nil {
 		dict = map[string]any{}
 	}

@@ -134,6 +134,7 @@ func (rt *debuggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, e
 		return nil, err
 	}
 	log.Debug("response details", "wire", string(b))
+	//fmt.Fprintf(os.Stderr, "\n\n%s\n\n", b)
 
 	return resp, err
 }

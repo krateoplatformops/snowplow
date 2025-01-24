@@ -8,6 +8,14 @@ type Reference struct {
 	Namespace string `json:"namespace"`
 }
 
+// Dependency reference to the identifier of another API on which this depends
+type Dependency struct {
+	// Name of another API on which this depends
+	Name string `json:"name"`
+	// Iterator defines a field on which iterate.
+	Iterator *string `json:"iterator,omitempty"`
+}
+
 // API represents a request to an HTTP service
 type API struct {
 	// Name is a (unique) identifier
@@ -23,11 +31,10 @@ type API struct {
 	Payload *string `json:"payload,omitempty"`
 	// EndpointRef a reference to an Endpoint
 	EndpointRef *Reference `json:"endpointRef,omitempty"`
-	// DependOn reference to the identifier (name) of another API on which this depends
-	DependOn *string `json:"dependOn,omitempty"`
-	// Iterator defines a field on which iterate.
-	Iterator *string `json:"iterator,omitempty"`
-	Filter   *string `json:"filter,omitempty"`
+	// DependsOn reference to another API on which this depends
+	DependsOn *Dependency `json:"dependsOn,omitempty"`
+
+	Filter *string `json:"filter,omitempty"`
 }
 
 // ObjectReference is a reference to a named object in a specified namespace.

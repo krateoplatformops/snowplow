@@ -39,7 +39,7 @@ func renderOne(ctx context.Context, opts renderOneOptions) (all []*templates.Act
 
 	log := xcontext.Logger(ctx)
 
-	tpl := xcontext.JQTemplate(ctx)
+	tpl := xcontext.JQ(ctx)
 	if tpl == nil {
 		log.Error("missing jq template engine")
 		return all

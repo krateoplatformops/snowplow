@@ -59,9 +59,9 @@ func UserConfig(ctx context.Context) (endpoints.Endpoint, error) {
 	return ep, nil
 }
 
-func JQTemplate(ctx context.Context) tmpl.JQTemplate {
-	v := ctx.Value(contextKeyJQTemplate)
-	if val, ok := v.(tmpl.JQTemplate); ok {
+func JQ(ctx context.Context) *tmpl.JQ {
+	v := ctx.Value(contextKeyJQ)
+	if val, ok := v.(*tmpl.JQ); ok {
 		return val
 	}
 	return nil
@@ -115,15 +115,15 @@ func WithUserConfig(ep endpoints.Endpoint) WithContextFunc {
 	}
 }
 
-func WithJQTemplate() WithContextFunc {
+func WithJQ() WithContextFunc {
 	return func(ctx context.Context) context.Context {
 		tpl, err := tmpl.New("${", "}")
 		if err != nil {
-			Logger(ctx).Error("unable to create jq template engine", slog.Any("err", err))
+			Logger(ctx).Error("unable to create jq engine", slog.Any("err", err))
 			return ctx
 		}
 
-		return context.WithValue(ctx, contextKeyJQTemplate, tpl)
+		return context.WithValue(ctx, contextKeyJQ, tpl)
 	}
 }
 
@@ -148,6 +148,6 @@ var (
 	contextKeyLogger         = contextKey("logger")
 	contextKeyUserConfig     = contextKey("userConfig")
 	contextKeyRequestStartAt = contextKey("requestStartedAt")
-	contextKeyJQTemplate     = contextKey("jqTemplateEngine")
+	contextKeyJQ             = contextKey("jq")
 	contextKeyAuthnNS        = contextKey("authnNS")
 )

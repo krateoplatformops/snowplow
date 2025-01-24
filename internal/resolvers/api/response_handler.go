@@ -6,10 +6,86 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 )
+
+func jsonResponseHandlerSmart(ctx context.Context, key string, out map[string]any, filter *string) func(io.ReadCloser) error {
+	log := xcontext.Logger(ctx)
+
+	return func(in io.ReadCloser) error {
+		dat, err := io.ReadAll(in)
+		if err != nil {
+			return err
+		}
+
+		var tmp any
+		if err := json.Unmarshal(dat, &tmp); err != nil {
+			return err
+		}
+		log.Debug("api response", slog.Any("json", tmp))
+
+		if filter != nil {
+			tpl := xcontext.JQ(ctx)
+			if tpl != nil {
+				q := fmt.Sprintf("${ %s }", ptr.Deref(filter, ""))
+				s, err := tpl.Execute(q, tmp)
+				if err != nil {
+					return err
+				}
+
+				if err := json.Unmarshal([]byte(s), &tmp); err != nil {
+					return err
+				}
+			}
+		}
+
+		got, ok := out[key]
+		if !ok {
+			out[key] = tmp // wrapAsSlice(tmp)
+			return nil
+		}
+
+		switch existingSlice := got.(type) {
+		case []any:
+			if v := wrapAsSlice(tmp); len(v) > 0 {
+				out[key] = append(existingSlice, v...)
+			}
+		default:
+			out[key] = []any{got, tmp}
+
+			switch v := tmp.(type) {
+			case []any:
+				all := []any{got}
+				all = append(all, v...)
+				out[key] = all
+			default:
+				out[key] = []any{got, v}
+			}
+		}
+
+		return nil
+	}
+}
+
+func wrapAsSlice(value any) []any {
+	switch v := value.(type) {
+	case []any:
+		return v
+	default:
+		return []any{v}
+	}
+}
+
+func flattenNestedSlices(nested [][]any) []any {
+	var flat []any
+	for _, inner := range nested {
+		flat = append(flat, inner...)
+	}
+	return flat
+}
 
 func jsonResponseHandler(ctx context.Context, key string, out map[string]any, filter *string) func(io.ReadCloser) error {
 	return func(in io.ReadCloser) error {
@@ -24,7 +100,7 @@ func jsonResponseHandler(ctx context.Context, key string, out map[string]any, fi
 		}
 
 		if filter != nil {
-			tpl := xcontext.JQTemplate(ctx)
+			tpl := xcontext.JQ(ctx)
 			if tpl != nil {
 				q := fmt.Sprintf("${ %s }", ptr.Deref(filter, ""))
 				s, err := tpl.Execute(q, tmp)
@@ -64,7 +140,7 @@ func jsonResponseHandler2(ctx context.Context, key string, out map[string]any, f
 			}
 
 			if filter != nil {
-				tpl := xcontext.JQTemplate(ctx)
+				tpl := xcontext.JQ(ctx)
 				if tpl != nil {
 					q := fmt.Sprintf("${ %s }", ptr.Deref(filter, ""))
 					s, err := tpl.Execute(q, tmp)
@@ -88,7 +164,7 @@ func jsonResponseHandler2(ctx context.Context, key string, out map[string]any, f
 		}
 
 		if filter != nil {
-			tpl := xcontext.JQTemplate(ctx)
+			tpl := xcontext.JQ(ctx)
 			if tpl != nil {
 				q := fmt.Sprintf("${ %s }", ptr.Deref(filter, ""))
 				s, err := tpl.Execute(q, v)

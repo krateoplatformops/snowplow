@@ -11,6 +11,49 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+type endpointReferenceMapper struct {
+	authnNS  string
+	username string
+	rc       *rest.Config
+}
+
+func (m *endpointReferenceMapper) resolveAll(ctx context.Context, items []*templates.API) (map[string]endpoints.Endpoint, error) {
+	endpointsMap := make(map[string]endpoints.Endpoint, len(items))
+	for _, el := range items {
+		res, err := m.resolveOne(ctx, el.EndpointRef)
+		if err != nil {
+			return endpointsMap, err
+		}
+
+		endpointsMap[el.Name] = res
+	}
+
+	return endpointsMap, nil
+}
+
+func (m *endpointReferenceMapper) resolveOne(ctx context.Context, ref *templates.Reference) (endpoints.Endpoint, error) {
+	ep := endpoints.Endpoint{}
+
+	isInternal := false
+	if ref == nil {
+		ref = &templates.Reference{
+			Namespace: m.authnNS,
+			Name:      fmt.Sprintf("%s-clientconfig", kubeutil.MakeDNS1123Compatible(m.username)),
+		}
+		isInternal = true
+	}
+
+	ep, err := endpoints.FromSecret(ctx, m.rc, ref.Name, ref.Namespace)
+	if err != nil {
+		return ep, err
+	}
+	if isInternal && !env.TestMode() {
+		ep.ServerURL = "https://kubernetes.default.svc"
+	}
+
+	return ep, nil
+}
+
 type resolveEndpointReferenceOptions struct {
 	Reference *templates.Reference
 	AuthnNS   string

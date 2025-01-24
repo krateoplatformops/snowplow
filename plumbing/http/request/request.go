@@ -19,7 +19,7 @@ import (
 const maxUnstructuredResponseTextBytes = 2048
 
 type RequestOptions struct {
-	Path            *string
+	Path            string
 	Verb            *string
 	Headers         []string
 	Payload         *string
@@ -27,15 +27,10 @@ type RequestOptions struct {
 	ResponseHandler func(io.ReadCloser) error
 }
 
-type Result struct {
-	Map    map[string]any
-	Status *response.Status
-}
-
 func Do(ctx context.Context, opts RequestOptions) *response.Status {
 	uri := strings.TrimSuffix(opts.Endpoint.ServerURL, "/")
-	if pt := ptr.Deref(opts.Path, ""); len(pt) > 0 {
-		uri = fmt.Sprintf("%s/%s", uri, strings.TrimPrefix(pt, "/"))
+	if len(opts.Path) > 0 {
+		uri = fmt.Sprintf("%s/%s", uri, strings.TrimPrefix(opts.Path, "/"))
 	}
 
 	u, err := url.Parse(uri)
