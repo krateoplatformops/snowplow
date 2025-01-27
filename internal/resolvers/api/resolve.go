@@ -15,6 +15,7 @@ import (
 
 const (
 	annotationKeyVerboseAPI = "krateo.io/verbose"
+	headerAcceptJSON        = "Accept: application/json"
 )
 
 type ResolveOptions struct {
@@ -85,7 +86,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 
 		// Add Krateo HTTP Request headers
 		if apiCall.Headers == nil {
-			apiCall.Headers = []string{"Accept: application/json"}
+			apiCall.Headers = []string{headerAcceptJSON}
 		}
 		apiCall.Headers = append(apiCall.Headers,
 			fmt.Sprintf("X-Krateo-User: %s", opts.Username))
@@ -115,7 +116,9 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 
 		for _, call := range tmp {
 			call.Endpoint = &ep
-			call.ResponseHandler = jsonResponseHandlerSmart(ctx, id, dict, apiCall.Filter)
+			call.ResponseHandler = jsonHandler(ctx, jsonHandlerOptions{
+				key: id, out: dict, filter: apiCall.Filter,
+			})
 
 			log.Debug("calling api", slog.String("name", id),
 				slog.String("host", call.Endpoint.ServerURL), slog.String("path", call.Path))

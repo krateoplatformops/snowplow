@@ -10,7 +10,7 @@ import (
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 )
 
-func Example_expandIterator2() {
+func Example_createRequestOptions() {
 	dict := map[string]any{
 		"namespaces": []any{"demo-system", "krateo-system", "example-system"},
 	}
@@ -23,6 +23,9 @@ func Example_expandIterator2() {
 			Name:     "namespaces",
 			Iterator: ptr.To(".[]"),
 		},
+		Headers: []string{
+			`${ "X-Namespace: " + (.) }`,
+		},
 	}, dict)
 
 	for _, el := range all {
@@ -34,11 +37,14 @@ func Example_expandIterator2() {
 
 	// Output:
 	// GET /api/v1/namespaces/demo-system/pods
+	//   X-Namespace: demo-system
 	// GET /api/v1/namespaces/krateo-system/pods
+	//   X-Namespace: krateo-system
 	// GET /api/v1/namespaces/example-system/pods
+	//   X-Namespace: example-system
 }
 
-func Example_expandIterator2_no_iter() {
+func Example_createRequestOptions_no_iter() {
 	dict := map[string]any{
 		"namespaces": []any{"demo-system", "krateo-system", "example-system"},
 	}

@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: github-endpoint
+  namespace: demo-system
+stringData:
+  server-url: https://api.github.com
+  #token: YOUR_TOKEN_HERE
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: github-runs
+  namespace: demo-system
+  annotations:
+    "krateo.io/verbose": "false"
+spec:
+  api:
+  - name: runs
+    endpointRef:
+      name: github-endpoint
+      namespace: demo-system
+    path: "/repos/krateoplatformops/snowplow/actions/runs?per_page=3"
+    headers:
+      - "Accept: application/vnd.github+json"
+    filter: "[.workflow_runs[] | {id: .id, actor: .actor.login, created_at: .created_at, conclusion: .conclusion}]"
+  - name: jobs
+    endpointRef:
+      name: github-endpoint
+      namespace: demo-system
+    dependsOn: 
+      name: runs
+      iterator: .runs[:2]
+    path: ${ "/repos/krateoplatformops/snowplow/actions/runs/" + (.id|tostring) + "/jobs"  }
+    headers:
+      - "Accept: application/vnd.github+json"
+    

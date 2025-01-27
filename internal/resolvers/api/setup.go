@@ -15,6 +15,10 @@ import (
 )
 
 func createRequestOptions(ctx context.Context, in *templates.API, dict map[string]any) (all []httpcall.RequestOptions) {
+	if in.DependsOn == nil {
+		return createRequestOptionsNoIterator(ctx, in, dict)
+	}
+
 	log := xcontext.Logger(ctx)
 
 	tpl := xcontext.JQ(ctx)
@@ -23,10 +27,7 @@ func createRequestOptions(ctx context.Context, in *templates.API, dict map[strin
 		return []httpcall.RequestOptions{}
 	}
 
-	var it string
-	if in.DependsOn != nil {
-		it = ptr.Deref(in.DependsOn.Iterator, "")
-	}
+	it := ptr.Deref(in.DependsOn.Iterator, "")
 
 	tot := 1
 	if len(it) > 0 {
@@ -42,11 +43,12 @@ func createRequestOptions(ctx context.Context, in *templates.API, dict map[strin
 			log.Warn("atoi failure, assuming count=1", slog.Any("err", err))
 			tot = 1
 		}
+
+		log.Debug("resolved iterator", slog.String("name", in.Name), slog.Int("count", tot))
 	}
-	log.Debug("resolved iterator", slog.String("name", in.Name), slog.Int("count", tot))
 
 	render := func(i int, s string, ds map[string]any) string {
-		exp := hackQueryFn(it, i, s)
+		exp := createQueryForIterator(it, i, s)
 		out, err := tpl.Execute(exp, ds)
 		if err != nil {
 			out = err.Error()
@@ -66,8 +68,11 @@ func createRequestOptions(ctx context.Context, in *templates.API, dict map[strin
 		}
 
 		if in.Headers != nil {
-			el.Headers = make([]string, len(in.Headers))
-			copy(el.Headers, in.Headers)
+			el.Headers = make([]string, 0, len(in.Headers))
+			//copy(el.Headers, in.Headers)
+			for _, h := range in.Headers {
+				el.Headers = append(el.Headers, render(i, h, dict))
+			}
 		}
 
 		all = append(all, el)
@@ -76,12 +81,65 @@ func createRequestOptions(ctx context.Context, in *templates.API, dict map[strin
 	return all
 }
 
-func hackQueryFn(it string, i int, q string) string {
+func createRequestOptionsNoIterator(ctx context.Context, in *templates.API, dict map[string]any) (all []httpcall.RequestOptions) {
+	log := xcontext.Logger(ctx)
+
+	tpl := xcontext.JQ(ctx)
+	if tpl == nil {
+		log.Error("missing jq engine")
+		return []httpcall.RequestOptions{}
+	}
+
+	render := func(q string, ds map[string]any) string {
+		out, err := tpl.Execute(q, ds)
+		if err != nil {
+			out = err.Error()
+		}
+		return out
+	}
+
+	all = make([]httpcall.RequestOptions, 0, 1)
+
+	el := httpcall.RequestOptions{
+		Path: render(in.Path, dict),
+		Verb: ptr.To(ptr.Deref(in.Verb, http.MethodGet)),
+	}
+
+	if in.Payload != nil {
+		el.Payload = ptr.To(ptr.Deref(in.Payload, ""))
+	}
+
+	if in.Headers != nil {
+		el.Headers = make([]string, 0, len(in.Headers))
+		//copy(el.Headers, in.Headers)
+		for _, h := range in.Headers {
+			el.Headers = append(el.Headers, render(h, dict))
+		}
+	}
+
+	all = append(all, el)
+
+	return all
+}
+
+func createQueryForIterator(it string, i int, q string) string {
 	if len(it) == 0 {
 		return q
 	}
 
 	el := fmt.Sprintf("%s[%d]", it, i)
 	q = strings.Replace(q, "${", fmt.Sprintf("${ %s | ", el), 1)
+	return q
+}
+
+func fixQuery(q string) string {
+	if !strings.HasPrefix(q, "${") {
+		q = fmt.Sprintf("${ %s", q)
+	}
+
+	if !strings.HasSuffix(q, "}") {
+		q = fmt.Sprintf("%s }", q)
+	}
+
 	return q
 }

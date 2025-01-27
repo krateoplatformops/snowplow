@@ -76,7 +76,7 @@ func TestResolveAPI(t *testing.T) {
 	const (
 		testdataPath = "../../../testdata"
 	)
-	os.Setenv("DEBUG", "0")
+	os.Setenv("DEBUG", "1")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
@@ -112,7 +112,7 @@ func TestResolveAPI(t *testing.T) {
 			apis.AddToScheme(r.GetScheme())
 
 			cr := v1.RESTAction{}
-			err = r.Get(ctx, "internal-api", namespace, &cr)
+			err = r.Get(ctx, "github-runs", namespace, &cr)
 			if err != nil {
 				t.Fail()
 			}

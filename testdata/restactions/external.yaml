@@ -27,6 +27,8 @@ spec:
       name: users
       iterator: .users[:3]
     path: ${ "/todos?userId=" + (.id|tostring) }
+    headers:
+      - ${ "X-UserID:" + (.id|tostring) }
     endpointRef:
       name: typicode-endpoint
       namespace: demo-system
