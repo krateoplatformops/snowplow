@@ -3,11 +3,12 @@ package tmpl
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 )
 
-func dataSource() (map[string]any, error) {
+func dataSource() (any, error) {
 	const sample = `
 	{
 		"metadata": {
@@ -31,7 +32,7 @@ func dataSource() (map[string]any, error) {
 		"id": 1
 	  }`
 
-	res := map[string]any{}
+	var res any
 	err := json.Unmarshal([]byte(sample), &res)
 	return res, err
 }
@@ -56,6 +57,7 @@ func TestJQTemplate(t *testing.T) {
 		{"hello world", "hello world"},
 		{`${ .hobbies | join(",") }`, "chess,netflix"},
 		{`${ .id }`, "1"},
+		{`${ "/todos/" + (.id|tostring) }`, "/todos/1"},
 		{`${ "/todos/" + (.id|tostring) +  "/comments" }`, "/todos/1/comments"},
 		{`${ .__internal_ep_ref_name }`, "tizio-clientconfig"},
 		{`${ .__internal_ep_ref_namespace }`, "demo-system"},
@@ -83,25 +85,6 @@ func TestJQTemplate(t *testing.T) {
 	}
 }
 
-func TestJQ(t *testing.T) {
-	ds, err := dataSource()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	str, err := jq(`.hobbies | join(",")`, ds)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println(str)
-
-	str, err = jq(`{firstName: .metadata.labels["krateo.io/composition-id"]}`, ds)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println(str)
-}
-
 func TestAcceptQuery(t *testing.T) {
 	test := []struct {
 		input string
@@ -119,10 +102,9 @@ func TestAcceptQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r := tpl.(*jqTemplate)
 
 	for _, tc := range test {
-		got, ok := r.ParseQuery(tc.input)
+		got, ok := tpl.ParseQuery(tc.input)
 		if got != tc.want {
 			t.Fatalf("got: %s, want: %s\n", got, tc.want)
 		}
@@ -130,4 +112,61 @@ func TestAcceptQuery(t *testing.T) {
 			t.Fatalf("got: %s, want: %s\n", got, tc.want)
 		}
 	}
+}
+
+func Example_JQ_Execute() {
+	sample := `
+[
+	{
+		"color": "red",
+		"value": "#f00"
+	},
+	{
+		"color": "green",
+		"value": "#0f0"
+	},
+	{
+		"color": "blue",
+		"value": "#00f"
+	},
+	{
+		"color": "cyan",
+		"value": "#0ff"
+	},
+	{
+		"color": "magenta",
+		"value": "#f0f"
+	},
+	{
+		"color": "yellow",
+		"value": "#ff0"
+	},
+	{
+		"color": "black",
+		"value": "#000"
+	}
+]`
+
+	var data any
+	err := json.Unmarshal([]byte(sample), &data)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return
+	}
+
+	tpl, err := New("${", "}")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return
+	}
+
+	got, err := tpl.Execute("${ .[2:4] }", data)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		return
+	}
+	fmt.Printf("%s\n", got)
+
+	// Output:
+	// [{"color":"blue","value":"#00f"},{"color":"cyan","value":"#0ff"}]
 }

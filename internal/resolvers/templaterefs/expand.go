@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	templates "github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 )
@@ -44,7 +44,7 @@ func renderOne(ctx context.Context, opts renderOneOptions) (all []*templates.Obj
 
 	log := xcontext.Logger(ctx)
 
-	tpl := xcontext.JQTemplate(ctx)
+	tpl := xcontext.JQ(ctx)
 	if tpl == nil {
 		log.Error("missing jq template engine")
 		return all

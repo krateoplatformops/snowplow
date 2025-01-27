@@ -23,7 +23,7 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    name: v1alpha1
+    name: v1
     schema:
       openAPIV3Schema:
         description: Widget is ui widgets configuration.
@@ -104,10 +104,19 @@ spec:
                 items:
                   description: API represents a request to an HTTP service
                   properties:
-                    dependOn:
-                      description: DependOn reference to the identifier (name) of
-                        another API on which this depends
-                      type: string
+                    dependsOn:
+                      description: DependsOn reference to another API on which this
+                        depends
+                      properties:
+                        iterator:
+                          description: Iterator defines a field on which iterate.
+                          type: string
+                        name:
+                          description: Name of another API on which this depends
+                          type: string
+                      required:
+                      - name
+                      type: object
                     endpointRef:
                       description: EndpointRef a reference to an Endpoint
                       properties:
@@ -121,6 +130,8 @@ spec:
                       - name
                       - namespace
                       type: object
+                    filter:
+                      type: string
                     headers:
                       description: Headers is an array of custom request headers
                       items:

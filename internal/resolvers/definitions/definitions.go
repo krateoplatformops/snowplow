@@ -8,7 +8,7 @@ import (
 	"log/slog"
 
 	"github.com/gobuffalo/flect"
-	templates "github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"

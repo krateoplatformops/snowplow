@@ -9,15 +9,7 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-type JQTemplate interface {
-	Execute(query string, data any) (string, error)
-	ParseQuery(q string) (string, bool)
-	Q(q string, data any) ([]any, error)
-}
-
-var _ JQTemplate = (*jqTemplate)(nil)
-
-func New(leftDelim, rightDelim string) (JQTemplate, error) {
+func New(leftDelim, rightDelim string) (*JQ, error) {
 	pattern := fmt.Sprintf("^%s\\s+(.*)%s",
 		regexp.QuoteMeta(leftDelim),
 		regexp.QuoteMeta(rightDelim))
@@ -27,46 +19,18 @@ func New(leftDelim, rightDelim string) (JQTemplate, error) {
 		return nil, err
 	}
 
-	return &jqTemplate{
+	return &JQ{
 		re:      re,
 		unquote: true,
 	}, nil
 }
 
-type jqTemplate struct {
+type JQ struct {
 	re      *regexp.Regexp
 	unquote bool
 }
 
-func (t *jqTemplate) Q(q string, data any) ([]any, error) {
-	if len(q) == 0 {
-		return []any{}, nil
-	}
-
-	query, err := gojq.Parse(q)
-	if err != nil {
-		return []any{}, err
-	}
-
-	res := []any{}
-
-	iter := query.Run(data)
-	for {
-		v, ok := iter.Next()
-		if !ok {
-			break
-		}
-		if err, ok := v.(error); ok {
-			return res, err
-		}
-
-		res = append(res, v)
-	}
-
-	return res, nil
-}
-
-func (t *jqTemplate) Execute(q string, data any) (string, error) {
+func (t *JQ) Execute(q string, data any) (string, error) {
 	q, ok := t.ParseQuery(q)
 	if !ok {
 		return q, nil
@@ -104,7 +68,7 @@ func (t *jqTemplate) Execute(q string, data any) (string, error) {
 	return res, nil
 }
 
-func (t *jqTemplate) ParseQuery(q string) (string, bool) {
+func (t *JQ) ParseQuery(q string) (string, bool) {
 	if !t.re.MatchString(q) {
 		return q, false
 	}

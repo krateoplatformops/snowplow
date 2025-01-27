@@ -1,0 +1,18 @@
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  annotations:
+    "krateo.io/verbose": "false"
+  name: internal-api
+  namespace: demo-system
+spec:
+  api:
+  - name: namespaces
+    path: "/api/v1/namespaces?limit=10"
+    filter: "[.items[] | .metadata.name]"
+  - name: pods
+    dependsOn: 
+      name: namespaces
+      iterator: .[]
+    path: ${ "/api/v1/namespaces/" + (.) + "/pods" }
+    filter: "[.items[] | .metadata | {name: .name, namespace: .namespace, uid: .uid}]"

@@ -25,16 +25,25 @@ curl --silent \
   "http://127.0.0.1:30081/list?category=pods"
 
 
-Call (GET example)
-==================
+Call (GET example - RESTAction)
+===============================
 
 curl -v -G GET \
   -H 'x-krateo-user: cyberjoker' \
   -H 'x-krateo-groups: devs' \
-  -d 'apiVersion=apps/v1' \
-  -d 'resource=deployments' \
+  -d 'apiVersion=templates.krateo.io/v1' \
+  -d 'resource=restactions' \
   -d 'namespace=demo-system' \
-  -d 'name=nginx' \
+  -d 'name=external-api' \
+  "http://127.0.0.1:30081/call"
+
+curl -v -G GET \
+  -H 'x-krateo-user: cyberjoker' \
+  -H 'x-krateo-groups: devs' \
+  -d 'apiVersion=templates.krateo.io/v1' \
+  -d 'resource=restactions' \
+  -d 'namespace=demo-system' \
+  -d 'name=internal-api' \
   "http://127.0.0.1:30081/call"
 
 

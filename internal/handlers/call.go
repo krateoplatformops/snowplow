@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -78,25 +79,27 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	log.Debug("user config succesfully loaded", slog.Any("endpoint", ep))
 
-	callOpts := request.Options{
-		Path: ptr.To(uri),
+	dict := map[string]any{}
+	callOpts := request.RequestOptions{
+		Path: uri,
 		Verb: ptr.To(strings.ToUpper(opts.verb)),
 		Headers: []string{
 			"Accept: application/json",
 		},
-		Endpoint: &ep,
+		Endpoint:        &ep,
+		ResponseHandler: callResponseHandler(dict),
 	}
 	if has([]string{http.MethodPost, http.MethodPut}, opts.verb) {
 		callOpts.Payload = ptr.To(string(opts.dat))
 	}
 
 	rt := request.Do(req.Context(), callOpts)
-	if rt.Status.Status == response.StatusFailure {
+	if rt.Status == response.StatusFailure {
 		log.Error("unable to call endpoint",
 			slog.String("verb", strings.ToUpper(opts.verb)),
 			slog.String("uri", uri),
-			slog.String("err", rt.Status.Message))
-		response.Encode(wri, rt.Status)
+			slog.String("err", rt.Message))
+		response.Encode(wri, rt)
 		return
 	}
 
@@ -105,7 +108,7 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	enc := json.NewEncoder(wri)
 	enc.SetIndent("", "  ")
-	if err := enc.Encode(rt.Map); err != nil {
+	if err := enc.Encode(dict); err != nil {
 		log.Error("unable to serve api call response", slog.Any("err", err))
 	}
 }
@@ -178,4 +181,28 @@ func has(s []string, e string) bool {
 	}
 
 	return false
+}
+
+func callResponseHandler(out map[string]any) func(io.ReadCloser) error {
+	return func(in io.ReadCloser) error {
+		dat, err := io.ReadAll(in)
+		if err != nil {
+			return err
+		}
+
+		x := bytes.TrimSpace(dat)
+		isArray := len(x) > 0 && x[0] == '['
+
+		if isArray {
+			v := []any{}
+			err := json.Unmarshal(dat, &v)
+			if err != nil {
+				return err
+			}
+			out["items"] = v
+			return nil
+		}
+
+		return json.Unmarshal(dat, &out)
+	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
+	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
 )
@@ -38,7 +39,7 @@ func UserConfig() func(http.Handler) http.Handler {
 
 			authnNS := env.String("AUTHN_NAMESPACE", "")
 			ep, err := endpoints.FromSecret(context.Background(), sarc,
-				fmt.Sprintf("%s-clientconfig", sub), authnNS)
+				fmt.Sprintf("%s-clientconfig", kubeutil.MakeDNS1123Compatible(sub)), authnNS)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					response.Unauthorized(wri, err)

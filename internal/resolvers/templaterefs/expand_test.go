@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 )
@@ -55,15 +55,15 @@ func ExampleExpand() {
 
 	ctx := xcontext.BuildContext(context.Background(),
 		xcontext.WithLogger(nil),
-		xcontext.WithJQTemplate(),
+		xcontext.WithJQ(),
 	)
 
 	all := Expand(ctx, ExpandOptions{
-		TemplateIterators: []*v1alpha1.TemplateIterator{
+		TemplateIterators: []*v1.TemplateIterator{
 			{
 				Iterator: ptr.To(".items"),
-				Template: &v1alpha1.ObjectReference{
-					Reference: v1alpha1.Reference{
+				Template: &v1.ObjectReference{
+					Reference: v1.Reference{
 						Name:      `${ .metadata.name + "-card" }`,
 						Namespace: `${ .metadata.namespace }`,
 					},

@@ -3,7 +3,7 @@ package actions
 import (
 	"strings"
 
-	templates "github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 )
 
 func mapVerbs(cat *templates.ActionTemplate) []string {

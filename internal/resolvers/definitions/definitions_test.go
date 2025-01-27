@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/krateoplatformops/snowplow/apis"
-	"github.com/krateoplatformops/snowplow/apis/templates/v1alpha1"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
@@ -153,7 +153,7 @@ func TestResolveDefinition(t *testing.T) {
 			r.WithNamespace(namespace)
 			apis.AddToScheme(r.GetScheme())
 
-			cr := v1alpha1.Form{}
+			cr := v1.Form{}
 			err = r.Get(ctx, "fireworksapp", namespace, &cr)
 			if err != nil {
 				t.Fail()

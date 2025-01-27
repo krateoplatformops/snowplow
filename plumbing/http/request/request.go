@@ -1,7 +1,6 @@
 package request
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,29 +18,24 @@ import (
 
 const maxUnstructuredResponseTextBytes = 2048
 
-type Options struct {
-	Path     *string
-	Verb     *string
-	Headers  []string
-	Payload  *string
-	Endpoint *endpoints.Endpoint
+type RequestOptions struct {
+	Path            string
+	Verb            *string
+	Headers         []string
+	Payload         *string
+	Endpoint        *endpoints.Endpoint
+	ResponseHandler func(io.ReadCloser) error
 }
 
-type Result struct {
-	Map    map[string]any
-	Status *response.Status
-}
-
-func Do(ctx context.Context, opts Options) (res Result) {
+func Do(ctx context.Context, opts RequestOptions) *response.Status {
 	uri := strings.TrimSuffix(opts.Endpoint.ServerURL, "/")
-	if pt := ptr.Deref(opts.Path, ""); len(pt) > 0 {
-		uri = fmt.Sprintf("%s/%s", uri, strings.TrimPrefix(pt, "/"))
+	if len(opts.Path) > 0 {
+		uri = fmt.Sprintf("%s/%s", uri, strings.TrimPrefix(opts.Path, "/"))
 	}
 
 	u, err := url.Parse(uri)
 	if err != nil {
-		res.Status = response.New(http.StatusInternalServerError, err)
-		return
+		return response.New(http.StatusInternalServerError, err)
 	}
 
 	verb := ptr.Deref(opts.Verb, http.MethodGet)
@@ -51,12 +45,11 @@ func Do(ctx context.Context, opts Options) (res Result) {
 		body = strings.NewReader(s)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, verb, u.String(), body)
+	call, err := http.NewRequestWithContext(ctx, verb, u.String(), body)
 	if err != nil {
-		res.Status = response.New(http.StatusInternalServerError, err)
-		return
+		return response.New(http.StatusInternalServerError, err)
 	}
-	req.Header.Set(xcontext.LabelKrateoTraceId, xcontext.TraceId(ctx, true))
+	call.Header.Set(xcontext.LabelKrateoTraceId, xcontext.TraceId(ctx, true))
 
 	if len(opts.Headers) > 0 {
 		for _, el := range opts.Headers {
@@ -64,21 +57,19 @@ func Do(ctx context.Context, opts Options) (res Result) {
 			if idx <= 0 {
 				continue
 			}
-			req.Header.Set(el[:idx], el[idx+1:])
+			call.Header.Set(el[:idx], el[idx+1:])
 		}
 	}
 
 	cli, err := HTTPClientForEndpoint(opts.Endpoint)
 	if err != nil {
-		res.Status = response.New(http.StatusInternalServerError,
+		return response.New(http.StatusInternalServerError,
 			fmt.Errorf("unable to create HTTP Client for endpoint: %w", err))
-		return
 	}
 
-	respo, err := cli.Do(req)
+	respo, err := cli.Do(call)
 	if err != nil {
-		res.Status = response.New(http.StatusInternalServerError, err)
-		return
+		return response.New(http.StatusInternalServerError, err)
 	}
 	defer respo.Body.Close()
 
@@ -86,54 +77,26 @@ func Do(ctx context.Context, opts Options) (res Result) {
 	if !statusOK {
 		dat, err := io.ReadAll(io.LimitReader(respo.Body, maxUnstructuredResponseTextBytes))
 		if err != nil {
-			res.Status = response.New(http.StatusInternalServerError, err)
-			return
+			return response.New(http.StatusInternalServerError, err)
 		}
 
-		if err := json.Unmarshal(dat, &res.Status); err != nil {
-			res.Status = response.New(res.Status.Code, fmt.Errorf("%s", string(dat)))
-			return
+		res := &response.Status{}
+		if err := json.Unmarshal(dat, res); err != nil {
+			res = response.New(respo.StatusCode, fmt.Errorf("%s", string(dat)))
+			return res
 		}
 
-		return
+		return res
 	}
 
-	dict, err := decodeResponseBody(respo)
-	if err != nil {
-		res.Status = response.New(http.StatusInternalServerError, err)
-		return
+	if opts.ResponseHandler != nil {
+		if err := opts.ResponseHandler(respo.Body); err != nil {
+			return response.New(http.StatusInternalServerError, err)
+		}
+		return response.New(http.StatusOK, nil)
 	}
 
-	res.Map = dict
-	res.Status = response.New(http.StatusOK, nil)
-	return
-}
-
-func decodeResponseBody(resp *http.Response) (map[string]any, error) {
-	if !hasContentType(resp, "application/json") {
-		return nil, fmt.Errorf("only 'application/json' media type is supported")
-	}
-
-	dat, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	x := bytes.TrimSpace(dat)
-	isArray := len(x) > 0 && x[0] == '['
-	//isObject := len(x) > 0 && x[0] == '{'
-
-	if isArray {
-		v := []any{}
-		err := json.Unmarshal(dat, &v)
-		return map[string]any{
-			"items": v,
-		}, err
-	}
-
-	v := map[string]any{}
-	err = json.Unmarshal(dat, &v)
-	return v, err
+	return response.New(http.StatusNoContent, nil)
 }
 
 // Determine whether the request `content-type` includes a
