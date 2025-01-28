@@ -75,3 +75,13 @@ Plurals
 
 curl -v --request GET \
   "http://127.0.0.1:30081/api-info/names?apiVersion=v1&kind=Pod"
+
+
+Convert (JSON to YAML)
+=======================
+
+curl -v --request POST \
+  -H 'Content-Type: application/json' \
+  -d @testdata/convert-sample.json \
+  "http://127.0.0.1:30081/convert"
+

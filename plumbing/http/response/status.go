@@ -138,6 +138,9 @@ func New(code int, err error) *Status {
 	case http.StatusNotImplemented:
 		res.Status = StatusFailure
 		res.Reason = StatusReasonInvalid
+	case http.StatusBadRequest:
+		res.Status = StatusFailure
+		res.Reason = StatusReasonBadRequest
 	case http.StatusServiceUnavailable:
 		res.Status = StatusFailure
 		res.Reason = StatusReasonServiceUnavailable

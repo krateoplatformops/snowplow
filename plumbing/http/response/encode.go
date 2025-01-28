@@ -21,6 +21,10 @@ func BadRequest(w http.ResponseWriter, err error) error {
 	return Encode(w, New(http.StatusBadRequest, err))
 }
 
+func NotAcceptable(w http.ResponseWriter, err error) error {
+	return Encode(w, New(http.StatusNotAcceptable, err))
+}
+
 func MethodNotAllowed(w http.ResponseWriter, err error) error {
 	return Encode(w, New(http.StatusMethodNotAllowed, err))
 }

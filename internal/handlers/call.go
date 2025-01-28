@@ -46,10 +46,10 @@ type callHandler struct {
 // @Param data body string false "Object"
 // @Produce  json
 // @Success 200 {object} map[string]any
-// @Failure 400 {object} status.Status
-// @Failure 401 {object} status.Status
-// @Failure 404 {object} status.Status
-// @Failure 500 {object} status.Status
+// @Failure 400 {object} response.Status
+// @Failure 401 {object} response.Status
+// @Failure 404 {object} response.Status
+// @Failure 500 {object} response.Status
 // @Router /call [get]
 // @Router /call [post]
 // @Router /call [put]

@@ -1,0 +1,15 @@
+{
+    "director": {
+        "name": "Spielberg",
+        "movies": [
+            {
+                "title": "E.T.",
+                "year": 1975
+            },
+            {
+                "title": "Jaws",
+                "year": 1982
+            }
+        ]
+    }
+}

@@ -70,6 +70,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
+	mux.Handle("POST /convert", chain.Then(handlers.Converter()))
 
 	mux.Handle("GET /health", handlers.HealthCheck(serviceName, build))
 	mux.Handle("GET /api-info/names", chain.Then(handlers.Plurals()))

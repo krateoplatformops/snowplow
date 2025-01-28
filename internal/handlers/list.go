@@ -24,10 +24,10 @@ import (
 // @Param  ns               query   string  false  "Namespace"
 // @Produce  json
 // @Success 200 {object} map[string]any
-// @Failure 400 {object} status.Status
-// @Failure 401 {object} status.Status
-// @Failure 404 {object} status.Status
-// @Failure 500 {object} status.Status
+// @Failure 400 {object} response.Status
+// @Failure 401 {object} response.Status
+// @Failure 404 {object} response.Status
+// @Failure 500 {object} response.Status
 // @Router /list [get]
 func List() http.HandlerFunc {
 	return func(wri http.ResponseWriter, req *http.Request) {

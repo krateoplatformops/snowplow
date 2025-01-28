@@ -34,10 +34,10 @@ type pluralsHandler struct {
 // @Param  kind             query   string  true  "API Kind"
 // @Produce  json
 // @Success 200 {object} names
-// @Failure 400 {object} status.Status
-// @Failure 401 {object} status.Status
-// @Failure 404 {object} status.Status
-// @Failure 500 {object} status.Status
+// @Failure 400 {object} response.Status
+// @Failure 401 {object} response.Status
+// @Failure 404 {object} response.Status
+// @Failure 500 {object} response.Status
 // @Router /api-info/names [get]
 func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	gvk, err := r.validateRequest(req)
@@ -67,7 +67,7 @@ func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	if len(tmp.Plural) == 0 {
 		msg := fmt.Sprintf("no names found for %q", gvk.GroupVersion().String())
 		log.Warn(msg)
-		response.NotFound(wri, fmt.Errorf(msg))
+		response.NotFound(wri, fmt.Errorf("%s", msg))
 		return
 	}
 
