@@ -16,6 +16,7 @@ import (
 	"github.com/krateoplatformops/snowplow/internal/handlers"
 	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
+	"github.com/krateoplatformops/snowplow/plumbing/prettylog"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -58,7 +59,17 @@ func main() {
 		logLevel = slog.LevelDebug
 	}
 
-	log := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
+	lh := prettylog.New(&slog.HandlerOptions{
+		Level:     logLevel,
+		AddSource: false,
+	},
+		prettylog.WithDestinationWriter(os.Stderr),
+		prettylog.WithColor(),
+		prettylog.WithOutputEmptyAttrs(),
+	)
+
+	//log := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
+	log := slog.New(lh)
 	if *debugOn {
 		log.Debug("environment variables", slog.Any("env", os.Environ()))
 	}

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"math"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
@@ -18,7 +18,9 @@ func Converter() http.Handler {
 	return &convertHandler{}
 }
 
-const MaxBodySize = 1 * 1024 * 1024 // 1MB
+const (
+	MaxBodySize = 1 * 1024 * 1024 // 1MB
+)
 
 var _ http.Handler = (*convertHandler)(nil)
 
@@ -55,13 +57,12 @@ func (r *convertHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	log := xcontext.Logger(req.Context())
 
 	if toJSON {
-		limit := int(math.Min(128, float64(len(body))))
 		log.Debug("converting data to JSON", slog.String("contentType", contentType),
-			slog.String("data", fmt.Sprintf("%s", body[:limit])))
+			slog.String("data", truncate(body, 128)))
 
 		dat, err := yaml.YAMLToJSON(body)
 		if err != nil {
-			response.BadRequest(wri, fmt.Errorf("failed to convert YAML to JSON: %w", err))
+			response.BadRequest(wri, fmt.Errorf("failed to encode JSON: %w", err))
 			return
 		}
 
@@ -73,9 +74,8 @@ func (r *convertHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	}
 
 	if toYAML {
-		limit := int(math.Min(128, float64(len(body))))
 		log.Debug("converting data to YAML", slog.String("contentType", contentType),
-			slog.String("data", fmt.Sprintf("%s", body[:limit])))
+			slog.String("data", truncate(body, 128)))
 
 		dat, err := yaml.JSONToYAML(body)
 		if err != nil {
@@ -93,4 +93,18 @@ func (r *convertHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		fmt.Errorf("unsupported content type '%s' use 'application/json' or 'application/x-yaml'", contentType))
 
 	return
+}
+
+func truncate(data []byte, limit int) string {
+	str := string(data) // Converte i byte in stringa
+
+	// Conta i caratteri UTF-8 (rune)
+	if utf8.RuneCountInString(str) <= limit {
+		return str
+	}
+
+	// Converte la stringa in slice di rune per evitare di troncare caratteri multibyte
+	runes := []rune(str)
+
+	return string(runes[:limit]) + "..."
 }
