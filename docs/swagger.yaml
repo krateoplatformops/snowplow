@@ -1,6 +1,17 @@
 basePath: /
 definitions:
-  health.ServiceInfo:
+  handlers.names:
+    properties:
+      plural:
+        type: string
+      shorts:
+        items:
+          type: string
+        type: array
+      singular:
+        type: string
+    type: object
+  handlers.serviceInfo:
     properties:
       build:
         type: string
@@ -9,7 +20,7 @@ definitions:
       namespace:
         type: string
     type: object
-  status.Status:
+  response.Status:
     properties:
       apiVersion:
         type: string
@@ -23,7 +34,7 @@ definitions:
         type: string
       reason:
         allOf:
-        - $ref: '#/definitions/status.StatusReason'
+        - $ref: '#/definitions/response.StatusReason'
         description: |-
           A machine-readable description of why this operation is in the
           "Failure" status. If this value is empty there
@@ -35,7 +46,7 @@ definitions:
           One of: "Success" or "Failure".
         type: string
     type: object
-  status.StatusReason:
+  response.StatusReason:
     enum:
     - ""
     - Unauthorized
@@ -77,9 +88,342 @@ info:
   title: SnowPlow API
   version: 0.1.0
 paths:
+  /api-info/names:
+    get:
+      description: Returns information about Kubernetes API names
+      operationId: names
+      parameters:
+      - description: API Group and Version
+        in: query
+        name: apiVersion
+        required: true
+        type: string
+      - description: API Kind
+        in: query
+        name: kind
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.names'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Status'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Status'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Status'
+      summary: Names Endpoint
+  /call:
+    delete:
+      description: Handle Resources
+      operationId: call
+      parameters:
+      - description: Krateo User
+        in: header
+        name: X-Krateo-User
+        required: true
+        type: string
+      - description: Krateo User Groups
+        in: header
+        name: X-Krateo-Groups
+        required: true
+        type: string
+      - description: Resource API Group and Version
+        in: query
+        name: apiVersion
+        required: true
+        type: string
+      - description: Resource Plural
+        in: query
+        name: resource
+        required: true
+        type: string
+      - description: Resource name
+        in: query
+        name: name
+        required: true
+        type: string
+      - description: Resource namespace
+        in: query
+        name: namespace
+        required: true
+        type: string
+      - description: Object
+        in: body
+        name: data
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Status'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Status'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Status'
+      summary: Call Endpoint
+    get:
+      description: Handle Resources
+      operationId: call
+      parameters:
+      - description: Krateo User
+        in: header
+        name: X-Krateo-User
+        required: true
+        type: string
+      - description: Krateo User Groups
+        in: header
+        name: X-Krateo-Groups
+        required: true
+        type: string
+      - description: Resource API Group and Version
+        in: query
+        name: apiVersion
+        required: true
+        type: string
+      - description: Resource Plural
+        in: query
+        name: resource
+        required: true
+        type: string
+      - description: Resource name
+        in: query
+        name: name
+        required: true
+        type: string
+      - description: Resource namespace
+        in: query
+        name: namespace
+        required: true
+        type: string
+      - description: Object
+        in: body
+        name: data
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Status'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Status'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Status'
+      summary: Call Endpoint
+    post:
+      description: Handle Resources
+      operationId: call
+      parameters:
+      - description: Krateo User
+        in: header
+        name: X-Krateo-User
+        required: true
+        type: string
+      - description: Krateo User Groups
+        in: header
+        name: X-Krateo-Groups
+        required: true
+        type: string
+      - description: Resource API Group and Version
+        in: query
+        name: apiVersion
+        required: true
+        type: string
+      - description: Resource Plural
+        in: query
+        name: resource
+        required: true
+        type: string
+      - description: Resource name
+        in: query
+        name: name
+        required: true
+        type: string
+      - description: Resource namespace
+        in: query
+        name: namespace
+        required: true
+        type: string
+      - description: Object
+        in: body
+        name: data
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Status'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Status'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Status'
+      summary: Call Endpoint
+    put:
+      description: Handle Resources
+      operationId: call
+      parameters:
+      - description: Krateo User
+        in: header
+        name: X-Krateo-User
+        required: true
+        type: string
+      - description: Krateo User Groups
+        in: header
+        name: X-Krateo-Groups
+        required: true
+        type: string
+      - description: Resource API Group and Version
+        in: query
+        name: apiVersion
+        required: true
+        type: string
+      - description: Resource Plural
+        in: query
+        name: resource
+        required: true
+        type: string
+      - description: Resource name
+        in: query
+        name: name
+        required: true
+        type: string
+      - description: Resource namespace
+        in: query
+        name: namespace
+        required: true
+        type: string
+      - description: Object
+        in: body
+        name: data
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Status'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Status'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Status'
+      summary: Call Endpoint
+  /convert:
+    post:
+      consumes:
+      - application/json
+      - ' application/x-yaml'
+      - ' text/yaml'
+      description: This endpoint converts YAML to JSON or JSON to YAML based on the
+        "Accept" header.
+      operationId: convert
+      parameters:
+      - description: Input data in YAML or JSON format
+        in: body
+        name: data
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      - ' application/x-yaml'
+      responses:
+        "200":
+          description: Converted output in the requested format
+          schema:
+            type: string
+        "400":
+          description: Bad request, invalid input
+          schema:
+            $ref: '#/definitions/response.Status'
+        "406":
+          description: Unsupported 'Accept' header
+          schema:
+            $ref: '#/definitions/response.Status'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Status'
+      summary: Convert YAML to JSON or JSON to YAML
   /health:
     get:
-      description: Health Check
+      description: Health HealthCheck
       operationId: health
       produces:
       - application/json
@@ -87,7 +431,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/health.ServiceInfo'
+            $ref: '#/definitions/handlers.serviceInfo'
       summary: Liveness Endpoint
   /list:
     get:
@@ -124,18 +468,18 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/status.Status'
+            $ref: '#/definitions/response.Status'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/status.Status'
+            $ref: '#/definitions/response.Status'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Status'
+            $ref: '#/definitions/response.Status'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Status'
+            $ref: '#/definitions/response.Status'
       summary: List resources by category in a specified namespace.
 swagger: "2.0"

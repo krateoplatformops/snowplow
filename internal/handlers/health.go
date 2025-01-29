@@ -13,7 +13,7 @@ import (
 // @Description Health HealthCheck
 // @ID health
 // @Produce  json
-// @Success 200 {object} ServiceInfo
+// @Success 200 {object} serviceInfo
 // @Router /health [get]
 func HealthCheck(serviceName, build string) http.HandlerFunc {
 	return func(wri http.ResponseWriter, req *http.Request) {

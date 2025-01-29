@@ -8,9 +8,494 @@
     },
     "basePath": "/",
     "paths": {
+        "/api-info/names": {
+            "get": {
+                "description": "Returns information about Kubernetes API names",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Names Endpoint",
+                "operationId": "names",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "API Group and Version",
+                        "name": "apiVersion",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API Kind",
+                        "name": "kind",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.names"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    }
+                }
+            }
+        },
+        "/call": {
+            "get": {
+                "description": "Handle Resources",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Call Endpoint",
+                "operationId": "call",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Krateo User",
+                        "name": "X-Krateo-User",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Krateo User Groups",
+                        "name": "X-Krateo-Groups",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource API Group and Version",
+                        "name": "apiVersion",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource Plural",
+                        "name": "resource",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource namespace",
+                        "name": "namespace",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Object",
+                        "name": "data",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Handle Resources",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Call Endpoint",
+                "operationId": "call",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Krateo User",
+                        "name": "X-Krateo-User",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Krateo User Groups",
+                        "name": "X-Krateo-Groups",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource API Group and Version",
+                        "name": "apiVersion",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource Plural",
+                        "name": "resource",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource namespace",
+                        "name": "namespace",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Object",
+                        "name": "data",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Handle Resources",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Call Endpoint",
+                "operationId": "call",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Krateo User",
+                        "name": "X-Krateo-User",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Krateo User Groups",
+                        "name": "X-Krateo-Groups",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource API Group and Version",
+                        "name": "apiVersion",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource Plural",
+                        "name": "resource",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource namespace",
+                        "name": "namespace",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Object",
+                        "name": "data",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Handle Resources",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Call Endpoint",
+                "operationId": "call",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Krateo User",
+                        "name": "X-Krateo-User",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Krateo User Groups",
+                        "name": "X-Krateo-Groups",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource API Group and Version",
+                        "name": "apiVersion",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource Plural",
+                        "name": "resource",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource namespace",
+                        "name": "namespace",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Object",
+                        "name": "data",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    }
+                }
+            }
+        },
+        "/convert": {
+            "post": {
+                "description": "This endpoint converts YAML to JSON or JSON to YAML based on the \"Accept\" header.",
+                "consumes": [
+                    "application/json",
+                    " application/x-yaml",
+                    " text/yaml"
+                ],
+                "produces": [
+                    "application/json",
+                    " application/x-yaml"
+                ],
+                "summary": "Convert YAML to JSON or JSON to YAML",
+                "operationId": "convert",
+                "parameters": [
+                    {
+                        "description": "Input data in YAML or JSON format",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Converted output in the requested format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request, invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "406": {
+                        "description": "Unsupported 'Accept' header",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
-                "description": "Health Check",
+                "description": "Health HealthCheck",
                 "produces": [
                     "application/json"
                 ],
@@ -20,7 +505,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/health.ServiceInfo"
+                            "$ref": "#/definitions/handlers.serviceInfo"
                         }
                     }
                 }
@@ -74,25 +559,25 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/status.Status"
+                            "$ref": "#/definitions/response.Status"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/status.Status"
+                            "$ref": "#/definitions/response.Status"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Status"
+                            "$ref": "#/definitions/response.Status"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Status"
+                            "$ref": "#/definitions/response.Status"
                         }
                     }
                 }
@@ -100,7 +585,24 @@
         }
     },
     "definitions": {
-        "health.ServiceInfo": {
+        "handlers.names": {
+            "type": "object",
+            "properties": {
+                "plural": {
+                    "type": "string"
+                },
+                "shorts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "singular": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.serviceInfo": {
             "type": "object",
             "properties": {
                 "build": {
@@ -114,7 +616,7 @@
                 }
             }
         },
-        "status.Status": {
+        "response.Status": {
             "type": "object",
             "properties": {
                 "apiVersion": {
@@ -135,7 +637,7 @@
                     "description": "A machine-readable description of why this operation is in the\n\"Failure\" status. If this value is empty there\nis no information available. A Reason clarifies an HTTP status\ncode but does not override it.",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/status.StatusReason"
+                            "$ref": "#/definitions/response.StatusReason"
                         }
                     ]
                 },
@@ -145,7 +647,7 @@
                 }
             }
         },
-        "status.StatusReason": {
+        "response.StatusReason": {
             "type": "string",
             "enum": [
                 "",
