@@ -17,28 +17,25 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func JQTemplate() types.StepFunc {
-	return func(ctx context.Context, _ *testing.T, _ *envconf.Config) context.Context {
-		return xcontext.BuildContext(ctx,
-			xcontext.WithJQ(),
-		)
-	}
-}
-
 func Logger(traceId string) types.StepFunc {
 	logLevel := slog.LevelInfo
 	if env.True("DEBUG") {
 		logLevel = slog.LevelDebug
 	}
 
-	handler := prettylog.New(&slog.HandlerOptions{
-		Level:     logLevel,
-		AddSource: false,
-	},
-		prettylog.WithDestinationWriter(os.Stdout),
-		prettylog.WithColor(),
-		prettylog.WithOutputEmptyAttrs(),
-	)
+	var handler slog.Handler
+	if env.TestMode() {
+		handler = slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel})
+	} else {
+		handler = prettylog.New(&slog.HandlerOptions{
+			Level:     logLevel,
+			AddSource: false,
+		},
+			prettylog.WithDestinationWriter(os.Stdout),
+			prettylog.WithColor(),
+			prettylog.WithOutputEmptyAttrs(),
+		)
+	}
 
 	return func(ctx context.Context, _ *testing.T, _ *envconf.Config) context.Context {
 		return xcontext.BuildContext(ctx,

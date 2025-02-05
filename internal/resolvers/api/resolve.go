@@ -42,12 +42,6 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 
 	log := xcontext.Logger(ctx)
 
-	tpl := xcontext.JQ(ctx)
-	if tpl == nil {
-		log.Error("missing jq engine in context")
-		return map[string]any{}
-	}
-
 	// Sort API by Depends
 	names, err := topologicalSort(opts.Items)
 	if err != nil {
@@ -111,8 +105,6 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 			log.Warn("empty request options for http call", slog.Any("name", id))
 			continue
 		}
-		log.Debug("api call expanded by iterator",
-			slog.String("name", id), slog.Int("count", len(tmp)))
 
 		for _, call := range tmp {
 			call.Endpoint = &ep

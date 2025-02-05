@@ -3,7 +3,7 @@ kind: RESTAction
 metadata:
   annotations:
     "krateo.io/verbose": "false"
-  name: internal-api
+  name: kube
   namespace: demo-system
 spec:
   api:

@@ -57,7 +57,7 @@ func (r *restActionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 		return
 	}
 
-	ctx := xcontext.BuildContext(req.Context(), xcontext.WithJQ())
+	ctx := xcontext.BuildContext(req.Context())
 	res, err := restactions.Resolve(ctx, restactions.ResolveOptions{
 		In:         &cr,
 		Username:   req.Header.Get(xcontext.LabelKrateoUser),

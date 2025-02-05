@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: httpbin-endpoint
+  namespace: demo-system
+stringData:
+  server-url: https://httpbin.org
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: httpbin
+  namespace: demo-system
+spec:
+  api:
+  - name: one
+    path: "/get?name=Alice&email=alice@example.com&age=30"
+    endpointRef:
+      name: httpbin-endpoint
+      namespace: demo-system
+  - name: two
+    dependsOn: 
+      name: one
+    verb: POST
+    path: "/post"
+    headers:
+      - "Content-Type: application/json"
+    payload: ${ .one.args }
+    endpointRef:
+      name: httpbin-endpoint
+      namespace: demo-system

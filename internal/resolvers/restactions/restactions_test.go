@@ -71,6 +71,7 @@ func TestMain(m *testing.M) {
 		envfuncs.DeleteNamespace(namespace),
 		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
 		envfuncs.DestroyCluster(clusterName),
+		e2e.Coverage(),
 	)
 
 	os.Exit(testenv.Run(m))
@@ -81,7 +82,6 @@ func TestRESTAction(t *testing.T) {
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
-		Setup(e2e.JQTemplate()).
 		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r, err := resources.New(cfg.Client().RESTConfig())
@@ -103,41 +103,49 @@ func TestRESTAction(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve RESTAction", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			r, err := resources.New(c.Client().RESTConfig())
-			if err != nil {
-				t.Fail()
-			}
-			r.WithNamespace(namespace)
-			apis.AddToScheme(r.GetScheme())
-
-			cr := v1.RESTAction{}
-			err = r.Get(ctx, "external-api", namespace, &cr)
-			if err != nil {
-				t.Fail()
-			}
-
-			res, err := Resolve(ctx, ResolveOptions{
-				In:         &cr,
-				SArc:       c.Client().RESTConfig(),
-				AuthnNS:    namespace,
-				Username:   "cyberjoker",
-				UserGroups: []string{"devs"},
-			})
-			if err != nil {
-				log := xcontext.Logger(ctx)
-				log.Error("unable to resolve rest action", slog.Any("err", err))
-				t.Fail()
-			}
-
-			res.Kind = "RESTAction"
-			res.APIVersion = v1.SchemeGroupVersion.String()
-			if err := kubeutil.ToYAML(os.Stderr, res); err != nil {
-				t.Fatal(err)
-			}
-
-			return ctx
-		}).Feature()
+		Assess("Resolve GitHub", resolveRESTAction("github")).
+		Assess("Resolve HttpBin", resolveRESTAction("httpbin")).
+		Assess("Resolve Typicode", resolveRESTAction("typicode")).
+		Assess("Resolve Kube", resolveRESTAction("kube")).
+		Feature()
 
 	testenv.Test(t, f)
+}
+
+func resolveRESTAction(name string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+		r, err := resources.New(c.Client().RESTConfig())
+		if err != nil {
+			t.Fail()
+		}
+		r.WithNamespace(namespace)
+		apis.AddToScheme(r.GetScheme())
+
+		cr := v1.RESTAction{}
+		err = r.Get(ctx, name, namespace, &cr)
+		if err != nil {
+			t.Fail()
+		}
+
+		res, err := Resolve(ctx, ResolveOptions{
+			In:         &cr,
+			SArc:       c.Client().RESTConfig(),
+			AuthnNS:    namespace,
+			Username:   "cyberjoker",
+			UserGroups: []string{"devs"},
+		})
+		if err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to resolve rest action", slog.Any("err", err))
+			t.Fail()
+		}
+
+		res.Kind = "RESTAction"
+		res.APIVersion = v1.SchemeGroupVersion.String()
+		if err := kubeutil.ToYAML(os.Stderr, res); err != nil {
+			t.Fatal(err)
+		}
+
+		return ctx
+	}
 }

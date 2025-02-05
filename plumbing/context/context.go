@@ -10,7 +10,6 @@ import (
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/shortid"
-	"github.com/krateoplatformops/snowplow/plumbing/tmpl"
 )
 
 const (
@@ -59,14 +58,6 @@ func UserConfig(ctx context.Context) (endpoints.Endpoint, error) {
 	return ep, nil
 }
 
-func JQ(ctx context.Context) *tmpl.JQ {
-	v := ctx.Value(contextKeyJQ)
-	if val, ok := v.(*tmpl.JQ); ok {
-		return val
-	}
-	return nil
-}
-
 func RequestElapsedTime(ctx context.Context) string {
 	start, ok := ctx.Value(contextKeyRequestStartAt).(time.Time)
 	if !ok {
@@ -112,18 +103,6 @@ func WithRequestStartedAt(t time.Time) WithContextFunc {
 func WithUserConfig(ep endpoints.Endpoint) WithContextFunc {
 	return func(ctx context.Context) context.Context {
 		return context.WithValue(ctx, contextKeyUserConfig, ep)
-	}
-}
-
-func WithJQ() WithContextFunc {
-	return func(ctx context.Context) context.Context {
-		tpl, err := tmpl.New("${", "}")
-		if err != nil {
-			Logger(ctx).Error("unable to create jq engine", slog.Any("err", err))
-			return ctx
-		}
-
-		return context.WithValue(ctx, contextKeyJQ, tpl)
 	}
 }
 

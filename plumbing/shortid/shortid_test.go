@@ -1,3 +1,6 @@
+//go:build unit
+// +build unit
+
 // Copyright (c) 2016-2017. Oleg Sklyar & teris.io. All rights reserved.
 // See the LICENSE file in the project root for licensing information.
 
