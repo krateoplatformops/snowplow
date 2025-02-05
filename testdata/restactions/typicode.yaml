@@ -11,7 +11,7 @@ stringData:
 apiVersion: templates.krateo.io/v1
 kind: RESTAction
 metadata:
-  name: external-api
+  name: typicode
   namespace: demo-system
   annotations:
     "krateo.io/verbose": "false"
@@ -22,6 +22,7 @@ spec:
     endpointRef:
       name: typicode-endpoint
       namespace: demo-system
+    filter: map(select(.email | endswith(".biz")))
   - name: todos
     dependsOn: 
       name: users

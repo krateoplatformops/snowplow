@@ -3,11 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
+	"github.com/krateoplatformops/snowplow/plumbing/jqutil"
 	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 )
 
@@ -21,12 +21,6 @@ func jsonHandler(ctx context.Context, opts jsonHandlerOptions) func(io.ReadClose
 	return func(in io.ReadCloser) error {
 		log := xcontext.Logger(ctx)
 
-		tpl := xcontext.JQ(ctx)
-		if tpl == nil {
-			log.Error("missing jq engine in context")
-			return nil
-		}
-
 		dat, err := io.ReadAll(in)
 		if err != nil {
 			return err
@@ -38,9 +32,11 @@ func jsonHandler(ctx context.Context, opts jsonHandlerOptions) func(io.ReadClose
 		}
 
 		if opts.filter != nil {
-			q := fmt.Sprintf("${ %s }", ptr.Deref(opts.filter, ""))
+			q := ptr.Deref(opts.filter, "")
 			log.Debug("found filter on api results", slog.String("filter", q))
-			s, err := tpl.Execute(q, tmp)
+			s, err := jqutil.Eval(context.TODO(), jqutil.EvalOptions{
+				Query: q, Data: tmp,
+			})
 			if err != nil {
 				return err
 			}

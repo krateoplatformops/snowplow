@@ -80,7 +80,6 @@ func TestResolveAPI(t *testing.T) {
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
-		Setup(e2e.JQTemplate()).
 		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 
@@ -112,7 +111,7 @@ func TestResolveAPI(t *testing.T) {
 			apis.AddToScheme(r.GetScheme())
 
 			cr := v1.RESTAction{}
-			err = r.Get(ctx, "github-runs", namespace, &cr)
+			err = r.Get(ctx, "external-api", namespace, &cr)
 			if err != nil {
 				t.Fail()
 			}

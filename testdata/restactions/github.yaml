@@ -12,28 +12,29 @@ stringData:
 apiVersion: templates.krateo.io/v1
 kind: RESTAction
 metadata:
-  name: github-runs
+  name: github
   namespace: demo-system
   annotations:
     "krateo.io/verbose": "false"
 spec:
   api:
-  - name: runs
+  - name: all
     endpointRef:
       name: github-endpoint
       namespace: demo-system
-    path: "/repos/krateoplatformops/snowplow/actions/runs?per_page=3"
+    path: "/repos/krateoplatformops/snowplow/actions/runs?per_page=2"
     headers:
       - "Accept: application/vnd.github+json"
-    filter: "[.workflow_runs[] | {id: .id, actor: .actor.login, created_at: .created_at, conclusion: .conclusion}]"
+    filter: ".workflow_runs |  map({workflow_id, id, display_title, status, conclusion, created_at, user: .triggering_actor.login})"
   - name: jobs
     endpointRef:
       name: github-endpoint
       namespace: demo-system
     dependsOn: 
-      name: runs
-      iterator: .runs[:2]
-    path: ${ "/repos/krateoplatformops/snowplow/actions/runs/" + (.id|tostring) + "/jobs"  }
+      name: all
+      iterator: .all | sort_by(.created_at) | reverse
+    path: ${ "/repos/krateoplatformops/snowplow/actions/runs/" + (.id|tostring) + "/timing" }
     headers:
       - "Accept: application/vnd.github+json"
-    
+    filter: ".billable |= with_entries({key, value: {jobs: .value.jobs}})"
+

@@ -34,7 +34,7 @@ curl -v -G GET \
   -d 'apiVersion=templates.krateo.io/v1' \
   -d 'resource=restactions' \
   -d 'namespace=demo-system' \
-  -d 'name=external-api' \
+  -d 'name=typicode' \
   "http://127.0.0.1:30081/call"
 
 curl -v -G GET \
@@ -43,20 +43,9 @@ curl -v -G GET \
   -d 'apiVersion=templates.krateo.io/v1' \
   -d 'resource=restactions' \
   -d 'namespace=demo-system' \
-  -d 'name=internal-api' \
+  -d 'name=kube' \
   "http://127.0.0.1:30081/call"
 
-
-Call (Dispatcher example)
-=========================
-curl -v -G GET \
-  -H 'x-krateo-user: cyberjoker' \
-  -H 'x-krateo-groups: devs' \
-  -d 'apiVersion=templates.krateo.io/v1alpha1' \
-  -d 'resource=customforms' \
-  -d 'namespace=demo-system' \
-  -d 'name=fireworksapp' \
-  "http://127.0.0.1:30081/call"
 
 Call (POST example)
 ==================
@@ -67,7 +56,6 @@ curl -v --request POST \
   -H 'Content-Type: application/json' \
   -d @testdata/pod-sample.json \
   "http://127.0.0.1:30081/call?apiVersion=apps/v1&namespace=demo-system&resource=deployments&name=nginx"
-
 
 
 Plurals 

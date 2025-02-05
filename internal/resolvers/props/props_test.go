@@ -80,7 +80,6 @@ func TestWidgetProps(t *testing.T) {
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
-		Setup(e2e.JQTemplate()).
 		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r, err := resources.New(cfg.Client().RESTConfig())
