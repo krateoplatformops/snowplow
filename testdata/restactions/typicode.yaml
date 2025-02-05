@@ -16,6 +16,7 @@ metadata:
   annotations:
     "krateo.io/verbose": "false"
 spec:
+  filter: "[.todos[] as $todo | .users[] | select(.id == $todo.userId) | { name: .name, id: $todo.id, title: $todo.title, completed: $todo.completed }]"
   api:
   - name: users
     path: "/users"

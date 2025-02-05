@@ -33,7 +33,7 @@ func jsonHandler(ctx context.Context, opts jsonHandlerOptions) func(io.ReadClose
 
 		if opts.filter != nil {
 			q := ptr.Deref(opts.filter, "")
-			log.Debug("found filter on api results", slog.String("filter", q))
+			log.Debug("found local filter on api results", slog.String("filter", q))
 			s, err := jqutil.Eval(context.TODO(), jqutil.EvalOptions{
 				Query: q, Data: tmp,
 			})
