@@ -6,6 +6,8 @@ import (
 
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/api"
+	"github.com/krateoplatformops/snowplow/plumbing/jqutil"
+	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,13 +40,27 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 		dict = map[string]any{}
 	}
 
-	bin, err := json.Marshal(dict)
-	if err != nil {
-		return opts.In, err
+	var raw []byte
+	if opts.In.Spec.Filter != nil {
+		q := ptr.Deref(opts.In.Spec.Filter, "")
+		s, err := jqutil.Eval(context.TODO(), jqutil.EvalOptions{
+			Query: q, Data: dict,
+		})
+		if err != nil {
+			return opts.In, err
+		}
+
+		raw = []byte(s)
+	} else {
+		var err error
+		raw, err = json.Marshal(dict)
+		if err != nil {
+			return opts.In, err
+		}
 	}
 
 	opts.In.Status = &runtime.RawExtension{
-		Raw: bin,
+		Raw: raw,
 	}
 
 	if opts.In.Annotations != nil {

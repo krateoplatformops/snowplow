@@ -8,7 +8,8 @@ import (
 // RESTActionSpec defines the api handler specifications.
 type RESTActionSpec struct {
 	//+listType=atomic
-	API []*API `json:"api,omitempty"`
+	API    []*API  `json:"api,omitempty"`
+	Filter *string `json:"filter,omitempty"`
 }
 
 // +kubebuilder:object:root=true

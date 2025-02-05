@@ -105,6 +105,8 @@ spec:
                   type: object
                 type: array
                 x-kubernetes-list-type: atomic
+              filter:
+                type: string
             type: object
           status:
             type: object
