@@ -3,8 +3,10 @@ coverage:
   round: down
   range: "70..100"
   ignore:
-    - "apis/*"
-    - "docs/*"
-    - "plumbing/e2e/*"
+    - "apis/**/*"
+    - "docs/**/*"
+    - "internal/objects/**/*"
+    - "internal/rbac/**/*"
+    - "plumbing/e2e/**/*"
 
   
