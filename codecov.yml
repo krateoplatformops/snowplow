@@ -5,6 +5,6 @@ coverage:
   ignore:
     - "apis/*"
     - "docs/*"
-    - "plumbing/http/*"
+    - "plumbing/e2e/*"
 
   

@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: snowplow-endpoint
+  namespace: krateo-system
+stringData:
+  server-url: http://10.96.185.104:8081
+  #token: YOUR_TOKEN_HERE
+---

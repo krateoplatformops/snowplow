@@ -13,8 +13,7 @@ import (
 func Example_topologicalSort() {
 	got, err := topologicalSort([]*templates.API{
 		{Name: "api1", DependsOn: &templates.Dependency{Name: "api3"}},
-		{Name: "api2"},
-		{Name: "api3", DependsOn: &templates.Dependency{Name: "api2"}},
+		{Name: "api3", DependsOn: &templates.Dependency{Name: "api4"}},
 		{Name: "api4"},
 	})
 	if err != nil {
@@ -25,5 +24,5 @@ func Example_topologicalSort() {
 	fmt.Println(got)
 
 	// Output:
-	// [api2 api4 api3 api1]
+	// [api4 api3 api1]
 }
