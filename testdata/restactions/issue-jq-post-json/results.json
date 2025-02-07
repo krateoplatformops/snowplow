@@ -1,0 +1,134 @@
+{
+  "kind": "RESTAction",
+  "apiVersion": "templates.krateo.io/v1",
+  "metadata": {
+    "name": "composition-tabpane-yamlviewer-row-column-1-panel-yamlviewer",
+    "namespace": "fireworksapp-system",
+    "uid": "5cdb7737-6a3a-48f4-b041-c26f1ca64050",
+    "resourceVersion": "608",
+    "generation": 1,
+    "creationTimestamp": "2025-02-06T08:11:31Z"
+  },
+  "spec": {
+    "api": [
+      {
+        "name": "getCompositionJson",
+        "path": "/apis/composition.krateo.io/v1-1-11/namespaces/fireworksapp-system/fireworksapps/test",
+        "headers": [
+          "Accept: application/json",
+          "X-Krateo-User: cyberjoker",
+          "X-Krateo-Groups: devs"
+        ]
+      },
+      {
+        "name": "getCompositionYaml",
+        "path": "/convert",
+        "verb": "POST",
+        "headers": [
+          "Content-Type: application/json",
+          "X-Krateo-User: cyberjoker",
+          "X-Krateo-Groups: devs"
+        ],
+        "payload": "${ .getCompositionJson }",
+        "endpointRef": {
+          "name": "snowplow-endpoint",
+          "namespace": "krateo-system"
+        },
+        "dependsOn": {
+          "name": "getCompositionJson"
+        }
+      }
+    ]
+  },
+  "status": {
+    "getCompositionJson": {
+      "apiVersion": "composition.krateo.io/v1-1-11",
+      "kind": "FireworksApp",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"composition.krateo.io/v1-1-11\",\"kind\":\"FireworksApp\",\"metadata\":{\"annotations\":{},\"name\":\"test\",\"namespace\":\"fireworksapp-system\"},\"spec\":{\"git\":{\"deletionPolicy\":\"Orphan\",\"insecure\":true,\"toRepo\":{\"apiUrl\":\"https://api.github.com\",\"branch\":\"main\",\"credentials\":{\"authMethod\":\"basic\",\"secretRef\":{\"key\":\"token\",\"name\":\"github-repo-creds\",\"namespace\":\"krateo-system\"}},\"deletionPolicy\":\"Delete\",\"initialize\":true,\"name\":\"test\",\"org\":\"krateoplatformops-archive\",\"path\":\"/\",\"private\":false,\"scmUrl\":\"https://github.com\"},\"unsupportedCapabilities\":true}},\"status\":{\"conditions\":[{\"lastTransitionTime\":\"2025-02-05T14:31:54Z\",\"message\":\"\",\"reason\":\"Available\",\"status\":\"True\",\"type\":\"Ready\"}],\"helmChartUrl\":\"https://charts.krateo.io\",\"helmChartVersion\":\"1.1.11\",\"managed\":[{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-applicationstatus-row-column-1\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-applicationstatus\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-compositionstatus-row-column-1\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-compositionstatus\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-events-row-column-1\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-events\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-overview-row-column-1\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-overview\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-card\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"composition-test-tabpane-events-row-column-1-panel-eventlist\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"v1\",\"name\":\"test-fireworks-app-replace-values\",\"namespace\":\"fireworksapp-system\",\"resource\":\"configmaps\"},{\"apiVersion\":\"argoproj.io/v1alpha1\",\"name\":\"test\",\"namespace\":\"krateo-system\",\"resource\":\"applications\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tablist\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-applicationstatus-row-column-1\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-applicationstatus-row\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-applicationstatus\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-compositionstatus-row-column-1\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-compositionstatus-row\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-compositionstatus\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-events-row-column-1-panel\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-events-row-column-1\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-events-row\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-events\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-overview-row-column-1-panel\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-overview-row-column-1\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-overview-row\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-overview\",\"namespace\":\"fireworksapp-system\",\"resource\":\"collections\"},{\"apiVersion\":\"resourcetrees.krateo.io/v1\",\"name\":\"test\",\"namespace\":\"fireworksapp-system\",\"resource\":\"compositionreferences\"},{\"apiVersion\":\"git.krateo.io/v1alpha1\",\"name\":\"test-fireworks-app-repo\",\"namespace\":\"fireworksapp-system\",\"resource\":\"repoes\"},{\"apiVersion\":\"github.krateo.io/v1alpha1\",\"name\":\"test-fireworks-app-repo\",\"namespace\":\"fireworksapp-system\",\"resource\":\"repoes\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-card\",\"namespace\":\"fireworksapp-system\",\"resource\":\"widgets\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-applicationstatus-row-column-1-chartflow\",\"namespace\":\"fireworksapp-system\",\"resource\":\"widgets\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-compositionstatus-row-column-1-chartflow\",\"namespace\":\"fireworksapp-system\",\"resource\":\"widgets\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-events-row-column-1-panel-eventlist\",\"namespace\":\"fireworksapp-system\",\"resource\":\"widgets\"},{\"apiVersion\":\"templates.krateo.io/v1alpha1\",\"name\":\"composition-test-tabpane-overview-row-column-1-panel-paragraph\",\"namespace\":\"fireworksapp-system\",\"resource\":\"widgets\"}]}}\n"
+        },
+        "creationTimestamp": "2025-02-06T08:11:27Z",
+        "generation": 1,
+        "managedFields": [
+          {
+            "apiVersion": "composition.krateo.io/v1-1-11",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  ".": {},
+                  "f:kubectl.kubernetes.io/last-applied-configuration": {}
+                }
+              },
+              "f:spec": {
+                ".": {},
+                "f:git": {
+                  ".": {},
+                  "f:deletionPolicy": {},
+                  "f:insecure": {},
+                  "f:toRepo": {
+                    ".": {},
+                    "f:apiUrl": {},
+                    "f:branch": {},
+                    "f:credentials": {
+                      ".": {},
+                      "f:authMethod": {},
+                      "f:secretRef": {
+                        ".": {},
+                        "f:key": {},
+                        "f:name": {},
+                        "f:namespace": {}
+                      }
+                    },
+                    "f:deletionPolicy": {},
+                    "f:initialize": {},
+                    "f:name": {},
+                    "f:org": {},
+                    "f:path": {},
+                    "f:private": {},
+                    "f:scmUrl": {}
+                  },
+                  "f:unsupportedCapabilities": {}
+                }
+              }
+            },
+            "manager": "kubectl-client-side-apply",
+            "operation": "Update",
+            "time": "2025-02-06T08:11:27Z"
+          }
+        ],
+        "name": "test",
+        "namespace": "fireworksapp-system",
+        "resourceVersion": "600",
+        "uid": "07dcfcb3-40a7-4a32-9708-0731d3eb1427"
+      },
+      "spec": {
+        "git": {
+          "deletionPolicy": "Orphan",
+          "insecure": true,
+          "toRepo": {
+            "apiUrl": "https://api.github.com",
+            "branch": "main",
+            "credentials": {
+              "authMethod": "basic",
+              "secretRef": {
+                "key": "token",
+                "name": "github-repo-creds",
+                "namespace": "krateo-system"
+              }
+            },
+            "deletionPolicy": "Delete",
+            "initialize": true,
+            "name": "test",
+            "org": "krateoplatformops-archive",
+            "path": "/",
+            "private": false,
+            "scmUrl": "https://github.com"
+          },
+          "unsupportedCapabilities": true
+        }
+      }
+    }
+  }
+}

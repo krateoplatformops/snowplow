@@ -89,6 +89,10 @@ func Do(ctx context.Context, opts RequestOptions) *response.Status {
 		return res
 	}
 
+	if ct := respo.Header.Get("Content-Type"); !strings.Contains(ct, "json") {
+		return response.New(http.StatusNotAcceptable, fmt.Errorf("content type %q is not allowed", ct))
+	}
+
 	if opts.ResponseHandler != nil {
 		if err := opts.ResponseHandler(respo.Body); err != nil {
 			return response.New(http.StatusInternalServerError, err)
