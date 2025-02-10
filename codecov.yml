@@ -5,8 +5,7 @@ coverage:
   ignore:
     - "apis"
     - "docs"
-    - "internal/objects"
     - "internal/rbac"
+    - "internal/dynamic"
     - "plumbing/e2e"
-
-  
+    - "plumbing/endpoints"
