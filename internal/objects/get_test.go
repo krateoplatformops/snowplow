@@ -1,20 +1,19 @@
 //go:build integration
 // +build integration
 
-package api
+package objects
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/krateoplatformops/snowplow/apis"
-	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
+	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -31,12 +30,12 @@ var (
 	namespace   string
 )
 
-func TestMain(m *testing.M) {
-	const (
-		crdPath      = "../../../crds"
-		testdataPath = "../../../testdata"
-	)
+const (
+	crdPath      = "../../crds"
+	testdataPath = "../../testdata"
+)
 
+func TestMain(m *testing.M) {
 	xenv.SetTestMode(true)
 
 	namespace = "demo-system"
@@ -60,6 +59,8 @@ func TestMain(m *testing.M) {
 				return ctx, err
 			}
 
+			// TODO: add a wait.For conditional helper that can
+			// check and wait for the existence of a CRD resource
 			time.Sleep(2 * time.Second)
 			return ctx, nil
 		},
@@ -67,22 +68,19 @@ func TestMain(m *testing.M) {
 		envfuncs.DeleteNamespace(namespace),
 		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
 		envfuncs.DestroyCluster(clusterName),
+		e2e.Coverage(),
 	)
 
 	os.Exit(testenv.Run(m))
 }
 
-func TestResolveAPI(t *testing.T) {
-	const (
-		testdataPath = "../../../testdata"
-	)
-	os.Setenv("DEBUG", "1")
+func TestGet(t *testing.T) {
+	os.Setenv("DEBUG", "0")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
 		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-
 			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {
 				t.Fail()
@@ -102,39 +100,36 @@ func TestResolveAPI(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve API", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			r, err := resources.New(cfg.Client().RESTConfig())
-			if err != nil {
-				t.Fail()
-			}
-			r.WithNamespace(namespace)
-			apis.AddToScheme(r.GetScheme())
-
-			cr := v1.RESTAction{}
-			err = r.Get(ctx, "kube", namespace, &cr)
-			if err != nil {
-				t.Fail()
-			}
-
-			res := Resolve(ctx, ResolveOptions{
-				RC:         cfg.Client().RESTConfig(),
-				AuthnNS:    cfg.Namespace(),
-				Username:   "cyberjoker",
-				UserGroups: []string{"devs"},
-				Items:      cr.Spec.API,
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			enc := json.NewEncoder(os.Stderr)
-			enc.SetIndent("", "  ")
-			if err := enc.Encode(res); err != nil {
-				t.Fatal(err)
-			}
-
-			return ctx
-		}).Feature()
+		Assess("Get RESTAction", getRESTAction("typicode")).
+		Feature()
 
 	testenv.Test(t, f)
+}
+
+func getRESTAction(name string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+		r, err := resources.New(c.Client().RESTConfig())
+		if err != nil {
+			t.Fail()
+		}
+		r.WithNamespace(namespace)
+		apis.AddToScheme(r.GetScheme())
+
+		res := Get(ctx, Reference{
+			Name:       name,
+			Namespace:  namespace,
+			Resource:   "restactions",
+			APIVersion: "templates.krateo.io/v1",
+		})
+		if res.Err != nil {
+			t.Fatal(res.Err)
+		}
+
+		err = kubeutil.ToYAML(os.Stderr, res.Unstructured)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return ctx
+	}
 }
