@@ -1,19 +1,16 @@
 //go:build integration
 // +build integration
 
-package restactions
+package objects
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/krateoplatformops/snowplow/apis"
-	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
@@ -34,8 +31,8 @@ var (
 )
 
 const (
-	crdPath      = "../../../crds"
-	testdataPath = "../../../testdata"
+	crdPath      = "../../crds"
+	testdataPath = "../../testdata"
 )
 
 func TestMain(m *testing.M) {
@@ -77,8 +74,8 @@ func TestMain(m *testing.M) {
 	os.Exit(testenv.Run(m))
 }
 
-func TestRESTAction(t *testing.T) {
-	os.Setenv("DEBUG", "1")
+func TestGet(t *testing.T) {
+	os.Setenv("DEBUG", "0")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
@@ -103,16 +100,13 @@ func TestRESTAction(t *testing.T) {
 			}
 			return ctx
 		}).
-		//Assess("Resolve GitHub", resolveRESTAction("github")).
-		//Assess("Resolve HttpBin", resolveRESTAction("httpbin")).
-		//Assess("Resolve Typicode", resolveRESTAction("typicode")).
-		Assess("Resolve Kube", resolveRESTAction("kube")).
+		Assess("Get RESTAction", getRESTAction("typicode")).
 		Feature()
 
 	testenv.Test(t, f)
 }
 
-func resolveRESTAction(name string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+func getRESTAction(name string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 		r, err := resources.New(c.Client().RESTConfig())
 		if err != nil {
@@ -121,28 +115,18 @@ func resolveRESTAction(name string) func(ctx context.Context, t *testing.T, c *e
 		r.WithNamespace(namespace)
 		apis.AddToScheme(r.GetScheme())
 
-		cr := v1.RESTAction{}
-		err = r.Get(ctx, name, namespace, &cr)
-		if err != nil {
-			t.Fail()
-		}
-
-		res, err := Resolve(ctx, ResolveOptions{
-			In:         &cr,
-			SArc:       c.Client().RESTConfig(),
-			AuthnNS:    namespace,
-			Username:   "cyberjoker",
-			UserGroups: []string{"devs"},
+		res := Get(ctx, Reference{
+			Name:       name,
+			Namespace:  namespace,
+			Resource:   "restactions",
+			APIVersion: "templates.krateo.io/v1",
 		})
-		if err != nil {
-			log := xcontext.Logger(ctx)
-			log.Error("unable to resolve rest action", slog.Any("err", err))
-			t.Fail()
+		if res.Err != nil {
+			t.Fatal(res.Err)
 		}
 
-		res.Kind = "RESTAction"
-		res.APIVersion = v1.SchemeGroupVersion.String()
-		if err := kubeutil.ToYAML(os.Stderr, res); err != nil {
+		err = kubeutil.ToYAML(os.Stderr, res.Unstructured)
+		if err != nil {
 			t.Fatal(err)
 		}
 
