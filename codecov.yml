@@ -3,9 +3,9 @@ coverage:
   round: down
   range: "70..100"
   ignore:
-    - "apis"
-    - "docs"
-    - "internal/rbac"
-    - "internal/dynamic"
-    - "plumbing/e2e"
-    - "plumbing/endpoints"
+    - "apis/**/*"
+    - "docs/**/*"
+    - "internal/rbac/**/*"
+    - "internal/dynamic/**/*"
+    - "plumbing/e2e/**/*"
+    - "plumbing/endpoints/**/*"
