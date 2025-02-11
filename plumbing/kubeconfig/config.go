@@ -1,54 +1,37 @@
 package kubeconfig
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
 
+	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
+	"github.com/krateoplatformops/snowplow/plumbing/env"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-const (
-	defaultClusterName = "krateo"
-)
-
-func Marshal(ep *endpoints.Endpoint) ([]byte, error) {
-	kc := KubeConfig{
-		APIVersion: "v1",
-		Kind:       "Config",
-		Clusters: Clusters{
-			0: {
-				Cluster: ClusterInfo{
-					CertificateAuthorityData: ep.CertificateAuthorityData,
-					Server:                   ep.ServerURL,
-				},
-				Name: defaultClusterName,
-			},
-		},
-		Contexts: Contexts{
-			0: {
-				Context: Context{
-					Cluster: defaultClusterName,
-					User:    ep.Username,
-				},
-				Name: defaultClusterName,
-			},
-		},
-		CurrentContext: defaultClusterName,
-		Users: Users{
-			0: {
-				CertInfo: CertInfo{
-					ClientCertificateData: ep.ClientCertificateData,
-					ClientKeyData:         ep.ClientKeyData,
-				},
-				Name: ep.Username,
-			},
-		},
-	}
-
-	out, err := json.Marshal(kc)
+func NewClientConfig(ctx context.Context, ep endpoints.Endpoint) (*rest.Config, error) {
+	dat, err := Marshal(&ep)
 	if err != nil {
-		return nil, fmt.Errorf("generating kubeconfig from endpoint: %w", err)
+		return nil, err
 	}
 
-	return out, nil
+	ccf, err := clientcmd.NewClientConfigFromBytes(dat)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := ccf.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	log := xcontext.Logger(ctx)
+	traceId := xcontext.TraceId(ctx, true)
+
+	if env.True("DEBUG") {
+		res.Wrap(newDebuggingRoundTripper(log, traceId, env.True("TRACE")))
+	}
+
+	return res, nil
 }

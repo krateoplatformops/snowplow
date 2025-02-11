@@ -4,7 +4,7 @@ coverage:
   range: "70..100"
   ignore:
     - "apis/**/*"
-    - "docs/**/*"
+    - "docs/**/*.go"
     - "internal/rbac/**/*"
     - "internal/dynamic/**/*"
     - "plumbing/e2e/**/*"

@@ -16,6 +16,7 @@ import (
 	"github.com/krateoplatformops/snowplow/internal/handlers"
 	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
+	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	"github.com/krateoplatformops/snowplow/plumbing/prettylog"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use/cors"
@@ -83,7 +84,7 @@ func main() {
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 	mux.Handle("POST /convert", chain.Then(handlers.Converter()))
 
-	mux.Handle("GET /health", handlers.HealthCheck(serviceName, build))
+	mux.Handle("GET /health", handlers.HealthCheck(serviceName, build, kubeutil.ServiceAccountNamespace))
 	mux.Handle("GET /api-info/names", chain.Then(handlers.Plurals()))
 	mux.Handle("GET /list", chain.Append(use.UserConfig()).Then(handlers.List()))
 
