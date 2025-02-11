@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	"k8s.io/client-go/rest"
@@ -15,14 +16,20 @@ import (
 // @Produce  json
 // @Success 200 {object} serviceInfo
 // @Router /health [get]
-func HealthCheck(serviceName, build string) http.HandlerFunc {
+func HealthCheck(serviceName, build string, nsgetter func() (string, error)) http.HandlerFunc {
 	return func(wri http.ResponseWriter, req *http.Request) {
-		if _, err := rest.InClusterConfig(); err != nil {
-			response.ServiceUnavailable(wri, err)
-			return
+		if !env.TestMode() {
+			if _, err := rest.InClusterConfig(); err != nil {
+				response.ServiceUnavailable(wri, err)
+				return
+			}
 		}
 
-		ns, _ := kubeutil.ServiceAccountNamespace()
+		if nsgetter == nil {
+			nsgetter = kubeutil.ServiceAccountNamespace
+		}
+
+		ns, _ := nsgetter()
 
 		data := serviceInfo{
 			Name:      serviceName,
