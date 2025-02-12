@@ -3,9 +3,9 @@ coverage:
   round: down
   range: "70..100"
   ignore:
+    - "^main.go$"
     - "apis/**/*"
     - "docs/**/*.go"
-    - "internal/rbac/**/*"
     - "internal/dynamic/**/*"
     - "plumbing/e2e/**/*"
     - "plumbing/endpoints/**/*"

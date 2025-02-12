@@ -1,0 +1,165 @@
+//go:build unit
+// +build unit
+
+package handlers_test
+
+import (
+	"bytes"
+	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/krateoplatformops/snowplow/apis"
+	"github.com/krateoplatformops/snowplow/internal/handlers"
+	"github.com/krateoplatformops/snowplow/plumbing/e2e"
+	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
+	"github.com/krateoplatformops/snowplow/plumbing/http/request"
+	"github.com/krateoplatformops/snowplow/plumbing/http/response"
+	"github.com/krateoplatformops/snowplow/plumbing/ptr"
+	"sigs.k8s.io/e2e-framework/klient/decoder"
+	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
+	"sigs.k8s.io/e2e-framework/pkg/env"
+	"sigs.k8s.io/e2e-framework/pkg/envconf"
+	"sigs.k8s.io/e2e-framework/pkg/envfuncs"
+	"sigs.k8s.io/e2e-framework/pkg/features"
+	"sigs.k8s.io/e2e-framework/support/kind"
+
+	"github.com/stretchr/testify/assert"
+)
+
+var (
+	testenv     env.Environment
+	clusterName string
+	namespace   string
+)
+
+const (
+	crdPath      = "../../crds"
+	testdataPath = "../../testdata"
+)
+
+func TestMain(m *testing.M) {
+	xenv.SetTestMode(true)
+
+	namespace = "demo-system"
+	clusterName = "krateo"
+	testenv = env.New()
+
+	testenv.Setup(
+		envfuncs.CreateCluster(kind.NewProvider(), clusterName),
+		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
+		e2e.CreateNamespace(namespace),
+
+		func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
+			r, err := resources.New(cfg.Client().RESTConfig())
+			if err != nil {
+				return ctx, err
+			}
+			r.WithNamespace(namespace)
+
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
+			if err != nil {
+				return ctx, err
+			}
+
+			// TODO: add a wait.For conditional helper that can
+			// check and wait for the existence of a CRD resource
+			time.Sleep(2 * time.Second)
+			return ctx, nil
+		},
+	).Finish(
+		envfuncs.DeleteNamespace(namespace),
+		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
+		envfuncs.DestroyCluster(clusterName),
+		e2e.Coverage(),
+	)
+
+	os.Exit(testenv.Run(m))
+}
+
+func TestCallHandler(t *testing.T) {
+	os.Setenv("DEBUG", "0")
+
+	f := features.New("Setup").
+		Setup(e2e.Logger("test")).
+		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
+		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			r, err := resources.New(cfg.Client().RESTConfig())
+			if err != nil {
+				t.Fail()
+			}
+
+			apis.AddToScheme(r.GetScheme())
+
+			r.WithNamespace(namespace)
+
+			err = decoder.DecodeEachFile(
+				ctx, os.DirFS(filepath.Join(testdataPath, "restactions")), "*.yaml",
+				decoder.CreateHandler(r),
+				decoder.MutateNamespace(namespace),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return ctx
+		}).
+		Assess("Run Call WS", runWS(request.RequestOptions{
+			Verb: ptr.To(string(http.MethodGet)),
+			Path: "/call?apiVersion=templates.krateo.io/v1&resource=restactions&namespace=demo-system&name=kube",
+			Headers: []string{
+				"X-Krateo-User: test-user",
+				"X-Krateo-Groups: group1,group2",
+			}},
+			response.Status{
+				Kind: "Status", APIVersion: "v1",
+				Code:   http.StatusOK,
+				Status: "Success",
+			},
+		)).
+		Feature()
+
+	testenv.Test(t, f)
+}
+
+func runWS(opts request.RequestOptions, want response.Status) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+		var body io.Reader
+		if data := ptr.Deref(opts.Payload, ""); len(data) > 0 {
+			body = bytes.NewReader([]byte(data))
+		}
+
+		verb := ptr.Deref(opts.Verb, http.MethodGet)
+		req := httptest.NewRequestWithContext(ctx, verb, opts.Path, body)
+		for _, el := range opts.Headers {
+			idx := strings.Index(el, ":")
+			if idx <= 0 {
+				continue
+			}
+			req.Header.Set(el[:idx], el[idx+1:])
+		}
+
+		rec := httptest.NewRecorder()
+
+		handler := handlers.Call()
+		handler.ServeHTTP(rec, req)
+
+		assert.Equal(t, want.Code, rec.Code)
+
+		/*
+			if want.Code == http.StatusOK {
+				var got response.Status
+				err := json.Unmarshal(rec.Body.Bytes(), &got)
+				assert.NoError(t, err)
+				assert.Equal(t, want, got)
+			}
+		*/
+
+		return ctx
+	}
+}
