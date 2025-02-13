@@ -88,11 +88,7 @@ func Store(ctx context.Context, rc *rest.Config, ns string, ep Endpoint) error {
 	if err != nil {
 		return err
 	}
-	err = createSecret(ctx, &sec, clientOptions{
-		cli:       cli,
-		name:      sec.Name,
-		namespace: ns,
-	})
+	err = createSecret(ctx, cli, &sec)
 	if err == nil {
 		return nil
 	}
@@ -101,11 +97,7 @@ func Store(ctx context.Context, rc *rest.Config, ns string, ep Endpoint) error {
 		return err
 	}
 
-	return updateSecret(ctx, &sec, clientOptions{
-		cli:       cli,
-		name:      sec.Name,
-		namespace: ns,
-	})
+	return updateSecret(ctx, cli, &sec)
 }
 
 const (

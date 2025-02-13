@@ -71,21 +71,21 @@ func getSecret(ctx context.Context, opts clientOptions) (result *corev1.Secret, 
 	return
 }
 
-func createSecret(ctx context.Context, secret *corev1.Secret, opts clientOptions) error {
-	return opts.cli.Post().
-		Namespace(secret.GetNamespace()).
+func createSecret(ctx context.Context, cli *rest.RESTClient, in *corev1.Secret) error {
+	return cli.Post().
+		Namespace(in.GetNamespace()).
 		Resource("secrets").
-		Body(secret).
+		Body(in).
 		Do(ctx).
 		Error()
 }
 
-func updateSecret(ctx context.Context, secret *corev1.Secret, opts clientOptions) error {
-	return opts.cli.Put().
-		Namespace(secret.GetNamespace()).
+func updateSecret(ctx context.Context, cli *rest.RESTClient, in *corev1.Secret) error {
+	return cli.Put().
+		Namespace(in.GetNamespace()).
 		Resource("secrets").
-		Name(secret.Name).
-		Body(secret).
+		Name(in.Name).
+		Body(in).
 		Do(ctx).
 		Error()
 }
