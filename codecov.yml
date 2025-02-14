@@ -7,4 +7,3 @@ coverage:
     - "apis/templates/**/*"
     - "docs/**/*.go"
     - "plumbing/e2e/**/*"
-
