@@ -6,6 +6,4 @@ coverage:
     - "main.go"
     - "apis/templates/**/*"
     - "docs/**/*.go"
-    - "internal/dynamic/**/*"
     - "plumbing/e2e/**/*"
-
