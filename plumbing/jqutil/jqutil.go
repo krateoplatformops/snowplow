@@ -74,6 +74,7 @@ func ForEach(ctx context.Context, opts EvalOptions, action func(any) error) erro
 	return nil
 }
 
+/*
 func MaybeQuery(s string) (string, bool) {
 	start := strings.Index(s, "${")
 	if start == -1 {
@@ -87,6 +88,33 @@ func MaybeQuery(s string) (string, bool) {
 	}
 
 	return strings.TrimSpace(s[start : start+end]), true
+}
+*/
+
+func MaybeQuery(s string) (string, bool) {
+	start := strings.Index(s, "${")
+	if start == -1 {
+		return s, false
+	}
+	start += len("${")
+
+	bracketCount := 1
+	end := start
+
+	for end < len(s) {
+		switch s[end] {
+		case '{':
+			bracketCount++
+		case '}':
+			bracketCount--
+			if bracketCount == 0 {
+				return strings.TrimSpace(s[start:end]), true
+			}
+		}
+		end++
+	}
+
+	return s, false
 }
 
 func Extract(ctx context.Context, opts EvalOptions) (map[string]any, error) {

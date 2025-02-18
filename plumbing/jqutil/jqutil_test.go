@@ -324,9 +324,9 @@ func TestMaybeQuery(t *testing.T) {
 			found:    false,
 		},
 		{
-			name:     "Multiple placeholders (only one is extracted)",
+			name:     "Multiple placeholders (only first one is extracted)",
 			input:    "Hello ${name}, welcome to ${city}",
-			expected: "name}, welcome to ${city",
+			expected: "name",
 			found:    true,
 		},
 		{
@@ -340,6 +340,24 @@ func TestMaybeQuery(t *testing.T) {
 			input:    "Welcome to ${location}",
 			expected: "location",
 			found:    true,
+		},
+		{
+			name:     "Embedded object",
+			input:    "${ {compositionID: .one.args.uid} }",
+			expected: "{compositionID: .one.args.uid}",
+			found:    true,
+		},
+		{
+			name:     "Nested",
+			input:    "${ {nested: {a: 1, b: 2}} }",
+			expected: "{nested: {a: 1, b: 2}}",
+			found:    true,
+		},
+		{
+			name:     "Invalid - missing end",
+			input:    "${invalid {missing} end",
+			expected: "${invalid {missing} end",
+			found:    false,
 		},
 	}
 
