@@ -81,7 +81,7 @@ func MaybeQuery(s string) (string, bool) {
 	}
 
 	start += len("${")
-	end := strings.IndexByte(s[start:], '}')
+	end := strings.LastIndexByte(s[start:], '}')
 	if end == -1 {
 		return s, false
 	}

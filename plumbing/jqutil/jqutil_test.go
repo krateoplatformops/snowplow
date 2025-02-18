@@ -324,9 +324,9 @@ func TestMaybeQuery(t *testing.T) {
 			found:    false,
 		},
 		{
-			name:     "Multiple placeholders (only first is extracted)",
+			name:     "Multiple placeholders (only one is extracted)",
 			input:    "Hello ${name}, welcome to ${city}",
-			expected: "name",
+			expected: "name}, welcome to ${city",
 			found:    true,
 		},
 		{

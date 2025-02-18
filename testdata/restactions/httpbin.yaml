@@ -16,7 +16,7 @@ metadata:
 spec:
   api:
   - name: one
-    path: "/get?name=Alice&email=alice@example.com&age=30"
+    path: "/get?name=Alice&email=alice@example.com&age=30&uid=AA-BB-CC"
     endpointRef:
       name: httpbin-endpoint
       namespace: demo-system
@@ -27,7 +27,8 @@ spec:
     path: "/post"
     headers:
       - "Content-Type: application/json"
-    payload: ${ .one.args }
+    payload: |
+      ${ {compositionID: .one.args.uid} }
     endpointRef:
       name: httpbin-endpoint
       namespace: demo-system
