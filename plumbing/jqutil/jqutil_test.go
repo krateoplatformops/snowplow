@@ -101,6 +101,16 @@ func TestEval(t *testing.T) {
 			want:    "",
 			wantErr: true,
 		},
+		{
+			name:    "Create a new JSON",
+			query:   "{ compositionID : .item.uid }",
+			unquote: false,
+			data: map[string]any{
+				"item": map[string]any{"uid": "AA-BB-CC", "name": "Alice"},
+			},
+			want:    `{"compositionID":"AA-BB-CC"}`,
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
