@@ -17,9 +17,11 @@ import (
 	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
-	"github.com/krateoplatformops/snowplow/plumbing/prettylog"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use"
 	"github.com/krateoplatformops/snowplow/plumbing/server/use/cors"
+	"github.com/krateoplatformops/snowplow/plumbing/slogs/multi"
+	"github.com/krateoplatformops/snowplow/plumbing/slogs/pretty"
+	"github.com/krateoplatformops/snowplow/plumbing/slogs/ssex"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -38,6 +40,7 @@ var (
 func main() {
 	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "enable or disable debug logs")
 	blizzardOn := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
+	sseLogs := flag.Bool("sselogs", env.Bool("SSE_LOGS", false), "broadcast logs using Server Side Events")
 	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
 	authnNS := flag.String("authn-namespace", env.String("AUTHN_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
@@ -60,17 +63,28 @@ func main() {
 		logLevel = slog.LevelDebug
 	}
 
-	lh := prettylog.New(&slog.HandlerOptions{
+	lh := pretty.New(&slog.HandlerOptions{
 		Level:     logLevel,
 		AddSource: false,
 	},
-		prettylog.WithDestinationWriter(os.Stderr),
-		prettylog.WithColor(),
-		prettylog.WithOutputEmptyAttrs(),
+		pretty.WithDestinationWriter(os.Stderr),
+		pretty.WithColor(),
+		pretty.WithOutputEmptyAttrs(),
 	)
 
-	//log := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
-	log := slog.New(lh)
+	var log *slog.Logger
+	var sseH *ssex.Handler
+	if *sseLogs {
+		sseH = ssex.New(&slog.HandlerOptions{
+			Level:     logLevel,
+			AddSource: false,
+		})
+		multiH := multi.NewMultiHandler(lh, sseH)
+		log = slog.New(multiH)
+	} else {
+		log = slog.New(lh)
+	}
+
 	if *debugOn {
 		log.Debug("environment variables", slog.Any("env", os.Environ()))
 	}
@@ -81,6 +95,11 @@ func main() {
 	)
 
 	mux := http.NewServeMux()
+
+	if sseH != nil {
+		mux.Handle("GET /logs", sseH)
+	}
+
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 	mux.Handle("POST /convert", chain.Then(handlers.Converter()))
 

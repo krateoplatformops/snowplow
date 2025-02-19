@@ -10,7 +10,7 @@ import (
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
-	"github.com/krateoplatformops/snowplow/plumbing/prettylog"
+	"github.com/krateoplatformops/snowplow/plumbing/slogs/pretty"
 
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/types"
@@ -27,13 +27,13 @@ func Logger(traceId string) types.StepFunc {
 	if env.TestMode() {
 		handler = slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel})
 	} else {
-		handler = prettylog.New(&slog.HandlerOptions{
+		handler = pretty.New(&slog.HandlerOptions{
 			Level:     logLevel,
 			AddSource: false,
 		},
-			prettylog.WithDestinationWriter(os.Stdout),
-			prettylog.WithColor(),
-			prettylog.WithOutputEmptyAttrs(),
+			pretty.WithDestinationWriter(os.Stdout),
+			pretty.WithColor(),
+			pretty.WithOutputEmptyAttrs(),
 		)
 	}
 

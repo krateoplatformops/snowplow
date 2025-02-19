@@ -1,7 +1,7 @@
 //go:build unit
 // +build unit
 
-package prettylog
+package pretty
 
 import (
 	"log/slog"

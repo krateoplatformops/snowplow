@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Logs via SSE</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #1e1e1e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 { margin-bottom: 10px; }
+        #logContainer {
+            width: 80%;
+            max-width: 800px;
+            height: 400px;
+            overflow-y: auto;
+            background: #2d2d2d;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+        }
+        .log-entry {
+            /*font-family: monospace;*/
+            padding: 8px;
+            border-bottom: 1px solid #444;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Live Logs via SSE</h1>
+    <div id="logContainer"></div>
+
+    <script>
+        const MAX_LOGS = 20;
+        const logContainer = document.getElementById("logContainer");
+
+        const evtSource = new EventSource("http://127.0.0.1:30081/logs");
+
+        evtSource.onmessage = (event) => {
+            const logEntry = document.createElement("div");
+            logEntry.innerHTML = event.data;
+            logEntry.classList.add("log-entry");
+
+            logContainer.appendChild(logEntry);
+
+            while (logContainer.children.length > MAX_LOGS) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+
+            logContainer.scrollTop = logContainer.scrollHeight;
+        };
+
+        evtSource.onerror = (err) => {
+            console.error("Errore SSE:", err);
+        };
+    </script>
+
+</body>
+</html>
