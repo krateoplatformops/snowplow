@@ -53,6 +53,7 @@ spec:
         args:
           - --debug=true
           - --blizzard=false
+          - --sselogs=true
           - --port=8081
           - --authn-namespace=demo-system
         ports:

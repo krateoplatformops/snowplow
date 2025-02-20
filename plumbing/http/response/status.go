@@ -1,6 +1,9 @@
 package response
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 // Values of Status.Status
 const (
@@ -164,4 +167,22 @@ func New(code int, err error) *Status {
 	}
 
 	return res
+}
+
+func AsMap(s *Status) (map[string]any, error) {
+	data, err := json.Marshal(s)
+	if err != nil {
+		return map[string]any{}, err
+	}
+
+	var dict map[string]any
+	err = json.Unmarshal(data, &dict)
+	if err != nil {
+		return map[string]any{}, err
+	}
+
+	delete(dict, "apiVersion")
+	delete(dict, "kind")
+
+	return dict, nil
 }
