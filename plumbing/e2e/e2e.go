@@ -10,6 +10,7 @@ import (
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
+	"github.com/krateoplatformops/snowplow/plumbing/signup"
 	"github.com/krateoplatformops/snowplow/plumbing/slogs/pretty"
 
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -57,15 +58,15 @@ func SignUp(user string, groups []string, namespace string) types.StepFunc {
 			t.Fatal(err)
 		}
 
-		handler := &signupHandler{
-			restconfig:   cfg.Client().RESTConfig(),
-			namespace:    namespace,
-			caData:       in.Clusters[0].Cluster.CertificateAuthorityData,
-			serverURL:    in.Clusters[0].Cluster.Server, //"https://kubernetes.default.svc",
-			certDuration: time.Minute * 30,
-		}
-
-		ep, err := handler.SignUp(user, groups)
+		ep, err := signup.Do(context.TODO(), signup.Options{
+			CAData:       in.Clusters[0].Cluster.CertificateAuthorityData,
+			ServerURL:    in.Clusters[0].Cluster.Server, //"https://kubernetes.default.svc",
+			CertDuration: time.Minute * 30,
+			RestConfig:   cfg.Client().RESTConfig(),
+			Namespace:    namespace,
+			Username:     user,
+			UserGroups:   groups,
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
