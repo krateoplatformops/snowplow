@@ -1,4 +1,4 @@
-package e2e
+package signup
 
 import (
 	"context"
@@ -20,6 +20,30 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+type Options struct {
+	CAData       string
+	ProxyURL     string
+	ServerURL    string
+	CertDuration time.Duration
+	RestConfig   *rest.Config
+	Namespace    string
+	Username     string
+	UserGroups   []string
+}
+
+func Do(ctx context.Context, opts Options) (endpoints.Endpoint, error) {
+	handler := &signupHandler{
+		caData:       opts.CAData,
+		proxyURL:     opts.ProxyURL,
+		serverURL:    opts.ServerURL,
+		certDuration: opts.CertDuration,
+		restconfig:   opts.RestConfig,
+		namespace:    opts.Namespace,
+	}
+
+	return handler.doIt(ctx, opts.Username, opts.UserGroups)
+}
+
 type signupHandler struct {
 	caData       string
 	proxyURL     string
@@ -29,9 +53,9 @@ type signupHandler struct {
 	namespace    string
 }
 
-func (g *signupHandler) SignUp(user string, groups []string) (endpoints.Endpoint, error) {
+func (g *signupHandler) doIt(ctx context.Context, user string, groups []string) (endpoints.Endpoint, error) {
 	if len(g.caData) == 0 {
-		caCrt, err := kubeutil.CACrt(context.Background(), g.restconfig)
+		caCrt, err := kubeutil.CACrt(ctx, g.restconfig)
 		if err != nil {
 			return endpoints.Endpoint{}, err
 		}
@@ -44,7 +68,7 @@ func (g *signupHandler) SignUp(user string, groups []string) (endpoints.Endpoint
 	}
 	ep.Username = user
 
-	err = endpoints.Store(context.TODO(), g.restconfig, g.namespace, ep)
+	err = endpoints.Store(ctx, g.restconfig, g.namespace, ep)
 	return ep, err
 }
 
