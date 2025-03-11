@@ -50,3 +50,43 @@ The `RESTAction` Custom Resource Definition (CRD) allows users to declaratively 
 The `status` field is an open-ended object that preserves unknown fields for storing results of all the `api` calls.
 
 
+## Examples
+
+Some `RESTAction` examples can be found [here](testdata/restactions/). Lets check the one that query [jsonplaceholder.typicode.com](https://jsonplaceholder.typicode.com) API:
+
+```yaml
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: typicode-endpoint
+  namespace: demo-system
+stringData:
+  server-url: https://jsonplaceholder.typicode.com
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  name: typicode
+  namespace: demo-system
+spec:
+  filter: "[.todos[] as $todo | .users[] | select(.id == $todo.userId) | { name: .name, id: $todo.id, title: $todo.title, completed: $todo.completed }]"
+  api:
+  - name: users
+    path: "/users"
+    endpointRef:
+      name: typicode-endpoint
+      namespace: demo-system
+    filter: map(select(.email | endswith(".biz")))
+  - name: todos
+    dependsOn: 
+      name: users
+      iterator: .users
+    path: ${ "/todos?userId=" + (.id|tostring) }
+    headers:
+      - ${ "X-UserID:" + (.id|tostring) }
+    endpointRef:
+      name: typicode-endpoint
+      namespace: demo-system
+```
