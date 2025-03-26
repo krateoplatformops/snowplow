@@ -38,11 +38,11 @@ func jsonHandler(ctx context.Context, opts jsonHandlerOptions) func(io.ReadClose
 				Query: q, Data: tmp,
 			})
 			if err != nil {
-				return err
-			}
-
-			if err := json.Unmarshal([]byte(s), &tmp); err != nil {
-				return err
+				log.Error("evaluating JQ", slog.Any("error", err))
+			} else {
+				if err := json.Unmarshal([]byte(s), &tmp); err != nil {
+					return err
+				}
 			}
 		}
 

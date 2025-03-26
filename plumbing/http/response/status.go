@@ -181,8 +181,5 @@ func AsMap(s *Status) (map[string]any, error) {
 		return map[string]any{}, err
 	}
 
-	delete(dict, "apiVersion")
-	delete(dict, "kind")
-
 	return dict, nil
 }

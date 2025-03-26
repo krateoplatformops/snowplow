@@ -111,7 +111,7 @@ func TestResolveAPI(t *testing.T) {
 			apis.AddToScheme(r.GetScheme())
 
 			cr := v1.RESTAction{}
-			err = r.Get(ctx, "kube", namespace, &cr)
+			err = r.Get(ctx, "kube-get", namespace, &cr)
 			if err != nil {
 				t.Fail()
 			}

@@ -44,6 +44,9 @@ func createRequestOptions(ctx context.Context, in *templates.API, dict map[strin
 }
 
 func createRequestOption(in *templates.API, ds any) (out httpcall.RequestOptions) {
+	out.ContinueOnError = ptr.Deref(in.ContinueOnError, false)
+	out.ErrorKey = ptr.Deref(in.ErrorKey, "error")
+
 	out.Path = evalJQ(in.Path, ds)
 	out.Verb = ptr.To(ptr.Deref(in.Verb, http.MethodGet))
 
