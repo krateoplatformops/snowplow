@@ -16,24 +16,19 @@ rules:
   - ''
   resources:
   - namespaces
-  - configmaps
+  - pods
+  verbs:
+  - list
+- apiGroups:
+  - ''
+  resources:
   - pods
   verbs:
   - get
-  - list
-  - watch
-- apiGroups:
-  - templates.krateo.io
-  resources:
-  - restactions
-  - collections
-  - widgets
-  verbs:
-  - get
-  - list
-  - create
-  - update
-  - delete
+  resourceNames:
+  #- etcd-krateo-control-plane
+  - kube-scheduler-krateo-control-plane
+  - kube-apiserver-krateo-control-plane
 - apiGroups:
   - composition.krateo.io
   resources:

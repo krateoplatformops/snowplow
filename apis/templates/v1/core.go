@@ -35,6 +35,10 @@ type API struct {
 	DependsOn *Dependency `json:"dependsOn,omitempty"`
 
 	Filter *string `json:"filter,omitempty"`
+
+	ContinueOnError *bool `json:"continueOnError,omitempty"`
+
+	ErrorKey *string `json:"errorKey,omitempty"`
 }
 
 // ObjectReference is a reference to a named object in a specified namespace.

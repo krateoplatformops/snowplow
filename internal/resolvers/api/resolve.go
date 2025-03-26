@@ -120,12 +120,23 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 				log.Error("api call response failure", slog.String("name", id),
 					slog.String("host", call.Endpoint.ServerURL), slog.String("path", call.Path),
 					slog.String("error", res.Message))
+
 				tmp, err := response.AsMap(res)
 				if err != nil {
-					log.Error("unable to encode status as dict", slog.Any("err", err))
-					return dict
+					log.Warn("unable to encode status as dict", slog.Any("err", err))
 				}
-				return map[string]any{"error": tmp}
+
+				if len(tmp) > 0 {
+					dict[call.ErrorKey] = tmp
+				} else {
+					dict[call.ErrorKey] = res.Message
+				}
+
+				if call.ContinueOnError {
+					continue
+				}
+
+				return dict
 			}
 		}
 	}

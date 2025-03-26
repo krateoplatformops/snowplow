@@ -57,7 +57,7 @@ func TestMain(m *testing.M) {
 			}
 			r.WithNamespace(namespace)
 
-			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac*.yaml", []resources.CreateOption{})
 			if err != nil {
 				return ctx, err
 			}
@@ -106,7 +106,8 @@ func TestRESTAction(t *testing.T) {
 		Assess("Resolve GitHub", resolveRESTAction("github")).
 		Assess("Resolve HttpBin", resolveRESTAction("httpbin")).
 		Assess("Resolve Typicode", resolveRESTAction("typicode")).
-		Assess("Resolve Kube", resolveRESTAction("kube")).
+		Assess("Resolve Kube List", resolveRESTAction("kube-list")).
+		Assess("Resolve Kube Get", resolveRESTAction("kube-get")).
 		Feature()
 
 	testenv.Test(t, f)

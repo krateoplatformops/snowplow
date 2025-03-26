@@ -54,6 +54,8 @@ spec:
                 items:
                   description: API represents a request to an HTTP service
                   properties:
+                    continueOnError:
+                      type: boolean
                     dependsOn:
                       description: DependsOn reference to another API on which this
                         depends
@@ -80,6 +82,8 @@ spec:
                       - name
                       - namespace
                       type: object
+                    errorKey:
+                      type: string
                     filter:
                       type: string
                     headers:
