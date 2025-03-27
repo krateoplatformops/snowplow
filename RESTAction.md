@@ -27,6 +27,8 @@ The `RESTAction` Custom Resource Definition (CRD) allows users to declaratively 
 | `path` | string | Request URI path (can be a JQ expression). |
 | `payload` | string | Request body payload (can be a JQ expression). |
 | `verb` | string | HTTP method (defaults to GET if omitted). |
+| `continueOnError` | bool | Controls behavior on HTTP errors; if true, it continues processing other APIs, otherwise (default: false), it stops. |
+| `errorKey` | string | Used when continueOnError=true, defines the key name in the JSON results for storing error details (default: "error"). |
 
 #### `dependsOn` Object Properties
 
