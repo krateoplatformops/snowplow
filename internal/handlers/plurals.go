@@ -10,6 +10,7 @@ import (
 	"github.com/krateoplatformops/snowplow/plumbing/cache"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
@@ -55,7 +56,11 @@ func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Error("unable to discover API names",
 				slog.String("gvk", gvk.String()), slog.Any("err", err))
-			response.InternalError(wri, err)
+			if apierrors.IsNotFound(err) {
+				response.NotFound(wri, err)
+			} else {
+				response.InternalError(wri, err)
+			}
 			return
 		}
 

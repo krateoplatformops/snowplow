@@ -60,10 +60,26 @@ curl -v --request POST \
 
 Plurals 
 ==================
-
 curl -v --request GET \
   "http://127.0.0.1:30081/api-info/names?apiVersion=v1&kind=Pod"
+{
+  "plural": "pods",
+  "singular": "pod",
+  "shorts": [
+    "po"
+  ]
+}
 
+
+curl -v --request GET \
+  "http://127.0.0.1:30081/api-info/names?apiVersion=composition.krateo.io/v1-1-14&kind=FireworksApp"
+{
+  "kind":"Status",
+  "apiVersion":"v1",
+  "status":"Failure",
+  "message":"the server could not find the requested resource","reason":"NotFound",
+  "code":404,
+}
 
 Convert (JSON to YAML)
 =======================
