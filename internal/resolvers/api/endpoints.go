@@ -17,23 +17,7 @@ type endpointReferenceMapper struct {
 	rc       *rest.Config
 }
 
-func (m *endpointReferenceMapper) resolveAll(ctx context.Context, items []*templates.API) (map[string]endpoints.Endpoint, error) {
-	endpointsMap := make(map[string]endpoints.Endpoint, len(items))
-	for _, el := range items {
-		res, err := m.resolveOne(ctx, el.EndpointRef)
-		if err != nil {
-			return endpointsMap, err
-		}
-
-		endpointsMap[el.Name] = res
-	}
-
-	return endpointsMap, nil
-}
-
 func (m *endpointReferenceMapper) resolveOne(ctx context.Context, ref *templates.Reference) (endpoints.Endpoint, error) {
-	ep := endpoints.Endpoint{}
-
 	isInternal := false
 	if ref == nil {
 		ref = &templates.Reference{
