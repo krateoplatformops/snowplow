@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 
@@ -9,7 +8,7 @@ import (
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 )
 
-func Validate(ctx context.Context, crv *apiextensions.CustomResourceValidation, document []byte) error {
+func validateCustomResource(crv *apiextensions.CustomResourceValidation, document []byte) error {
 	var jsonObj map[string]any
 	if err := json.Unmarshal(document, &jsonObj); err != nil {
 		return err

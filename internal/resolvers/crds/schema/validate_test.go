@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,7 +8,6 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	ctx := context.Background()
 
 	validSchema := &apiextensions.CustomResourceValidation{
 		OpenAPIV3Schema: &apiextensions.JSONSchemaProps{
@@ -26,17 +24,17 @@ func TestValidate(t *testing.T) {
 	malformedDocument := []byte(`{"name": "John", "age": 30`) // JSON non valido
 
 	t.Run("valid document", func(t *testing.T) {
-		err := Validate(ctx, validSchema, validDocument)
+		err := validateCustomResource(validSchema, validDocument)
 		assert.NoError(t, err)
 	})
 
 	t.Run("invalid document type mismatch", func(t *testing.T) {
-		err := Validate(ctx, validSchema, invalidDocument)
+		err := validateCustomResource(validSchema, invalidDocument)
 		assert.Error(t, err)
 	})
 
 	t.Run("malformed JSON", func(t *testing.T) {
-		err := Validate(ctx, validSchema, malformedDocument)
+		err := validateCustomResource(validSchema, malformedDocument)
 		assert.Error(t, err)
 	})
 }

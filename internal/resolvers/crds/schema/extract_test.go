@@ -23,14 +23,14 @@ func TestExtractOpenAPISchemaFromCRD(t *testing.T) {
 	}
 
 	t.Run("valid schema extraction", func(t *testing.T) {
-		result, err := ExtractOpenAPISchemaFromCRD(validCRD, "v1")
+		result, err := extractOpenAPISchemaFromCRD(validCRD, "v1")
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, "object", result.OpenAPIV3Schema.Type)
 	})
 
 	t.Run("missing version in CRD", func(t *testing.T) {
-		_, err := ExtractOpenAPISchemaFromCRD(validCRD, "v2")
+		_, err := extractOpenAPISchemaFromCRD(validCRD, "v2")
 		assert.Error(t, err)
 		assert.Equal(t, "version [v2] not found in CRD schema", err.Error())
 	})
@@ -39,7 +39,7 @@ func TestExtractOpenAPISchemaFromCRD(t *testing.T) {
 		invalidCRD := map[string]any{
 			"spec": map[string]any{},
 		}
-		_, err := ExtractOpenAPISchemaFromCRD(invalidCRD, "v1")
+		_, err := extractOpenAPISchemaFromCRD(invalidCRD, "v1")
 		assert.Error(t, err)
 		assert.Equal(t, "no versions found in CRD", err.Error())
 	})
@@ -55,7 +55,7 @@ func TestExtractOpenAPISchemaFromCRD(t *testing.T) {
 				},
 			},
 		}
-		_, err := ExtractOpenAPISchemaFromCRD(invalidSchemaCRD, "v1")
+		_, err := extractOpenAPISchemaFromCRD(invalidSchemaCRD, "v1")
 		assert.Error(t, err)
 	})
 }

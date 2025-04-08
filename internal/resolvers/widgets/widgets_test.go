@@ -34,7 +34,6 @@ var (
 )
 
 const (
-	crdPath      = "../../../crds"
 	testdataPath = "../../../testdata"
 )
 
@@ -47,7 +46,7 @@ func TestMain(m *testing.M) {
 
 	testenv.Setup(
 		envfuncs.CreateCluster(kind.NewProvider(), clusterName),
-		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
+		envfuncs.SetupCRDs(filepath.Join(testdataPath, "widgets"), "button.crd.yaml"),
 		e2e.CreateNamespace(namespace),
 
 		func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
@@ -57,7 +56,7 @@ func TestMain(m *testing.M) {
 			}
 			r.WithNamespace(namespace)
 
-			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac*.yaml", []resources.CreateOption{})
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.widgets.yaml", []resources.CreateOption{})
 			if err != nil {
 				return ctx, err
 			}
@@ -69,7 +68,7 @@ func TestMain(m *testing.M) {
 		},
 	).Finish(
 		envfuncs.DeleteNamespace(namespace),
-		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
+		envfuncs.TeardownCRDs(filepath.Join(testdataPath, "widgets"), "button.crd.yaml"),
 		envfuncs.DestroyCluster(clusterName),
 		e2e.Coverage(),
 	)
@@ -94,7 +93,7 @@ func TestResolveAsUnstructured(t *testing.T) {
 			r.WithNamespace(namespace)
 
 			err = decoder.DecodeEachFile(
-				ctx, os.DirFS(filepath.Join(testdataPath, "restactions")), "*.yaml",
+				ctx, os.DirFS(filepath.Join(testdataPath, "widgets")), "button.sample.yaml",
 				decoder.CreateHandler(r),
 				decoder.MutateNamespace(namespace),
 			)
@@ -103,18 +102,18 @@ func TestResolveAsUnstructured(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve GitHub RESTAction as Unstructured", resolveAsUnstructured("github")).
+		Assess("Resolve Button Widget", resolveWidget("button-sample")).
 		Feature()
 
 	testenv.Test(t, f)
 }
 
-func resolveAsUnstructured(name string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+func resolveWidget(name string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 
 		res := objects.Get(ctx, objects.Reference{
 			Name: name, Namespace: namespace,
-			Resource: "restactions", APIVersion: "templates.krateo.io/v1",
+			Resource: "buttons", APIVersion: "widgets.templates.krateo.io/v1beta1",
 		})
 		if res.Err != nil {
 			log := xcontext.Logger(ctx)

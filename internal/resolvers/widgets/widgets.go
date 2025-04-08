@@ -3,11 +3,15 @@ package widgets
 import (
 	"context"
 	"fmt"
-	"sort"
+	"net/http"
 
-	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
-	"github.com/krateoplatformops/snowplow/internal/resolvers/restactions"
-	"github.com/krateoplatformops/snowplow/plumbing/maps"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtimeschema "k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/krateoplatformops/snowplow/internal/dynamic"
+	crdschema "github.com/krateoplatformops/snowplow/internal/resolvers/crds/schema"
+	"github.com/krateoplatformops/snowplow/plumbing/env"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,48 +26,66 @@ const (
 type Widget = unstructured.Unstructured
 
 type ResolveOptions struct {
-	In *Widget
-	RC *rest.Config
+	In         *Widget
+	RC         *rest.Config
+	AuthnNS    string
+	Username   string
+	UserGroups []string
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
-
-	widgetData, ok, err := unstructured.NestedMap(opts.In.Object, "spec", widgetDataKey)
+	spec, err := nestedSpecCopy(opts.In.Object, widgetDataKey)
 	if err != nil {
 		return opts.In, err
 	}
-	if !ok {
-		return opts.In, fmt.Errorf("missing %q in spec (%s @ %s)",
-			widgetDataKey, opts.In.GetName(), opts.In.GetNamespace())
+
+	err = unstructured.SetNestedMap(opts.In.Object, spec, "status")
+	if err != nil {
+		return opts.In, err
 	}
 
-	status := runtime.DeepCopyJSON(widgetData)
-
-	paths := maps.LeafPaths(status, "")
-	sort.Strings(paths)
-
-	for _, path := range paths {
-		fields := maps.ParsePath(path)
-
-		value, found := maps.NestedValue(opts.In.Object, fields)
-		if !found {
-			continue
-		}
-
-		fmt.Printf("Path: %s, Value: %v\n", path, value)
-		// if the value is string, we can try to evaluate a JQ expression
-		if strValue, ok := value.(string); ok {
-			fmt.Printf("  ==> evaluate JQ: %s\n", strValue)
-		}
+	if env.TestMode() {
+		err = crdschema.ValidateObjectStatus(ctx, opts.RC, opts.In.Object)
+	} else {
+		err = crdschema.ValidateObjectStatus(ctx, nil, opts.In.Object)
 	}
-
-	unstructured.SetNestedMap(opts.In.Object, status, "status")
+	if err != nil {
+		return opts.In, err
+	}
 
 	return opts.In, nil
 }
 
-func resolveRESTActionRef(ctx context.Context, opts ResolveOptions) error {
-	api, ok, err := unstructured.NestedMap(opts.In.Object, "spec", apiKey)
+func nestedSpecCopy(obj map[string]any, key string) (map[string]any, error) {
+	data, ok, err := unstructured.NestedMap(obj, "spec", key)
+	if err != nil {
+		return map[string]any{}, err
+	}
+	if !ok {
+		name := dynamic.GetName(obj)
+		namespace := dynamic.GetNamespace(obj)
+		gv, _ := runtimeschema.ParseGroupVersion(dynamic.GetAPIVersion(obj))
+		err := &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status: metav1.StatusFailure,
+				Code:   http.StatusNotFound,
+				Reason: metav1.StatusReasonNotFound,
+				Details: &metav1.StatusDetails{
+					Group: gv.Group,
+					Kind:  dynamic.GetKind(obj),
+					Name:  name,
+				},
+				Message: fmt.Sprintf("spec %q not found in %s @ %s", key, name, namespace),
+			}}
+		return map[string]any{}, err
+	}
+
+	return runtime.DeepCopyJSON(data), nil
+}
+
+/*
+func resolveRESTActionRef(ctx context.Context, obj map[string]any) error {
+	api, ok, err := unstructured.NestedMap(obj, "spec", apiKey)
 	if err != nil {
 		return err
 	}
@@ -77,8 +99,16 @@ func resolveRESTActionRef(ctx context.Context, opts ResolveOptions) error {
 		return err
 	}
 
-	restactions.Resolve(ctx, restactions.ResolveOptions{
-		In: &ra,
-		// TODO other params
+	_, err = restactions.Resolve(ctx, restactions.ResolveOptions{
+		In:         &ra,
+		AuthnNS:    r.authnNS,
+		Username:   r.username,
+		UserGroups: r.userGroups,
 	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
+*/

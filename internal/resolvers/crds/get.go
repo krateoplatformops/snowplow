@@ -2,8 +2,10 @@ package crds
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
+	"github.com/krateoplatformops/snowplow/plumbing/env"
 	runtimeschema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
@@ -16,6 +18,10 @@ type GetOptions struct {
 
 func Get(ctx context.Context, opts GetOptions) (map[string]any, error) {
 	if opts.RC == nil {
+		if env.TestMode() {
+			return map[string]any{}, fmt.Errorf("with 'test mode' enabled rest.Config cannot be nil")
+		}
+
 		var err error
 		opts.RC, err = rest.InClusterConfig()
 		if err != nil {
