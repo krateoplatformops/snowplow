@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func Dispatcher(handlers map[schema.GroupVersionResource]http.Handler) func(http.Handler) http.Handler {
+func Dispatcher(handlers map[string]http.Handler) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(wri http.ResponseWriter, req *http.Request) {
 			if req.Method != http.MethodGet {
@@ -33,14 +33,20 @@ func Dispatcher(handlers map[schema.GroupVersionResource]http.Handler) func(http
 				log.Error("unable to create schema.GroupVersion",
 					slog.String("api", api), slog.Any("err", err))
 			}
-			key := gv.WithResource(res)
+			gvr := gv.WithResource(res)
+
+			key := gv.Group
+			// Hack caused by new Widgets handlers
+			if res == "restactions" {
+				key = "restactions." + gv.Group
+			}
 
 			h, ok := handlers[key]
 			if !ok {
-				log.Warn("handler not found", slog.String("gvr", key.String()))
+				log.Warn("handler not found", slog.String("gvr", gvr.String()))
 				next.ServeHTTP(wri, req)
 			} else {
-				log.Debug("handler found, forwarding request", slog.String("gvr", key.String()))
+				log.Debug("handler found, forwarding request", slog.String("gvr", gvr.String()))
 				h.ServeHTTP(wri, req)
 			}
 		}

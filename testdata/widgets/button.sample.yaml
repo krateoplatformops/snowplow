@@ -1,0 +1,11 @@
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Button
+metadata:
+  namespace: demo-system
+  name: button-sample
+spec:
+  widgetData:
+    label: Hello Button
+    icon: fa-gear-complex-code
+    type: text

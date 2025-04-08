@@ -126,6 +126,9 @@ func TestGetNestedValue(t *testing.T) {
 		"apiVersion": "v1",
 		"kind":       "Pod",
 		"metadata": map[string]any{
+			"annotations": map[string]string{
+				"krateo.io/verbose": "false",
+			},
 			"name": "mypod",
 			"labels": map[string]any{
 				"app": "myapp",

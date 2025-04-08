@@ -22,9 +22,5 @@ var (
 func init() {
 	SchemeBuilder.Register(
 		&RESTAction{}, &RESTActionList{},
-		&Widget{}, &WidgetList{},
-		&CustomForm{}, &CustomFormList{},
-		&Form{}, &FormList{},
-		&Collection{}, &CollectionList{},
 	)
 }

@@ -60,6 +60,7 @@ func TestDynamicClient(t *testing.T) {
 				GVR:       schema.GroupVersionResource{Version: "v1", Resource: "namespaces"},
 				Namespace: "",
 			})
+
 			assert.Nil(t, err)
 			assert.NotNil(t, got)
 			assert.Equal(t, namespace, got.GetName())
