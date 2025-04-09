@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"

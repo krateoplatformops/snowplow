@@ -1,6 +1,7 @@
 package maps
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -121,6 +122,31 @@ func SetNestedValue(obj map[string]any, fields []string, newValue any) error {
 	return fmt.Errorf("unable to update path: %s", strings.Join(fields, "."))
 }
 
+// NestedMapNoCopy returns a map[string]any value of a nested field.
+// Returns false if value is not found and an error if not a map[string]any.
+func NestedMapNoCopy(obj map[string]any, fields ...string) (map[string]any, bool, error) {
+	val, found, err := nestedFieldNoCopy(obj, fields...)
+	if !found || err != nil {
+		return nil, found, err
+	}
+	m, ok := val.(map[string]interface{})
+	if !ok {
+		return nil, false, fmt.Errorf("%v accessor error: %v is of the type %T, expected map[string]interface{}",
+			strings.Join(fields, "."), val, val)
+	}
+	return m, true, nil
+}
+
+// NestedMap returns a deep copy of map[string]any value of a nested field.
+// Returns false if value is not found and an error if not a map[string]any.
+func NestedMap(obj map[string]any, fields ...string) (map[string]any, bool, error) {
+	m, found, err := NestedMapNoCopy(obj, fields...)
+	if !found || err != nil {
+		return nil, found, err
+	}
+	return deepCopyJSON(m), true, nil
+}
+
 // nestedFieldNoCopy returns a reference to a nested field.
 // Returns false if value is not found and an error if unable
 // to traverse obj.
@@ -145,4 +171,43 @@ func nestedFieldNoCopy(obj map[string]any, fields ...string) (any, bool, error) 
 		}
 	}
 	return val, true, nil
+}
+
+// deepCopyJSONValue deep copies the passed value, assuming it is a valid JSON representation i.e. only contains
+// types produced by json.Unmarshal() and also int64.
+// bool, int64, float64, string, []any, map[string]any, json.Number and nil
+func deepCopyJSONValue(x any) any {
+	switch x := x.(type) {
+	case map[string]any:
+		if x == nil {
+			// Typed nil - an any that contains a type map[string]any with a value of nil
+			return x
+		}
+		clone := make(map[string]any, len(x))
+		for k, v := range x {
+			clone[k] = deepCopyJSONValue(v)
+		}
+		return clone
+	case []any:
+		if x == nil {
+			// Typed nil - an any that contains a type []any with a value of nil
+			return x
+		}
+		clone := make([]any, len(x))
+		for i, v := range x {
+			clone[i] = deepCopyJSONValue(v)
+		}
+		return clone
+	case string, int64, bool, float64, nil, json.Number:
+		return x
+	default:
+		panic(fmt.Errorf("cannot deep copy %T", x))
+	}
+}
+
+// deepCopyJSON deep copies the passed value, assuming it is a valid JSON representation i.e. only contains
+// types produced by json.Unmarshal() and also int64.
+// bool, int64, float64, string, []any, map[string]any, json.Number and nil
+func deepCopyJSON(x map[string]any) map[string]any {
+	return deepCopyJSONValue(x).(map[string]any)
 }

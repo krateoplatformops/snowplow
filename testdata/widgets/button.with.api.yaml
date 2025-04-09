@@ -1,0 +1,14 @@
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Button
+metadata:
+  namespace: demo-system
+  name: button-with-api
+spec:
+  widgetData:
+    label: ${ .one.args.label }
+    icon: ${ .one.args.icon }
+    type: text
+  apiRef:
+    name: httpbin-simple
+    namespace: demo-system

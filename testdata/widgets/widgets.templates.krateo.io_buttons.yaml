@@ -42,6 +42,16 @@ spec:
             type: string
           spec:
             properties:
+              apiRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               widgetData:
                 description: the data that will be passed to the widget on the frontend
                 properties:
@@ -73,3 +83,4 @@ spec:
     storage: true
     subresources:
       status: {}
+
