@@ -147,6 +147,32 @@ func NestedMap(obj map[string]any, fields ...string) (map[string]any, bool, erro
 	return deepCopyJSON(m), true, nil
 }
 
+// SetNestedField sets the value of a nested field to a deep copy of the value provided.
+// Returns an error if value cannot be set because one of the nesting levels is not a map[string]any.
+func SetNestedField(obj map[string]any, value any, fields ...string) error {
+	return setNestedFieldNoCopy(obj, deepCopyJSONValue(value), fields...)
+}
+
+func setNestedFieldNoCopy(obj map[string]interface{}, value interface{}, fields ...string) error {
+	m := obj
+
+	for i, field := range fields[:len(fields)-1] {
+		if val, ok := m[field]; ok {
+			if valMap, ok := val.(map[string]interface{}); ok {
+				m = valMap
+			} else {
+				return fmt.Errorf("value cannot be set because %v is not a map[string]any", strings.Join(fields[:i+1], "."))
+			}
+		} else {
+			newVal := make(map[string]interface{})
+			m[field] = newVal
+			m = newVal
+		}
+	}
+	m[fields[len(fields)-1]] = value
+	return nil
+}
+
 // nestedFieldNoCopy returns a reference to a nested field.
 // Returns false if value is not found and an error if unable
 // to traverse obj.
