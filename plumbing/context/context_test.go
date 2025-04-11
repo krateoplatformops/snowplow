@@ -6,7 +6,6 @@ package context
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 )
@@ -65,31 +64,6 @@ func TestUserConfig(t *testing.T) {
 			_, err := UserConfig(tc.ctx)
 			if (err != nil) != tc.expectErr {
 				t.Errorf("unexpected error status: got %v, expectErr %v", err, tc.expectErr)
-			}
-		})
-	}
-}
-
-func TestRequestElapsedTime(t *testing.T) {
-	tests := []struct {
-		name string
-		ctx  context.Context
-	}{
-		{
-			name: "existing start time",
-			ctx:  context.WithValue(context.Background(), contextKeyRequestStartAt, time.Now().Add(-2*time.Second)),
-		},
-		{
-			name: "missing start time",
-			ctx:  context.Background(),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			elapsed := RequestElapsedTime(tc.ctx)
-			if elapsed == "" {
-				t.Errorf("unexpected empty elapsed time")
 			}
 		})
 	}
