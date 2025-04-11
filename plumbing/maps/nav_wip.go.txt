@@ -1,0 +1,148 @@
+package maps
+
+import (
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+)
+
+// SetValueAtPath imposta un valore in una mappa seguendo un percorso in stile JQ
+func SetValueAtPath(m map[string]any, path string, value any) error {
+	path = strings.TrimPrefix(path, ".")
+
+	components, err := ParsePath(path)
+	if err != nil {
+		return err
+	}
+
+	return navigateAndSet(m, components, value)
+}
+
+type PathComponent struct {
+	Key      string
+	IsArray  bool
+	ArrayIdx int
+}
+
+func ParsePath(path string) ([]PathComponent, error) {
+	if path == "" {
+		return nil, fmt.Errorf("empty path")
+	}
+
+	components := []PathComponent{}
+
+	keyPattern := regexp.MustCompile(`^([^.\[\]]+)`)
+	arrayPattern := regexp.MustCompile(`^\[(\d+)\]`)
+
+	for path != "" {
+		if path[0] == '.' {
+			path = path[1:]
+			continue
+		}
+
+		if strings.HasPrefix(path, "[") {
+			matches := arrayPattern.FindStringSubmatch(path)
+			if len(matches) != 2 {
+				return nil, fmt.Errorf("invalid array index format: %s", path)
+			}
+
+			index, err := strconv.Atoi(matches[1])
+			if err != nil {
+				return nil, fmt.Errorf("invalid array index: %s", matches[1])
+			}
+
+			components = append(components, PathComponent{
+				IsArray:  true,
+				ArrayIdx: index,
+			})
+
+			path = path[len(matches[0]):]
+			continue
+		}
+
+		matches := keyPattern.FindStringSubmatch(path)
+		if len(matches) != 2 {
+			return nil, fmt.Errorf("invalid key format: %s", path)
+		}
+
+		components = append(components, PathComponent{
+			Key:     matches[1],
+			IsArray: false,
+		})
+
+		path = path[len(matches[0]):]
+	}
+
+	return components, nil
+}
+
+func navigateAndSet(current any, components []PathComponent, value any) error {
+	if len(components) == 0 {
+		return fmt.Errorf("impossibile impostare valore: percorso vuoto")
+	}
+
+	// Ultimo componente del percorso - imposta il valore
+	if len(components) == 1 {
+		comp := components[0]
+
+		if comp.IsArray {
+			// Imposta valore in un array
+			arr, ok := current.([]any)
+			if !ok {
+				return fmt.Errorf("impossibile impostare l'indice [%d] in un non-array", comp.ArrayIdx)
+			}
+
+			if comp.ArrayIdx < 0 || comp.ArrayIdx >= len(arr) {
+				return fmt.Errorf("indice [%d] fuori dai limiti dell'array (dimensione: %d)", comp.ArrayIdx, len(arr))
+			}
+
+			arr[comp.ArrayIdx] = value
+			return nil
+		} else {
+			// Imposta valore in una mappa
+			m, ok := current.(map[string]any)
+			if !ok {
+				return fmt.Errorf("impossibile impostare la chiave '%s' in un non-oggetto", comp.Key)
+			}
+
+			m[comp.Key] = value
+			return nil
+		}
+	}
+
+	// Componente intermedio - naviga più a fondo
+	comp := components[0]
+
+	if comp.IsArray {
+		// Naviga in un array
+		arr, ok := current.([]any)
+		if !ok {
+			return fmt.Errorf("impossibile navigare l'indice [%d] di un non-array", comp.ArrayIdx)
+		}
+
+		if comp.ArrayIdx < 0 || comp.ArrayIdx >= len(arr) {
+			return fmt.Errorf("indice [%d] fuori dai limiti dell'array (dimensione: %d)", comp.ArrayIdx, len(arr))
+		}
+
+		return navigateAndSet(arr[comp.ArrayIdx], components[1:], value)
+	} else {
+		// Naviga in una mappa
+		m, ok := current.(map[string]any)
+		if !ok {
+			return fmt.Errorf("impossibile navigare la chiave '%s' di un non-oggetto", comp.Key)
+		}
+
+		// Se la chiave non esiste, crea una nuova mappa o array
+		nextComp := components[1]
+		if _, exists := m[comp.Key]; !exists {
+			if nextComp.IsArray {
+				m[comp.Key] = make([]any, nextComp.ArrayIdx+1) // Crea array abbastanza grande
+			} else {
+				m[comp.Key] = make(map[string]any) // Crea mappa vuota
+			}
+		}
+
+		return navigateAndSet(m[comp.Key], components[1:], value)
+	}
+}

@@ -34,6 +34,7 @@ var (
 )
 
 const (
+	crdPath      = "../../../crds"
 	testdataPath = "../../../testdata"
 )
 
@@ -46,7 +47,8 @@ func TestMain(m *testing.M) {
 
 	testenv.Setup(
 		envfuncs.CreateCluster(kind.NewProvider(), clusterName),
-		envfuncs.SetupCRDs(filepath.Join(testdataPath, "widgets"), "button.crd.yaml"),
+		envfuncs.SetupCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
+		envfuncs.SetupCRDs(filepath.Join(testdataPath, "widgets"), "widgets.templates.krateo.io_buttons.yaml"),
 		e2e.CreateNamespace(namespace),
 
 		func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
@@ -61,6 +63,11 @@ func TestMain(m *testing.M) {
 				return ctx, err
 			}
 
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.restactions.yaml", []resources.CreateOption{})
+			if err != nil {
+				return ctx, err
+			}
+
 			// TODO: add a wait.For conditional helper that can
 			// check and wait for the existence of a CRD resource
 			time.Sleep(2 * time.Second)
@@ -68,7 +75,7 @@ func TestMain(m *testing.M) {
 		},
 	).Finish(
 		envfuncs.DeleteNamespace(namespace),
-		envfuncs.TeardownCRDs(filepath.Join(testdataPath, "widgets"), "button.crd.yaml"),
+		envfuncs.TeardownCRDs(filepath.Join(testdataPath, "widgets"), "widgets.templates.krateo.io_buttons.yaml"),
 		envfuncs.DestroyCluster(clusterName),
 		e2e.Coverage(),
 	)
@@ -76,7 +83,7 @@ func TestMain(m *testing.M) {
 	os.Exit(testenv.Run(m))
 }
 
-func TestResolveAsUnstructured(t *testing.T) {
+func TestResolveWidgets(t *testing.T) {
 	os.Setenv("DEBUG", "0")
 
 	f := features.New("Setup").
@@ -93,7 +100,7 @@ func TestResolveAsUnstructured(t *testing.T) {
 			r.WithNamespace(namespace)
 
 			err = decoder.DecodeEachFile(
-				ctx, os.DirFS(filepath.Join(testdataPath, "widgets")), "button.sample.yaml",
+				ctx, os.DirFS(filepath.Join(testdataPath, "widgets")), "button.*.yaml",
 				decoder.CreateHandler(r),
 				decoder.MutateNamespace(namespace),
 			)
@@ -102,7 +109,8 @@ func TestResolveAsUnstructured(t *testing.T) {
 			}
 			return ctx
 		}).
-		Assess("Resolve Button Widget", resolveWidget("button-sample")).
+		Assess("Resolve Simple Widget", resolveWidget("button-sample")).
+		Assess("Resolve Widget with RESTAction reference", resolveWidget("button-with-api")).
 		Feature()
 
 	testenv.Test(t, f)
