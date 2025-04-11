@@ -1,0 +1,170 @@
+package maps
+
+import "testing"
+
+func TestParsePath(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		expected    []PathComponent
+		expectError bool
+	}{
+		{
+			name: "chiave semplice",
+			path: "utenti",
+			expected: []PathComponent{
+				{Key: "utenti", IsArray: false},
+			},
+			expectError: false,
+		},
+		{
+			name: "percorso con punto",
+			path: "utenti.nome",
+			expected: []PathComponent{
+				{Key: "utenti", IsArray: false},
+				{Key: "nome", IsArray: false},
+			},
+			expectError: false,
+		},
+		{
+			name: "percorso con punto iniziale",
+			path: ".utenti.nome",
+			expected: []PathComponent{
+				{Key: "utenti", IsArray: false},
+				{Key: "nome", IsArray: false},
+			},
+			expectError: false,
+		},
+		{
+			name: "percorso con indice array",
+			path: "utenti[0]",
+			expected: []PathComponent{
+				{Key: "utenti", IsArray: false},
+				{IsArray: true, ArrayIdx: 0},
+			},
+			expectError: false,
+		},
+		{
+			name: "percorso complesso",
+			path: "utenti[0].indirizzi[1].via",
+			expected: []PathComponent{
+				{Key: "utenti", IsArray: false},
+				{IsArray: true, ArrayIdx: 0},
+				{Key: "indirizzi", IsArray: false},
+				{IsArray: true, ArrayIdx: 1},
+				{Key: "via", IsArray: false},
+			},
+			expectError: false,
+		},
+		{
+			name: "indici array consecutivi",
+			path: "matrice[1][2]",
+			expected: []PathComponent{
+				{Key: "matrice", IsArray: false},
+				{IsArray: true, ArrayIdx: 1},
+				{IsArray: true, ArrayIdx: 2},
+			},
+			expectError: false,
+		},
+		{
+			name: "indice array all'inizio",
+			path: "[0].elemento",
+			expected: []PathComponent{
+				{IsArray: true, ArrayIdx: 0},
+				{Key: "elemento", IsArray: false},
+			},
+			expectError: false,
+		},
+		{
+			name:        "percorso vuoto",
+			path:        "",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "indice array non valido",
+			path:        "utenti[abc]",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "parentesi array aperta",
+			path:        "utenti[0",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "parentesi array non chiusa",
+			path:        "utenti[",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name: "nomi chiave con caratteri speciali",
+			path: "user-info.first_name",
+			expected: []PathComponent{
+				{Key: "user-info", IsArray: false},
+				{Key: "first_name", IsArray: false},
+			},
+			expectError: false,
+		},
+		{
+			name: "nomi chiave con numeri",
+			path: "user123.address2",
+			expected: []PathComponent{
+				{Key: "user123", IsArray: false},
+				{Key: "address2", IsArray: false},
+			},
+			expectError: false,
+		},
+		{
+			name: "indice array grande",
+			path: "array[999]",
+			expected: []PathComponent{
+				{Key: "array", IsArray: false},
+				{IsArray: true, ArrayIdx: 999},
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ParsePath(tt.path)
+
+			// Verifica errore
+			if (err != nil) != tt.expectError {
+				t.Errorf("parsePath() errore = %v, expectError %v", err, tt.expectError)
+				return
+			}
+
+			// Se ci aspettiamo un errore, non controlliamo il risultato
+			if tt.expectError {
+				return
+			}
+
+			// Verifica lunghezza array componenti
+			if len(result) != len(tt.expected) {
+				t.Errorf("parsePath() lunghezza = %d, expected %d", len(result), len(tt.expected))
+				return
+			}
+
+			// Verifica singoli componenti
+			for i, comp := range result {
+				expComp := tt.expected[i]
+
+				if comp.IsArray != expComp.IsArray {
+					t.Errorf("componente[%d].IsArray = %v, expected %v", i, comp.IsArray, expComp.IsArray)
+				}
+
+				if comp.IsArray && comp.ArrayIdx != expComp.ArrayIdx {
+					t.Errorf("componente[%d].ArrayIdx = %d, expected %d", i, comp.ArrayIdx, expComp.ArrayIdx)
+				}
+
+				if !comp.IsArray && comp.Key != expComp.Key {
+					t.Errorf("componente[%d].Key = %s, expected %s", i, comp.Key, expComp.Key)
+				}
+			}
+		})
+	}
+}

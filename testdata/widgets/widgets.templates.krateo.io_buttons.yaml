@@ -72,6 +72,18 @@ spec:
                     - dashed
                     type: string
                 type: object
+              widgetDataTemplate:
+                items:
+                  properties:
+                    expression:
+                      type: string
+                    forPath:
+                      type: string
+                  required:
+                  - expression
+                  - forPath
+                  type: object
+                type: array
             required:
             - widgetData
             type: object
