@@ -2,7 +2,6 @@ package use
 
 import (
 	"net/http"
-	"time"
 
 	"log/slog"
 
@@ -33,13 +32,9 @@ func Logger(root *slog.Logger) func(http.Handler) http.Handler {
 			ctx := xcontext.BuildContext(req.Context(),
 				xcontext.WithTraceId(traceId),
 				xcontext.WithLogger(log),
-				xcontext.WithRequestStartedAt(time.Now()),
 			)
 
 			next.ServeHTTP(wri, req.WithContext(ctx))
-
-			log.Debug("request elapsed time",
-				slog.String("duration", xcontext.RequestElapsedTime(req.Context())))
 		}
 
 		return http.HandlerFunc(fn)

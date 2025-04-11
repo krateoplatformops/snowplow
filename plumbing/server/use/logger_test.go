@@ -30,7 +30,7 @@ func TestLoggerMiddleware(t *testing.T) {
 			time.Sleep(1 * time.Second)
 			w.Write([]byte("Hello, World!"))
 
-			log.Info("Done!", "eta", xcontext.RequestElapsedTime(r.Context()))
+			log.Info("Done!")
 		})
 
 	route := NewChain(Logger(log)).Then(sillyHandler)

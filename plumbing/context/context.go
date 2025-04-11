@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"time"
 
 	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
@@ -58,20 +57,6 @@ func UserConfig(ctx context.Context) (endpoints.Endpoint, error) {
 	return ep, nil
 }
 
-func RequestElapsedTime(ctx context.Context) string {
-	start, ok := ctx.Value(contextKeyRequestStartAt).(time.Time)
-	if !ok {
-		start = time.Now()
-	}
-
-	dur := time.Since(start)
-	if dur < time.Second {
-		return dur.String()
-	}
-
-	return dur.Round(time.Microsecond).String()
-}
-
 func WithTraceId(traceId string) WithContextFunc {
 	return func(ctx context.Context) context.Context {
 		return context.WithValue(ctx, contextKeyTraceId, traceId)
@@ -91,12 +76,6 @@ func WithLogger(root *slog.Logger) WithContextFunc {
 
 		return context.WithValue(ctx, contextKeyLogger,
 			root.With("traceId", TraceId(ctx, false)))
-	}
-}
-
-func WithRequestStartedAt(t time.Time) WithContextFunc {
-	return func(ctx context.Context) context.Context {
-		return context.WithValue(ctx, contextKeyRequestStartAt, t)
 	}
 }
 
@@ -123,10 +102,9 @@ func (c contextKey) String() string {
 }
 
 var (
-	contextKeyTraceId        = contextKey("traceId")
-	contextKeyLogger         = contextKey("logger")
-	contextKeyUserConfig     = contextKey("userConfig")
-	contextKeyRequestStartAt = contextKey("requestStartedAt")
-	contextKeyJQ             = contextKey("jq")
-	contextKeyAuthnNS        = contextKey("authnNS")
+	contextKeyTraceId    = contextKey("traceId")
+	contextKeyLogger     = contextKey("logger")
+	contextKeyUserConfig = contextKey("userConfig")
+	contextKeyJQ         = contextKey("jq")
+	contextKeyAuthnNS    = contextKey("authnNS")
 )
