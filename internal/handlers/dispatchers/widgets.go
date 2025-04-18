@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
@@ -36,7 +34,6 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		response.Encode(wri, got.Err)
 		return
 	}
-	spew.Dump(got)
 
 	ctx := xcontext.BuildContext(req.Context())
 

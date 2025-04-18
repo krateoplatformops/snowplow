@@ -1,10 +1,11 @@
 //go:build integration
 // +build integration
 
-package widgets
+package apiref
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -16,7 +17,6 @@ import (
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/e2e"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -34,8 +34,8 @@ var (
 )
 
 const (
-	crdPath      = "../../../crds"
-	testdataPath = "../../../testdata"
+	crdPath      = "../../../../crds"
+	testdataPath = "../../../../testdata"
 )
 
 func TestMain(m *testing.M) {
@@ -109,14 +109,14 @@ func TestResolveWidgets(t *testing.T) {
 			}
 			return ctx
 		}).
-		//Assess("Resolve Simple Widget", resolveWidget("button-sample")).
-		Assess("Resolve Widget with RESTAction reference", resolveWidget("button-with-api")).
+		Assess("Resolve Widget NO API Reference", resolveApiRefFromWidget("button-sample")).
+		Assess("Resolve Widget API Reference", resolveApiRefFromWidget("button-with-api")).
 		Feature()
 
 	testenv.Test(t, f)
 }
 
-func resolveWidget(name string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+func resolveApiRefFromWidget(name string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 
 		res := objects.Get(ctx, objects.Reference{
@@ -130,17 +130,18 @@ func resolveWidget(name string) func(ctx context.Context, t *testing.T, c *envco
 		}
 
 		obj, err := Resolve(ctx, ResolveOptions{
-			RC: c.Client().RESTConfig(),
-			In: res.Unstructured,
+			RC:     c.Client().RESTConfig(),
+			Widget: res.Unstructured,
 		})
 		if err != nil {
 			log := xcontext.Logger(ctx)
-			log.Error("unable to resolve object", slog.Any("err", err))
+			log.Error("unable to resolve api reference", slog.Any("err", err))
 			t.Fail()
 		}
 
-		err = kubeutil.ToYAML(os.Stderr, obj)
-		if err != nil {
+		enc := json.NewEncoder(os.Stderr)
+		enc.SetIndent(" ", "   ")
+		if err := enc.Encode(obj); err != nil {
 			t.Fatal(err)
 		}
 

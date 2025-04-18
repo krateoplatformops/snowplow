@@ -59,6 +59,15 @@ curl -v -G GET \
   -d 'name=button-sample' \
   "http://127.0.0.1:30081/call"
 
+curl -v -G GET \
+  -H 'x-krateo-user: cyberjoker' \
+  -H 'x-krateo-groups: devs' \
+  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
+  -d 'resource=buttons' \
+  -d 'namespace=demo-system' \
+  -d 'name=button-with-api' \
+  "http://127.0.0.1:30081/call"
+
 Call (POST example)
 ==================
 

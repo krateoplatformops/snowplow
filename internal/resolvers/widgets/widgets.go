@@ -2,17 +2,21 @@ package widgets
 
 import (
 	"context"
+	"log/slog"
 
-	"github.com/davecgh/go-spew/spew"
 	crdschema "github.com/krateoplatformops/snowplow/internal/resolvers/crds/schema"
+	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/apiref"
+	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/data"
+	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
-
+	"github.com/krateoplatformops/snowplow/plumbing/maps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 )
 
 const (
-	widgetDataKey = "widgetData"
+	widgetDataKey         = "widgetData"
+	widgetDataTemplateKey = "widgetDataTemplate"
 )
 
 type Widget = unstructured.Unstructured
@@ -26,20 +30,52 @@ type ResolveOptions struct {
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
-	widgetData, err := getWidgetData(opts.In.Object, widgetDataKey)
+	log := xcontext.Logger(ctx)
+
+	src, err := getWidgetData(opts.In.Object, widgetDataKey)
 	if err != nil {
 		return opts.In, err
 	}
+	log.Debug("WidgetData before resolving API Ref", slog.Any(widgetDataKey, src))
 
-	dict, err := resolveRESTActionRef(ctx, opts)
+	dict, err := apiref.Resolve(ctx, apiref.ResolveOptions{
+		RC:         opts.RC,
+		Widget:     opts.In,
+		AuthnNS:    opts.AuthnNS,
+		Username:   opts.Username,
+		UserGroups: opts.UserGroups,
+	})
 	if err != nil {
+		log.Error("unable to resolve api reference", slog.Any("err", err))
+		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
 		return opts.In, err
 	}
-	spew.Dump(dict)
+	log.Debug("resolved API reference", slog.Any("apiRef", dict))
 
-	evalJQ(widgetData, dict)
+	evals, err := data.ResolveTemplates(ctx, data.ResolveOptions{
+		Widget: opts.In,
+		Dict:   dict,
+	})
+	if err != nil {
+		log.Error("unable to resolve widget data templates", slog.Any("err", err))
+		return opts.In, err
+	}
+	log.Debug("widgetDataTemplate array after evaluation", slog.Any("widgetDataTemplate", evals))
 
-	err = unstructured.SetNestedMap(opts.In.Object, widgetData, "status")
+	for _, el := range evals {
+		fields := maps.ParsePath(el.Path)
+		if len(fields) == 0 {
+			continue
+		}
+
+		err = maps.SetNestedValue(src, fields, el.Value)
+		if err != nil {
+			log.Error("unable to set nested field value", slog.Any("err", err))
+			return opts.In, err
+		}
+	}
+
+	err = unstructured.SetNestedMap(opts.In.Object, src, "status", widgetDataKey)
 	if err != nil {
 		return opts.In, err
 	}

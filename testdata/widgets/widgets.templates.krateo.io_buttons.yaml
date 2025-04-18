@@ -18,9 +18,6 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    - jsonPath: .status.conditions[?(@.type=='Ready')].status
-      name: READY
-      type: string
     name: v1beta1
     schema:
       openAPIV3Schema:
@@ -62,6 +59,9 @@ spec:
                   label:
                     description: the label of the button
                     type: string
+                  margin:
+                    description: margin of the button
+                    type: integer
                   type:
                     description: the visual style of the button
                     enum:
@@ -79,9 +79,6 @@ spec:
                       type: string
                     forPath:
                       type: string
-                  required:
-                  - expression
-                  - forPath
                   type: object
                 type: array
             required:
@@ -95,4 +92,3 @@ spec:
     storage: true
     subresources:
       status: {}
-
