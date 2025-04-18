@@ -1,4 +1,4 @@
-package widgets
+package apiref
 
 import (
 	"context"
@@ -8,18 +8,27 @@ import (
 	templatesv1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/objects"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/restactions"
-	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
 	"github.com/krateoplatformops/snowplow/plumbing/maps"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/rest"
 )
 
 const (
 	apiRefKey = "apiRef"
 )
 
-func resolveRESTActionRef(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
-	ref, err := getRESTActionRef(opts.In.Object)
+type ResolveOptions struct {
+	RC         *rest.Config
+	Widget     *unstructured.Unstructured
+	AuthnNS    string
+	Username   string
+	UserGroups []string
+}
+
+func Resolve(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
+	ref, err := getRESTActionRef(opts.Widget.Object)
 	if err != nil {
-		return nil, err
+		return map[string]any{}, err
 	}
 	if ref.Name == "" || ref.Namespace == "" {
 		return map[string]any{}, nil
@@ -27,7 +36,7 @@ func resolveRESTActionRef(ctx context.Context, opts ResolveOptions) (map[string]
 
 	res := objects.Get(ctx, ref)
 	if res.Err != nil {
-		return map[string]any{}, err
+		return map[string]any{}, fmt.Errorf(res.Err.Message)
 	}
 
 	ra, err := convertToRESTAction(res.Unstructured.Object)
@@ -37,12 +46,10 @@ func resolveRESTActionRef(ctx context.Context, opts ResolveOptions) (map[string]
 
 	raopts := restactions.ResolveOptions{
 		In:         &ra,
+		SArc:       opts.RC,
 		AuthnNS:    opts.AuthnNS,
 		Username:   opts.Username,
 		UserGroups: opts.UserGroups,
-	}
-	if xenv.TestMode() {
-		raopts.SArc = opts.RC
 	}
 
 	if _, err = restactions.Resolve(ctx, raopts); err != nil {

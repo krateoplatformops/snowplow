@@ -6,9 +6,15 @@ metadata:
   name: button-with-api
 spec:
   widgetData:
-    label: ${ .one.args.label }
-    icon: ${ .one.args.icon }
+    label: label
+    icon: fa-clock
     type: text
+    margin: 20
+  widgetDataTemplate:
+    - forPath: label
+      expression: ${ .one.args.label }
+    - forPath: icon
+      expression: ${ .one.args.icon }
   apiRef:
     name: httpbin-simple
     namespace: demo-system

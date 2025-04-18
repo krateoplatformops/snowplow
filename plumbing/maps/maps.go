@@ -144,7 +144,35 @@ func NestedMap(obj map[string]any, fields ...string) (map[string]any, bool, erro
 	if !found || err != nil {
 		return nil, found, err
 	}
-	return deepCopyJSON(m), true, nil
+	return DeepCopyJSON(m), true, nil
+}
+
+func NestedSliceNoCopy(obj map[string]any, fields ...string) ([]any, bool, error) {
+	val, found, err := nestedFieldNoCopy(obj, fields...)
+	if !found || err != nil {
+		return nil, found, err
+	}
+	_, ok := val.([]any)
+	if !ok {
+		return nil, false, fmt.Errorf("%v accessor error: %v is of the type %T, expected []any",
+			strings.Join(fields, "."), val, val)
+	}
+	return val.([]any), true, nil
+}
+
+// NestedSlice returns a deep copy of []any value of a nested field.
+// Returns false if value is not found and an error if not a []any.
+func NestedSlice(obj map[string]any, fields ...string) ([]any, bool, error) {
+	val, found, err := nestedFieldNoCopy(obj, fields...)
+	if !found || err != nil {
+		return nil, found, err
+	}
+	_, ok := val.([]any)
+	if !ok {
+		return nil, false, fmt.Errorf("%v accessor error: %v is of the type %T, expected []any",
+			strings.Join(fields, "."), val, val)
+	}
+	return deepCopyJSONValue(val).([]any), true, nil
 }
 
 // SetNestedField sets the value of a nested field to a deep copy of the value provided.
@@ -153,18 +181,18 @@ func SetNestedField(obj map[string]any, value any, fields ...string) error {
 	return setNestedFieldNoCopy(obj, deepCopyJSONValue(value), fields...)
 }
 
-func setNestedFieldNoCopy(obj map[string]interface{}, value interface{}, fields ...string) error {
+func setNestedFieldNoCopy(obj map[string]any, value any, fields ...string) error {
 	m := obj
 
 	for i, field := range fields[:len(fields)-1] {
 		if val, ok := m[field]; ok {
-			if valMap, ok := val.(map[string]interface{}); ok {
+			if valMap, ok := val.(map[string]any); ok {
 				m = valMap
 			} else {
 				return fmt.Errorf("value cannot be set because %v is not a map[string]any", strings.Join(fields[:i+1], "."))
 			}
 		} else {
-			newVal := make(map[string]interface{})
+			newVal := make(map[string]any)
 			m[field] = newVal
 			m = newVal
 		}
@@ -231,9 +259,9 @@ func deepCopyJSONValue(x any) any {
 	}
 }
 
-// deepCopyJSON deep copies the passed value, assuming it is a valid JSON representation i.e. only contains
+// DeepCopyJSON deep copies the passed value, assuming it is a valid JSON representation i.e. only contains
 // types produced by json.Unmarshal() and also int64.
 // bool, int64, float64, string, []any, map[string]any, json.Number and nil
-func deepCopyJSON(x map[string]any) map[string]any {
+func DeepCopyJSON(x map[string]any) map[string]any {
 	return deepCopyJSONValue(x).(map[string]any)
 }
