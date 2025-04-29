@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
@@ -69,6 +70,8 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	log := xcontext.Logger(req.Context())
 
+	start := time.Now()
+
 	ep, err := xcontext.UserConfig(req.Context())
 	if err != nil {
 		log.Error("unable to get user endpoint", slog.Any("err", err))
@@ -102,6 +105,12 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		response.Encode(wri, rt)
 		return
 	}
+
+	log.Info("endpoint call done",
+		slog.String("verb", strings.ToUpper(opts.verb)),
+		slog.String("uri", uri),
+		slog.String("duration", util.ETA(start)),
+	)
 
 	wri.Header().Set("Content-Type", "application/json")
 	wri.WriteHeader(http.StatusOK)

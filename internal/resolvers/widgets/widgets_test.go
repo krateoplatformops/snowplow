@@ -68,6 +68,11 @@ func TestMain(m *testing.M) {
 				return ctx, err
 			}
 
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.pods.yaml", []resources.CreateOption{})
+			if err != nil {
+				return ctx, err
+			}
+
 			// TODO: add a wait.For conditional helper that can
 			// check and wait for the existence of a CRD resource
 			time.Sleep(2 * time.Second)
@@ -75,6 +80,7 @@ func TestMain(m *testing.M) {
 		},
 	).Finish(
 		envfuncs.DeleteNamespace(namespace),
+		envfuncs.TeardownCRDs(crdPath, "templates.krateo.io_restactions.yaml"),
 		envfuncs.TeardownCRDs(filepath.Join(testdataPath, "widgets"), "widgets.templates.krateo.io_buttons.yaml"),
 		envfuncs.DestroyCluster(clusterName),
 		e2e.Coverage(),
@@ -110,7 +116,9 @@ func TestResolveWidgets(t *testing.T) {
 			return ctx
 		}).
 		//Assess("Resolve Simple Widget", resolveWidget("button-sample")).
-		Assess("Resolve Widget with RESTAction reference", resolveWidget("button-with-api")).
+		//Assess("Resolve Widget with RESTAction reference", resolveWidget("button-with-api")).
+		//Assess("Resolve Widget with Actions", resolveWidget("button-with-actions")).
+		Assess("Resolve Widget with API and Actions", resolveWidget("button-with-api-and-actions")).
 		Feature()
 
 	testenv.Test(t, f)

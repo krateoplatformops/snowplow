@@ -3,7 +3,7 @@ apiVersion: widgets.templates.krateo.io/v1beta1
 kind: Button
 metadata:
   namespace: demo-system
-  name: button-with-api
+  name: button-with-api-and-actions
 spec:
   widgetData:
     label: label
@@ -17,3 +17,10 @@ spec:
   apiRef:
     name: httpbin-simple
     namespace: demo-system
+  backendEndpoints:
+    - id: submit
+      apiVersion: v1
+      resource: pods
+      name: nginx
+      namespace: demo-system
+      verb: GET

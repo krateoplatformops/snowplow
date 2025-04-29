@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/krateoplatformops/snowplow/apis"
 	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
+	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/restactions"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
@@ -31,6 +33,8 @@ var _ http.Handler = (*restActionHandler)(nil)
 
 func (r *restActionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	log := xcontext.Logger(req.Context())
+
+	start := time.Now()
 
 	got := fetchObject(req)
 	if got.Err != nil {
@@ -72,6 +76,12 @@ func (r *restActionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 		response.InternalError(wri, err)
 		return
 	}
+
+	log.Info("RESTAction successfully resolved",
+		slog.String("name", cr.Name),
+		slog.String("namespace", cr.Namespace),
+		slog.String("duration", util.ETA(start)),
+	)
 
 	wri.Header().Set("Content-Type", "application/json")
 	wri.WriteHeader(http.StatusOK)

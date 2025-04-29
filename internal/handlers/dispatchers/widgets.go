@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/env"
@@ -29,6 +31,8 @@ var _ http.Handler = (*widgetsHandler)(nil)
 func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	log := xcontext.Logger(req.Context())
 
+	start := time.Now()
+
 	got := fetchObject(req)
 	if got.Err != nil {
 		response.Encode(wri, got.Err)
@@ -51,6 +55,14 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		response.InternalError(wri, err)
 		return
 	}
+
+	log.Info("Widget successfully resolved",
+		slog.String("kind", res.GetKind()),
+		slog.String("apiVersion", res.GetAPIVersion()),
+		slog.String("name", res.GetName()),
+		slog.String("namespace", res.GetNamespace()),
+		slog.String("duration", util.ETA(start)),
+	)
 
 	wri.Header().Set("Content-Type", "application/json")
 	wri.WriteHeader(http.StatusOK)
