@@ -60,6 +60,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 	})
 	if err != nil {
 		log.Error("unable to resolve widget data templates", slog.Any("err", err))
+		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
 		return opts.In, err
 	}
 	log.Debug("widgetDataTemplate array after evaluation", slog.Any("widgetDataTemplate", evals))
@@ -83,6 +84,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		Username: opts.Username, UserGroups: opts.UserGroups,
 	})
 	if err != nil {
+		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
 		return opts.In, err
 	}
 
@@ -104,6 +106,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		err = crdschema.ValidateObjectStatus(ctx, nil, opts.In.Object)
 	}
 	if err != nil {
+		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
 		return opts.In, err
 	}
 
