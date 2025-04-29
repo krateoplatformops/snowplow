@@ -1,0 +1,19 @@
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Button
+metadata:
+  namespace: demo-system
+  name: button-with-api-error
+spec:
+  widgetData:
+    label: label
+    icon: fa-clock
+    type: text
+  widgetDataTemplate:
+    - forPath: label
+      expression: ${ .two.args.label }
+    - forPath: icon
+      expression: ${ .two.args.icon }
+  apiRef:
+    name: httpbin-simple
+    namespace: demo-system
