@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/krateoplatformops/snowplow/internal/resolvers/backendendpoints"
 	crdschema "github.com/krateoplatformops/snowplow/internal/resolvers/crds/schema"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/apiref"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/data"
@@ -17,6 +18,7 @@ import (
 const (
 	widgetDataKey         = "widgetData"
 	widgetDataTemplateKey = "widgetDataTemplate"
+	backendEndpointsKey   = "backendEndpoints"
 )
 
 type Widget = unstructured.Unstructured
@@ -75,9 +77,25 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		}
 	}
 
+	beps, err := backendendpoints.Resolve(ctx, backendendpoints.ResolveOptions{
+		RC: opts.RC, Widget: opts.In,
+		AuthnNS:  opts.AuthnNS,
+		Username: opts.Username, UserGroups: opts.UserGroups,
+	})
+	if err != nil {
+		return opts.In, err
+	}
+
 	err = unstructured.SetNestedMap(opts.In.Object, src, "status", widgetDataKey)
 	if err != nil {
 		return opts.In, err
+	}
+
+	if len(beps) > 0 {
+		err = unstructured.SetNestedSlice(opts.In.Object, beps, "status", backendEndpointsKey)
+		if err != nil {
+			return opts.In, err
+		}
 	}
 
 	if xenv.TestMode() {

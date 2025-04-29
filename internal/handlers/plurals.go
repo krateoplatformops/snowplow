@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/plumbing/cache"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
@@ -49,6 +50,8 @@ func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	log := xcontext.Logger(req.Context())
 
+	start := time.Now()
+
 	tmp, ok := r.store.Get(gvk.String())
 	if !ok {
 		log.Debug("cache miss", slog.String("gvk", gvk.String()))
@@ -75,6 +78,11 @@ func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		response.NotFound(wri, fmt.Errorf("%s", msg))
 		return
 	}
+
+	log.Info("plurals successfully resolved",
+		slog.String("gvk", gvk.String()),
+		slog.String("duration", util.ETA(start)),
+	)
 
 	wri.Header().Set("Content-Type", "application/json")
 	wri.WriteHeader(http.StatusOK)

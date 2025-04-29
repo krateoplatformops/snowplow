@@ -1,0 +1,18 @@
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Button
+metadata:
+  namespace: demo-system
+  name: button-with-actions
+spec:
+  widgetData:
+    label: label
+    icon: fa-clock
+    type: text
+  backendEndpoints:
+    - id: submit
+      apiVersion: v1
+      resource: pods
+      name: nginx
+      namespace: demo-system
+      verb: GET

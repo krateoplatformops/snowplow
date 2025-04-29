@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
+	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
 	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
@@ -40,6 +42,8 @@ func List() http.HandlerFunc {
 		}
 
 		log := xcontext.Logger(req.Context())
+
+		start := time.Now()
 
 		ep, err := xcontext.UserConfig(req.Context())
 		if err != nil {
@@ -98,6 +102,12 @@ func List() http.HandlerFunc {
 				rt = append(rt, x)
 			}
 		}
+
+		log.Info("resources successfully listed",
+			slog.String("category", cat),
+			slog.String("namespace", ns),
+			slog.String("duration", util.ETA(start)),
+		)
 
 		wri.Header().Set("Content-Type", "application/json")
 		wri.WriteHeader(http.StatusOK)
