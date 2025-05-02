@@ -12,16 +12,16 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/krateoplatformops/plumbing/env"
+	"github.com/krateoplatformops/plumbing/kubeutil"
+	"github.com/krateoplatformops/plumbing/server/use"
+	"github.com/krateoplatformops/plumbing/server/use/cors"
+	"github.com/krateoplatformops/plumbing/slogs/multi"
+	"github.com/krateoplatformops/plumbing/slogs/pretty"
+	"github.com/krateoplatformops/plumbing/slogs/ssex"
 	_ "github.com/krateoplatformops/snowplow/docs"
 	"github.com/krateoplatformops/snowplow/internal/handlers"
 	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
-	"github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
-	"github.com/krateoplatformops/snowplow/plumbing/server/use"
-	"github.com/krateoplatformops/snowplow/plumbing/server/use/cors"
-	"github.com/krateoplatformops/snowplow/plumbing/slogs/multi"
-	"github.com/krateoplatformops/snowplow/plumbing/slogs/pretty"
-	"github.com/krateoplatformops/snowplow/plumbing/slogs/ssex"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 

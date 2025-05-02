@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"strings"
 
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	httpcall "github.com/krateoplatformops/plumbing/http/request"
+	"github.com/krateoplatformops/plumbing/http/response"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	httpcall "github.com/krateoplatformops/snowplow/plumbing/http/request"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	"k8s.io/client-go/rest"
 )
 

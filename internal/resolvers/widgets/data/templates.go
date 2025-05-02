@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/krateoplatformops/snowplow/plumbing/jqutil"
-	"github.com/krateoplatformops/snowplow/plumbing/maps"
+	"github.com/krateoplatformops/plumbing/jqutil"
+	"github.com/krateoplatformops/plumbing/maps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
-	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 )
 
 func Example_createRequestOptions() {

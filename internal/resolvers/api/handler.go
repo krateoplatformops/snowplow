@@ -6,9 +6,9 @@ import (
 	"io"
 	"log/slog"
 
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/jqutil"
-	"github.com/krateoplatformops/snowplow/plumbing/ptr"
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	"github.com/krateoplatformops/plumbing/jqutil"
+	"github.com/krateoplatformops/plumbing/ptr"
 )
 
 type jsonHandlerOptions struct {

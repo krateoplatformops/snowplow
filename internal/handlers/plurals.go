@@ -7,26 +7,25 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/krateoplatformops/plumbing/cache"
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	"github.com/krateoplatformops/plumbing/http/response"
+	"github.com/krateoplatformops/plumbing/kubeutil/plurals"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
-	"github.com/krateoplatformops/snowplow/plumbing/cache"
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/rest"
 )
 
 func Plurals() http.Handler {
 	return &pluralsHandler{
-		store: cache.NewTTL[string, names](),
+		store: cache.NewTTL[string, plurals.Info](),
 	}
 }
 
 var _ http.Handler = (*pluralsHandler)(nil)
 
 type pluralsHandler struct {
-	store *cache.TTLCache[string, names]
+	store *cache.TTLCache[string, plurals.Info]
 }
 
 // @Summary Names Endpoint
@@ -52,30 +51,17 @@ func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	start := time.Now()
 
-	tmp, ok := r.store.Get(gvk.String())
-	if !ok {
-		log.Debug("cache miss", slog.String("gvk", gvk.String()))
-		tmp, err = r.resolveAPINames(gvk)
-		if err != nil {
-			log.Error("unable to discover API names",
-				slog.String("gvk", gvk.String()), slog.Any("err", err))
-			if apierrors.IsNotFound(err) {
-				response.NotFound(wri, err)
-			} else {
-				response.InternalError(wri, err)
-			}
-			return
+	tmp, err := plurals.Get(gvk, plurals.GetOptions{
+		Logger:       log,
+		Cache:        r.store,
+		ResolverFunc: plurals.ResolveAPINames,
+	})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			response.NotFound(wri, err)
+		} else {
+			response.InternalError(wri, err)
 		}
-
-		r.store.Set(gvk.String(), tmp, time.Hour*48)
-	} else {
-		log.Debug("cache hit", slog.String("gvk", gvk.String()))
-	}
-
-	if len(tmp.Plural) == 0 {
-		msg := fmt.Sprintf("no names found for %q", gvk.GroupVersion().String())
-		log.Warn(msg)
-		response.NotFound(wri, fmt.Errorf("%s", msg))
 		return
 	}
 
@@ -92,43 +78,6 @@ func (r *pluralsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	if err := enc.Encode(&tmp); err != nil {
 		log.Error("unable to serve api call response", slog.Any("err", err))
 	}
-}
-
-func (r *pluralsHandler) resolveAPINames(gvk schema.GroupVersionKind) (names, error) {
-	rc, err := rest.InClusterConfig()
-	if err != nil {
-		return names{}, err
-	}
-
-	dc, err := discovery.NewDiscoveryClientForConfig(rc)
-	if err != nil {
-		return names{}, err
-	}
-
-	list, err := dc.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
-	if err != nil {
-		return names{}, err
-	}
-
-	if list == nil || len(list.APIResources) == 0 {
-		return names{}, nil
-	}
-
-	var tmp names
-	for _, el := range list.APIResources {
-		if el.Kind != gvk.Kind {
-			continue
-		}
-
-		tmp = names{
-			Plural:   el.Name,
-			Singular: el.SingularName,
-			Shorts:   el.ShortNames,
-		}
-		break
-	}
-
-	return tmp, nil
 }
 
 func (r *pluralsHandler) validateRequest(req *http.Request) (gvk schema.GroupVersionKind, err error) {

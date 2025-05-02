@@ -5,14 +5,17 @@ package crds
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/krateoplatformops/snowplow/plumbing/e2e"
-	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	"github.com/krateoplatformops/plumbing/e2e"
+	xenv "github.com/krateoplatformops/plumbing/env"
+	"github.com/krateoplatformops/snowplow/apis"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	serializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
 
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -80,6 +83,13 @@ func TestGetCRD(t *testing.T) {
 
 func resolveCRD(name, version string) func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 	return func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+		r, err := resources.New(c.Client().RESTConfig())
+		if err != nil {
+			t.Fail()
+		}
+
+		apis.AddToScheme(r.GetScheme())
+
 		crd, err := Get(ctx, GetOptions{
 			RC:   c.Client().RESTConfig(),
 			Name: name, Version: version,
@@ -90,9 +100,18 @@ func resolveCRD(name, version string) func(ctx context.Context, t *testing.T, c 
 
 		obj := unstructured.Unstructured{}
 		obj.SetUnstructuredContent(crd)
-		err = kubeutil.ToYAML(os.Stderr, &obj)
-		if err != nil {
-			t.Fatal(err)
+		s := serializer.NewSerializerWithOptions(serializer.DefaultMetaFactory,
+			r.GetScheme(), r.GetScheme(),
+			serializer.SerializerOptions{
+				Yaml:   true,
+				Pretty: true,
+				Strict: false,
+			})
+
+		if err := s.Encode(&obj, os.Stdout); err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to encode YAML", slog.Any("err", err))
+			t.Fail()
 		}
 
 		return ctx

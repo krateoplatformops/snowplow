@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/krateoplatformops/plumbing/endpoints"
+	"github.com/krateoplatformops/plumbing/env"
+	"github.com/krateoplatformops/plumbing/kubeutil"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
-	"github.com/krateoplatformops/snowplow/plumbing/endpoints"
-	"github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 	"k8s.io/client-go/rest"
 )
 

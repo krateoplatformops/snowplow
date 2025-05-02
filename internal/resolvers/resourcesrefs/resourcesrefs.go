@@ -1,4 +1,4 @@
-package backendendpoints
+package resourcesrefs
 
 import (
 	"context"
@@ -7,19 +7,19 @@ import (
 	"fmt"
 	"log/slog"
 
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	"github.com/krateoplatformops/plumbing/kubeconfig"
+	"github.com/krateoplatformops/plumbing/maps"
 	templatesv1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
 	"github.com/krateoplatformops/snowplow/internal/rbac"
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/kubeconfig"
-	"github.com/krateoplatformops/snowplow/plumbing/maps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
 
 const (
-	backendEndpointsKey = "backendEndpoints"
+	resourcesRefsKey = "resourcesRefs"
 )
 
 type ResolveOptions struct {
@@ -33,7 +33,7 @@ type ResolveOptions struct {
 func Resolve(ctx context.Context, opts ResolveOptions) ([]any, error) {
 	log := xcontext.Logger(ctx)
 
-	arr, ok, err := maps.NestedSlice(opts.Widget.Object, "spec", backendEndpointsKey)
+	arr, ok, err := maps.NestedSlice(opts.Widget.Object, "spec", resourcesRefsKey)
 	if err != nil {
 		log.Error("unable to look for backendEndpoints existence", slog.Any("err", err))
 		return nil, err
@@ -61,7 +61,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) ([]any, error) {
 		return nil, err
 	}
 
-	results := []templatesv1.BackendEndpointResult{}
+	results := []templatesv1.ResourceRefResult{}
 	for _, el := range acts {
 		res, err2 := resolveOne(ctx, rc, &el)
 		if err2 != nil {
@@ -75,8 +75,8 @@ func Resolve(ctx context.Context, opts ResolveOptions) ([]any, error) {
 	return toUnstructuredSlice(results)
 }
 
-func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.BackendEndpoint) ([]templatesv1.BackendEndpointResult, error) {
-	all := []templatesv1.BackendEndpointResult{}
+func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRef) ([]templatesv1.ResourceRefResult, error) {
+	all := []templatesv1.ResourceRefResult{}
 	if in == nil {
 		return all, nil
 	}
@@ -108,14 +108,14 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.BackendEnd
 			continue
 		}
 
-		el := templatesv1.BackendEndpointResult{
+		el := templatesv1.ResourceRefResult{
 			ID:   in.ID,
 			Verb: kubeToREST[verb],
 			Path: fmt.Sprintf("/call?resource=%s&apiVersion=%s&name=%s&namespace=%s",
 				gvr.Resource, gvr.GroupVersion().String(), in.Name, in.Namespace),
 		}
 
-		el.Payload = &templatesv1.BackendEndpointResultPayload{
+		el.Payload = &templatesv1.ResourceRefPayload{
 			Kind:       gvk.Kind,
 			APIVersion: in.APIVersion,
 			MetaData: &templatesv1.Reference{
@@ -144,8 +144,8 @@ func convertToBackendEndpoints(arr []any) ([]templatesv1.BackendEndpoint, error)
 }
 */
 
-func fromUnstructuredSlice(in []any) ([]templatesv1.BackendEndpoint, error) {
-	var out []templatesv1.BackendEndpoint
+func fromUnstructuredSlice(in []any) ([]templatesv1.ResourceRef, error) {
+	var out []templatesv1.ResourceRef
 
 	for _, item := range in {
 		m, ok := item.(map[string]any)
@@ -158,7 +158,7 @@ func fromUnstructuredSlice(in []any) ([]templatesv1.BackendEndpoint, error) {
 			return nil, fmt.Errorf("failed to marshal map: %w", err)
 		}
 
-		var ep templatesv1.BackendEndpoint
+		var ep templatesv1.ResourceRef
 		if err := json.Unmarshal(bytes, &ep); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal to BackendEndpoint: %w", err)
 		}
@@ -169,7 +169,7 @@ func fromUnstructuredSlice(in []any) ([]templatesv1.BackendEndpoint, error) {
 	return out, nil
 }
 
-func toUnstructuredSlice(results []templatesv1.BackendEndpointResult) ([]any, error) {
+func toUnstructuredSlice(results []templatesv1.ResourceRefResult) ([]any, error) {
 	var list []any
 
 	for _, r := range results {

@@ -3,21 +3,13 @@ apiVersion: widgets.templates.krateo.io/v1beta1
 kind: Button
 metadata:
   namespace: demo-system
-  name: button-with-api-and-actions
+  name: button-with-actions
 spec:
   widgetData:
     label: label
     icon: fa-clock
     type: text
-  widgetDataTemplate:
-    - forPath: label
-      expression: ${ .one.args.label }
-    - forPath: icon
-      expression: ${ .one.args.icon }
-  apiRef:
-    name: httpbin-simple
-    namespace: demo-system
-  backendEndpoints:
+  resourcesRefs:
     - id: submit
       apiVersion: v1
       resource: pods

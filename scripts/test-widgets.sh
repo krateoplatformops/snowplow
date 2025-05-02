@@ -11,5 +11,5 @@ kubectl apply -f testdata/widgets/button.restaction.simple.yaml
 kubectl apply -f testdata/widgets/button.sample.yaml
 kubectl apply -f testdata/widgets/button.with.api.yaml
 kubectl apply -f testdata/widgets/button.with.api.error.yaml
-kubectl apply -f testdata/widgets/button.with.api.and.backendendpoints.yaml
-kubectl apply -f testdata/widgets/button.with.backendendpoints.yaml
+kubectl apply -f testdata/widgets/button.with.api.and.resourcesrefs.yaml
+kubectl apply -f testdata/widgets/button.with.resourcesrefs.yaml
