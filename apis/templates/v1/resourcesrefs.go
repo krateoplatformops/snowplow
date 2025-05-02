@@ -1,7 +1,7 @@
 package v1
 
-// BackendEndpoint defines a template for an action.
-type BackendEndpoint struct {
+// ResourceRef defines a template for an action.
+type ResourceRef struct {
 	// ID for the action.
 	ID string `json:"id,omitempty"`
 	// Name of the related resource.
@@ -16,8 +16,8 @@ type BackendEndpoint struct {
 	Verb string `json:"verb,omitempty"`
 }
 
-// BackendEndpointResult defines the action result after evaluating a template.
-type BackendEndpointResult struct {
+// ResourceRefResult defines the action result after evaluating a template.
+type ResourceRefResult struct {
 	// ID of this action.
 	ID string `json:"id,omitempty"`
 	// Path is the HTTP request path.
@@ -25,11 +25,11 @@ type BackendEndpointResult struct {
 	// Verb is the HTTP request verb.
 	Verb string `json:"verb,omitempty"`
 	// Payload the payload for the action result
-	Payload *BackendEndpointResultPayload `json:"payload,omitempty"`
+	Payload *ResourceRefPayload `json:"payload,omitempty"`
 }
 
-// BackendEndpointResultPayload is the template action result payload.
-type BackendEndpointResultPayload struct {
+// ResourceRefPayload is the template action result payload.
+type ResourceRefPayload struct {
 	Kind       string     `json:"kind,omitempty"`
 	APIVersion string     `json:"apiVersion,omitempty"`
 	MetaData   *Reference `json:"metadata,omitempty"`

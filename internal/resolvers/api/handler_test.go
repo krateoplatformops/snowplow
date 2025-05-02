@@ -10,7 +10,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/krateoplatformops/snowplow/plumbing/ptr"
+	"github.com/krateoplatformops/plumbing/ptr"
 )
 
 func TestJsonHandler(t *testing.T) {

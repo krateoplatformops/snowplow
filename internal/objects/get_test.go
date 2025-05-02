@@ -5,16 +5,18 @@ package objects
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	"github.com/krateoplatformops/plumbing/e2e"
+	xenv "github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/snowplow/apis"
-	"github.com/krateoplatformops/snowplow/plumbing/e2e"
-	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 
+	serializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/pkg/env"
@@ -125,9 +127,18 @@ func getRESTAction(name string) func(ctx context.Context, t *testing.T, c *envco
 			t.Fatal(res.Err)
 		}
 
-		err = kubeutil.ToYAML(os.Stderr, res.Unstructured)
-		if err != nil {
-			t.Fatal(err)
+		s := serializer.NewSerializerWithOptions(serializer.DefaultMetaFactory,
+			r.GetScheme(), r.GetScheme(),
+			serializer.SerializerOptions{
+				Yaml:   true,
+				Pretty: true,
+				Strict: false,
+			})
+
+		if err := s.Encode(res.Unstructured, os.Stdout); err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to encode YAML", slog.Any("err", err))
+			t.Fail()
 		}
 
 		return ctx

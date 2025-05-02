@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/krateoplatformops/plumbing/jqutil"
+	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/api"
-	"github.com/krateoplatformops/snowplow/plumbing/jqutil"
-	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

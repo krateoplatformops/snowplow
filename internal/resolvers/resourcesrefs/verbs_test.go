@@ -1,4 +1,4 @@
-package backendendpoints
+package resourcesrefs
 
 import (
 	"sort"

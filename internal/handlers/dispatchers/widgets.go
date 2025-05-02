@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	"github.com/krateoplatformops/plumbing/env"
+	"github.com/krateoplatformops/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response"
 )
 
 func Widgets() http.Handler {

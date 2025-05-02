@@ -4,13 +4,13 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/krateoplatformops/snowplow/internal/resolvers/backendendpoints"
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	xenv "github.com/krateoplatformops/plumbing/env"
+	"github.com/krateoplatformops/plumbing/maps"
 	crdschema "github.com/krateoplatformops/snowplow/internal/resolvers/crds/schema"
+	"github.com/krateoplatformops/snowplow/internal/resolvers/resourcesrefs"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/apiref"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/data"
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/maps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 )
@@ -18,7 +18,7 @@ import (
 const (
 	widgetDataKey         = "widgetData"
 	widgetDataTemplateKey = "widgetDataTemplate"
-	backendEndpointsKey   = "backendEndpoints"
+	resourcesRefsKey      = "resourcesRefs"
 )
 
 type Widget = unstructured.Unstructured
@@ -78,7 +78,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		}
 	}
 
-	beps, err := backendendpoints.Resolve(ctx, backendendpoints.ResolveOptions{
+	resrefs, err := resourcesrefs.Resolve(ctx, resourcesrefs.ResolveOptions{
 		RC: opts.RC, Widget: opts.In,
 		AuthnNS:  opts.AuthnNS,
 		Username: opts.Username, UserGroups: opts.UserGroups,
@@ -93,8 +93,8 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		return opts.In, err
 	}
 
-	if len(beps) > 0 {
-		err = unstructured.SetNestedSlice(opts.In.Object, beps, "status", backendEndpointsKey)
+	if len(resrefs) > 0 {
+		err = unstructured.SetNestedSlice(opts.In.Object, resrefs, "status", resourcesRefsKey)
 		if err != nil {
 			return opts.In, err
 		}

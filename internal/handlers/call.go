@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	"github.com/krateoplatformops/plumbing/env"
+	"github.com/krateoplatformops/plumbing/http/request"
+	"github.com/krateoplatformops/plumbing/http/response"
+	"github.com/krateoplatformops/plumbing/ptr"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/http/request"
-	"github.com/krateoplatformops/snowplow/plumbing/http/response"
-	"github.com/krateoplatformops/snowplow/plumbing/ptr"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )

@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
+	xcontext "github.com/krateoplatformops/plumbing/context"
+	"github.com/krateoplatformops/plumbing/e2e"
+	xenv "github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/snowplow/apis"
 	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
-	xcontext "github.com/krateoplatformops/snowplow/plumbing/context"
-	"github.com/krateoplatformops/snowplow/plumbing/e2e"
-	xenv "github.com/krateoplatformops/snowplow/plumbing/env"
-	"github.com/krateoplatformops/snowplow/plumbing/kubeutil"
 
+	serializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/pkg/env"
@@ -143,8 +143,19 @@ func resolveRESTAction(name string) func(ctx context.Context, t *testing.T, c *e
 
 		res.Kind = "RESTAction"
 		res.APIVersion = v1.SchemeGroupVersion.String()
-		if err := kubeutil.ToYAML(os.Stderr, res); err != nil {
-			t.Fatal(err)
+
+		s := serializer.NewSerializerWithOptions(serializer.DefaultMetaFactory,
+			r.GetScheme(), r.GetScheme(),
+			serializer.SerializerOptions{
+				Yaml:   true,
+				Pretty: true,
+				Strict: false,
+			})
+
+		if err := s.Encode(res, os.Stdout); err != nil {
+			log := xcontext.Logger(ctx)
+			log.Error("unable to encode YAML", slog.Any("err", err))
+			t.Fail()
 		}
 
 		return ctx

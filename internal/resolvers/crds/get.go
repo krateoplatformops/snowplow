@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
-	"github.com/krateoplatformops/snowplow/plumbing/env"
 	runtimeschema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
