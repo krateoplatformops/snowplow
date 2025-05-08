@@ -132,16 +132,6 @@ paths:
       description: Handle Resources
       operationId: call
       parameters:
-      - description: Krateo User
-        in: header
-        name: X-Krateo-User
-        required: true
-        type: string
-      - description: Krateo User Groups
-        in: header
-        name: X-Krateo-Groups
-        required: true
-        type: string
       - description: Resource API Group and Version
         in: query
         name: apiVersion
@@ -196,16 +186,6 @@ paths:
       description: Handle Resources
       operationId: call
       parameters:
-      - description: Krateo User
-        in: header
-        name: X-Krateo-User
-        required: true
-        type: string
-      - description: Krateo User Groups
-        in: header
-        name: X-Krateo-Groups
-        required: true
-        type: string
       - description: Resource API Group and Version
         in: query
         name: apiVersion
@@ -260,16 +240,6 @@ paths:
       description: Handle Resources
       operationId: call
       parameters:
-      - description: Krateo User
-        in: header
-        name: X-Krateo-User
-        required: true
-        type: string
-      - description: Krateo User Groups
-        in: header
-        name: X-Krateo-Groups
-        required: true
-        type: string
       - description: Resource API Group and Version
         in: query
         name: apiVersion
@@ -324,16 +294,6 @@ paths:
       description: Handle Resources
       operationId: call
       parameters:
-      - description: Krateo User
-        in: header
-        name: X-Krateo-User
-        required: true
-        type: string
-      - description: Krateo User Groups
-        in: header
-        name: X-Krateo-Groups
-        required: true
-        type: string
       - description: Resource API Group and Version
         in: query
         name: apiVersion
@@ -391,7 +351,7 @@ paths:
       - ' application/x-yaml'
       - ' text/yaml'
       description: This endpoint converts YAML to JSON or JSON to YAML based on the
-        "Accept" header.
+        "Content-Type" header.
       operationId: convert
       parameters:
       - description: Input data in YAML or JSON format
@@ -438,16 +398,6 @@ paths:
       description: Resources List
       operationId: list
       parameters:
-      - description: Krateo User
-        in: header
-        name: X-Krateo-User
-        required: true
-        type: string
-      - description: Krateo User Groups
-        in: header
-        name: X-Krateo-Groups
-        required: true
-        type: string
       - description: Resource category
         in: query
         name: category

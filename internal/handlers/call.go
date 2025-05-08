@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -38,8 +37,6 @@ type callHandler struct {
 // @Summary Call Endpoint
 // @Description Handle Resources
 // @ID call
-// @Param  X-Krateo-User    header  string  true  "Krateo User"
-// @Param  X-Krateo-Groups  header  string  true  "Krateo User Groups"
 // @Param  apiVersion       query   string  true  "Resource API Group and Version"
 // @Param  resource         query   string  true  "Resource Plural"
 // @Param  name             query   string  true  "Resource name"
@@ -125,18 +122,6 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err error) {
 	opts.verb = req.Method
 
-	opts.subject = req.Header.Get(xcontext.LabelKrateoUser)
-	if len(opts.subject) == 0 {
-		err = fmt.Errorf("missing '%s' header", xcontext.LabelKrateoUser)
-		return
-	}
-
-	opts.groups = strings.Split(req.Header.Get(xcontext.LabelKrateoGroups), ",")
-	if len(opts.groups) == 0 {
-		err = fmt.Errorf("missing '%s' header", xcontext.LabelKrateoGroups)
-		return
-	}
-
 	opts.gvr, err = util.ParseGVR(req)
 	if err != nil {
 		return
@@ -156,12 +141,10 @@ func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err 
 }
 
 type callOptions struct {
-	gvr     schema.GroupVersionResource
-	nsn     types.NamespacedName
-	verb    string
-	subject string
-	groups  []string
-	dat     []byte
+	gvr  schema.GroupVersionResource
+	nsn  types.NamespacedName
+	verb string
+	dat  []byte
 }
 
 func buildURI(opts callOptions) (string, error) {

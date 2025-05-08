@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
@@ -42,10 +41,8 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	ctx := xcontext.BuildContext(req.Context())
 
 	res, err := widgets.Resolve(ctx, widgets.ResolveOptions{
-		In:         got.Unstructured,
-		Username:   req.Header.Get(xcontext.LabelKrateoUser),
-		UserGroups: strings.Split(req.Header.Get(xcontext.LabelKrateoGroups), ","),
-		AuthnNS:    r.authnNS,
+		In:      got.Unstructured,
+		AuthnNS: r.authnNS,
 	})
 	if err != nil {
 		log.Error("unable to resolve widget",

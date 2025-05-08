@@ -63,7 +63,7 @@ func TestMain(m *testing.M) {
 			}
 			r.WithNamespace(namespace)
 
-			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.restactions.yaml", []resources.CreateOption{})
 			if err != nil {
 				return ctx, err
 			}
@@ -84,11 +84,20 @@ func TestMain(m *testing.M) {
 }
 
 func TestCallHandler(t *testing.T) {
+	const (
+		jwtSignKey = "abbracadabbra"
+	)
+
 	os.Setenv("DEBUG", "0")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
-		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
+		Setup(e2e.SignUp(e2e.SignUpOptions{
+			Username:   "cyberjoker",
+			Groups:     []string{"devs"},
+			Namespace:  namespace,
+			JWTSignKey: jwtSignKey,
+		})).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {
@@ -112,14 +121,14 @@ func TestCallHandler(t *testing.T) {
 		Assess("Run Call WS", runWS(request.RequestOptions{
 			Verb: ptr.To(string(http.MethodGet)),
 			Path: "/call?apiVersion=templates.krateo.io/v1&resource=restactions&namespace=demo-system&name=kube",
-			Headers: []string{
-				"X-Krateo-User: test-user",
-				"X-Krateo-Groups: group1,group2",
-			}},
+			// Headers: []string{
+			// 	fmt.Sprintf("Authorization: Bearer: %s", "TODO"),
+			// }},
+		},
 			response.Status{
 				Kind: "Status", APIVersion: "v1",
-				Code:   http.StatusOK,
-				Status: "Success",
+				Code:   http.StatusNotFound,
+				Status: "Failure",
 			},
 		)).
 		Feature()

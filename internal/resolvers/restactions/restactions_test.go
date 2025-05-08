@@ -78,11 +78,20 @@ func TestMain(m *testing.M) {
 }
 
 func TestRESTAction(t *testing.T) {
+	const (
+		jwtSignKey = "abbracadabbra"
+	)
+
 	os.Setenv("DEBUG", "1")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
-		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
+		Setup(e2e.SignUp(e2e.SignUpOptions{
+			Username:   "cyberjoker",
+			Groups:     []string{"devs"},
+			Namespace:  namespace,
+			JWTSignKey: jwtSignKey,
+		})).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {
@@ -129,11 +138,9 @@ func resolveRESTAction(name string) func(ctx context.Context, t *testing.T, c *e
 		}
 
 		res, err := Resolve(ctx, ResolveOptions{
-			In:         &cr,
-			SArc:       c.Client().RESTConfig(),
-			AuthnNS:    namespace,
-			Username:   "cyberjoker",
-			UserGroups: []string{"devs"},
+			In:      &cr,
+			SArc:    c.Client().RESTConfig(),
+			AuthnNS: namespace,
 		})
 		if err != nil {
 			log := xcontext.Logger(ctx)

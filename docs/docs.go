@@ -84,20 +84,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Resource API Group and Version",
                         "name": "apiVersion",
                         "in": "query",
@@ -177,20 +163,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Resource API Group and Version",
                         "name": "apiVersion",
                         "in": "query",
@@ -268,20 +240,6 @@ const docTemplate = `{
                 "summary": "Call Endpoint",
                 "operationId": "call",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Resource API Group and Version",
@@ -363,20 +321,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Resource API Group and Version",
                         "name": "apiVersion",
                         "in": "query",
@@ -449,7 +393,7 @@ const docTemplate = `{
         },
         "/convert": {
             "post": {
-                "description": "This endpoint converts YAML to JSON or JSON to YAML based on the \"Accept\" header.",
+                "description": "This endpoint converts YAML to JSON or JSON to YAML based on the \"Content-Type\" header.",
                 "consumes": [
                     "application/json",
                     " application/x-yaml",
@@ -527,20 +471,6 @@ const docTemplate = `{
                 "summary": "List resources by category in a specified namespace.",
                 "operationId": "list",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Resource category",
@@ -706,6 +636,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This the total new Krateo backend.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

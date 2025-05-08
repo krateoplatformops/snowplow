@@ -84,11 +84,20 @@ func TestMain(m *testing.M) {
 }
 
 func TestResolveWidgets(t *testing.T) {
+	const (
+		jwtSignKey = "abbracadabbra"
+	)
+
 	os.Setenv("DEBUG", "0")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
-		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
+		Setup(e2e.SignUp(e2e.SignUpOptions{
+			Username:   "cyberjoker",
+			Groups:     []string{"devs"},
+			Namespace:  namespace,
+			JWTSignKey: jwtSignKey,
+		})).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {

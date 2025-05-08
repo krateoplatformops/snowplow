@@ -44,8 +44,7 @@ func main() {
 	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
 	authnNS := flag.String("authn-namespace", env.String("AUTHN_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
-	skipOn := flag.Bool("skip", env.Bool("SKIP", false),
-		"enable or disable request dispatcher for templates.krateo.io resources")
+	signKey := flag.String("jwt-sign-key", env.String("JWT_SIGN_KEY", ""), "secret key used to sign JWT tokens")
 
 	flag.Usage = func() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
@@ -105,15 +104,15 @@ func main() {
 
 	mux.Handle("GET /health", handlers.HealthCheck(serviceName, build, kubeutil.ServiceAccountNamespace))
 	mux.Handle("GET /api-info/names", chain.Then(handlers.Plurals()))
-	mux.Handle("GET /list", chain.Append(use.UserConfig()).Then(handlers.List()))
+	mux.Handle("GET /list", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.List()))
 
 	mux.Handle("GET /call", chain.Append(
-		use.UserConfig(),
-		handlers.Dispatcher(dispatchers.All(*skipOn))).
+		use.UserConfig(*signKey, *authnNS),
+		handlers.Dispatcher(dispatchers.All())).
 		Then(handlers.Call()))
-	mux.Handle("POST /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
-	mux.Handle("PUT /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
-	mux.Handle("DELETE /call", chain.Append(use.UserConfig()).Then(handlers.Call()))
+	mux.Handle("POST /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
+	mux.Handle("PUT /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
+	mux.Handle("DELETE /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
 
 	ctx, stop := signal.NotifyContext(context.Background(), []os.Signal{
 		os.Interrupt,
@@ -136,8 +135,6 @@ func main() {
 				"Content-Type",
 				"X-Auth-Code",
 				"X-Krateo-TraceId",
-				"X-Krateo-User",
-				"X-Krateo-Groups",
 			},
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: true,
