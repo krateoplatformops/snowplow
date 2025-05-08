@@ -18,11 +18,9 @@ const (
 )
 
 type ResolveOptions struct {
-	RC         *rest.Config
-	Widget     *unstructured.Unstructured
-	AuthnNS    string
-	Username   string
-	UserGroups []string
+	RC      *rest.Config
+	Widget  *unstructured.Unstructured
+	AuthnNS string
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
@@ -36,7 +34,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
 
 	res := objects.Get(ctx, ref)
 	if res.Err != nil {
-		return map[string]any{}, fmt.Errorf(res.Err.Message)
+		return map[string]any{}, fmt.Errorf("%s", res.Err.Message)
 	}
 
 	ra, err := convertToRESTAction(res.Unstructured.Object)
@@ -45,11 +43,9 @@ func Resolve(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
 	}
 
 	raopts := restactions.ResolveOptions{
-		In:         &ra,
-		SArc:       opts.RC,
-		AuthnNS:    opts.AuthnNS,
-		Username:   opts.Username,
-		UserGroups: opts.UserGroups,
+		In:      &ra,
+		SArc:    opts.RC,
+		AuthnNS: opts.AuthnNS,
 	}
 
 	if _, err = restactions.Resolve(ctx, raopts); err != nil {

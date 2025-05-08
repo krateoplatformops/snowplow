@@ -24,11 +24,9 @@ const (
 type Widget = unstructured.Unstructured
 
 type ResolveOptions struct {
-	In         *Widget
-	RC         *rest.Config
-	AuthnNS    string
-	Username   string
-	UserGroups []string
+	In      *Widget
+	RC      *rest.Config
+	AuthnNS string
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
@@ -41,11 +39,9 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 	log.Debug("WidgetData before resolving API Ref", slog.Any(widgetDataKey, src))
 
 	dict, err := apiref.Resolve(ctx, apiref.ResolveOptions{
-		RC:         opts.RC,
-		Widget:     opts.In,
-		AuthnNS:    opts.AuthnNS,
-		Username:   opts.Username,
-		UserGroups: opts.UserGroups,
+		RC:      opts.RC,
+		Widget:  opts.In,
+		AuthnNS: opts.AuthnNS,
 	})
 	if err != nil {
 		log.Error("unable to resolve api reference", slog.Any("err", err))
@@ -80,8 +76,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 
 	resrefs, err := resourcesrefs.Resolve(ctx, resourcesrefs.ResolveOptions{
 		RC: opts.RC, Widget: opts.In,
-		AuthnNS:  opts.AuthnNS,
-		Username: opts.Username, UserGroups: opts.UserGroups,
+		AuthnNS: opts.AuthnNS,
 	})
 	if err != nil {
 		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")

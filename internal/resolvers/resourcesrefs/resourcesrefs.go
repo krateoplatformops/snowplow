@@ -23,11 +23,9 @@ const (
 )
 
 type ResolveOptions struct {
-	RC         *rest.Config
-	Widget     *unstructured.Unstructured
-	AuthnNS    string
-	Username   string
-	UserGroups []string
+	RC      *rest.Config
+	Widget  *unstructured.Unstructured
+	AuthnNS string
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) ([]any, error) {

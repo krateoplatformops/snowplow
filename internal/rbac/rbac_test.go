@@ -50,7 +50,7 @@ func TestMain(m *testing.M) {
 			}
 			r.WithNamespace(namespace)
 
-			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.restactions.yaml", []resources.CreateOption{})
 			if err != nil {
 				return ctx, err
 			}
@@ -71,11 +71,20 @@ func TestMain(m *testing.M) {
 }
 
 func TestUserCan(t *testing.T) {
+	const (
+		signKey = "abbracadabbra"
+	)
+
 	os.Setenv("DEBUG", "0")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
-		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
+		Setup(e2e.SignUp(e2e.SignUpOptions{
+			Username:   "cyberjoker",
+			Groups:     []string{"devs"},
+			Namespace:  namespace,
+			JWTSignKey: signKey,
+		})).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			r, err := resources.New(cfg.Client().RESTConfig())
 			if err != nil {

@@ -20,21 +20,17 @@ const (
 )
 
 type ResolveOptions struct {
-	In         *templates.RESTAction
-	SArc       *rest.Config
-	AuthnNS    string
-	Username   string
-	UserGroups []string
+	In      *templates.RESTAction
+	SArc    *rest.Config
+	AuthnNS string
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, error) {
 	dict := api.Resolve(ctx, api.ResolveOptions{
-		RC:         opts.SArc,
-		AuthnNS:    opts.AuthnNS,
-		Username:   opts.Username,
-		UserGroups: opts.UserGroups,
-		Verbose:    isVerbose(opts.In),
-		Items:      opts.In.Spec.API,
+		RC:      opts.SArc,
+		AuthnNS: opts.AuthnNS,
+		Verbose: isVerbose(opts.In),
+		Items:   opts.In.Spec.API,
 	})
 	if dict == nil {
 		dict = map[string]any{}

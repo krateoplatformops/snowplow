@@ -20,8 +20,6 @@ import (
 // @Summary List resources by category in a specified namespace.
 // @Description Resources List
 // @ID list
-// @Param  X-Krateo-User    header  string  true  "Krateo User"
-// @Param  X-Krateo-Groups  header  string  true  "Krateo User Groups"
 // @Param  category         query   string  true  "Resource category"
 // @Param  ns               query   string  false  "Namespace"
 // @Produce  json

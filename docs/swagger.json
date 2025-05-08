@@ -77,20 +77,6 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Resource API Group and Version",
                         "name": "apiVersion",
                         "in": "query",
@@ -170,20 +156,6 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Resource API Group and Version",
                         "name": "apiVersion",
                         "in": "query",
@@ -261,20 +233,6 @@
                 "summary": "Call Endpoint",
                 "operationId": "call",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Resource API Group and Version",
@@ -356,20 +314,6 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Resource API Group and Version",
                         "name": "apiVersion",
                         "in": "query",
@@ -442,7 +386,7 @@
         },
         "/convert": {
             "post": {
-                "description": "This endpoint converts YAML to JSON or JSON to YAML based on the \"Accept\" header.",
+                "description": "This endpoint converts YAML to JSON or JSON to YAML based on the \"Content-Type\" header.",
                 "consumes": [
                     "application/json",
                     " application/x-yaml",
@@ -520,20 +464,6 @@
                 "summary": "List resources by category in a specified namespace.",
                 "operationId": "list",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Krateo User",
-                        "name": "X-Krateo-User",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Krateo User Groups",
-                        "name": "X-Krateo-Groups",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Resource category",

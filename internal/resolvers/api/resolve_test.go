@@ -55,7 +55,7 @@ func TestMain(m *testing.M) {
 			}
 			r.WithNamespace(namespace)
 
-			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.yaml", []resources.CreateOption{})
+			err = decoder.ApplyWithManifestDir(ctx, r, testdataPath, "rbac.restactions.yaml", []resources.CreateOption{})
 			if err != nil {
 				return ctx, err
 			}
@@ -75,12 +75,19 @@ func TestMain(m *testing.M) {
 func TestResolveAPI(t *testing.T) {
 	const (
 		testdataPath = "../../../testdata"
+		signKey      = "abbracadabbra"
 	)
+
 	os.Setenv("DEBUG", "1")
 
 	f := features.New("Setup").
 		Setup(e2e.Logger("test")).
-		Setup(e2e.SignUp("cyberjoker", []string{"devs"}, namespace)).
+		Setup(e2e.SignUp(e2e.SignUpOptions{
+			Username:   "cyberjoker",
+			Groups:     []string{"devs"},
+			Namespace:  namespace,
+			JWTSignKey: signKey,
+		})).
 		Setup(func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 
 			r, err := resources.New(cfg.Client().RESTConfig())
@@ -117,11 +124,9 @@ func TestResolveAPI(t *testing.T) {
 			}
 
 			res := Resolve(ctx, ResolveOptions{
-				RC:         cfg.Client().RESTConfig(),
-				AuthnNS:    cfg.Namespace(),
-				Username:   "cyberjoker",
-				UserGroups: []string{"devs"},
-				Items:      cr.Spec.API,
+				RC:      cfg.Client().RESTConfig(),
+				AuthnNS: cfg.Namespace(),
+				Items:   cr.Spec.API,
 			})
 			if err != nil {
 				t.Fatal(err)

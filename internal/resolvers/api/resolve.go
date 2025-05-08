@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	httpcall "github.com/krateoplatformops/plumbing/http/request"
@@ -19,12 +18,10 @@ const (
 )
 
 type ResolveOptions struct {
-	RC         *rest.Config
-	AuthnNS    string
-	Username   string
-	UserGroups []string
-	Verbose    bool
-	Items      []*templates.API
+	RC      *rest.Config
+	AuthnNS string
+	Verbose bool
+	Items   []*templates.API
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
@@ -41,6 +38,12 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	log := xcontext.Logger(ctx)
+
+	user, err := xcontext.UserInfo(ctx)
+	if err != nil {
+		log.Error("unable to fetch user info from context", slog.Any("err", err))
+		return map[string]any{}
+	}
 
 	// Sort API by Depends
 	names, err := topologicalSort(opts.Items)
@@ -64,7 +67,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	// Endpoints reference mapper
 	mapper := endpointReferenceMapper{
 		authnNS:  opts.AuthnNS,
-		username: opts.Username,
+		username: user.Username,
 		rc:       opts.RC,
 	}
 
@@ -77,15 +80,13 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 			log.Warn("api not found in apiMap", slog.Any("name", id))
 			continue
 		}
-
-		// Add Krateo HTTP Request headers
 		if apiCall.Headers == nil {
 			apiCall.Headers = []string{headerAcceptJSON}
 		}
-		apiCall.Headers = append(apiCall.Headers,
-			fmt.Sprintf("X-Krateo-User: %s", opts.Username))
-		apiCall.Headers = append(apiCall.Headers,
-			fmt.Sprintf("X-Krateo-Groups: %s", strings.Join(opts.UserGroups, ",")))
+		if accessToken, _ := xcontext.AccessToken(ctx); accessToken != "" && apiCall.EndpointRef == nil {
+			apiCall.Headers = append(apiCall.Headers,
+				fmt.Sprintf("Authorization: Bearer %s", accessToken))
+		}
 
 		// Resolve the endpoint
 		ep, err := mapper.resolveOne(ctx, apiCall.EndpointRef)
