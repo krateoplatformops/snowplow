@@ -2,7 +2,6 @@ package schema
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -14,6 +13,10 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const (
+	widgetDataKey = "widgetData"
+)
+
 func ValidateObjectStatus(ctx context.Context, rc *rest.Config, obj map[string]any) error {
 	gv := dynamic.GroupVersion(obj)
 	gvr, err := dynamic.ResourceFor(rc, gv.WithKind(dynamic.GetKind(obj)))
@@ -21,7 +24,7 @@ func ValidateObjectStatus(ctx context.Context, rc *rest.Config, obj map[string]a
 		return err
 	}
 
-	status, ok, err := unstructured.NestedMap(obj, "status")
+	widgetData, ok, err := unstructured.NestedMap(obj, "status", widgetDataKey)
 	if err != nil {
 		return err
 	}
@@ -37,13 +40,8 @@ func ValidateObjectStatus(ctx context.Context, rc *rest.Config, obj map[string]a
 					Kind:  gvr.Resource,
 					Name:  name,
 				},
-				Message: fmt.Sprintf("status not found in %s %q", gvr.String(), name),
+				Message: fmt.Sprintf("status.widgetData not found in %s %q", gvr.String(), name),
 			}}
-	}
-
-	doc, err := json.Marshal(status)
-	if err != nil {
-		return err
 	}
 
 	crd, err := crds.Get(ctx, crds.GetOptions{
@@ -60,5 +58,5 @@ func ValidateObjectStatus(ctx context.Context, rc *rest.Config, obj map[string]a
 		return err
 	}
 
-	return validateCustomResource(crv, doc)
+	return validateCustomResource(crv, widgetData)
 }

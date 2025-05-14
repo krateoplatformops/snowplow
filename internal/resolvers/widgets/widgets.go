@@ -3,6 +3,7 @@ package widgets
 import (
 	"context"
 	"log/slog"
+	"net/http"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	xenv "github.com/krateoplatformops/plumbing/env"
@@ -11,6 +12,8 @@ import (
 	"github.com/krateoplatformops/snowplow/internal/resolvers/resourcesrefs"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/apiref"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/data"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 )
@@ -102,7 +105,13 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 	}
 	if err != nil {
 		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
-		return opts.In, err
+		return opts.In, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusBadRequest,
+				Reason:  metav1.StatusReasonBadRequest,
+				Message: err.Error(),
+			}}
 	}
 
 	return opts.In, nil
