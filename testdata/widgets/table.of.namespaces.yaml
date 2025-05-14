@@ -1,0 +1,34 @@
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  annotations:
+    "krateo.io/verbose": "false"
+  name: cluster-namespaces
+  namespace: demo-system
+spec:
+  api:
+  - name: namespaces
+    path: "/api/v1/namespaces?limit=50"
+    filter: "[.items[] | .metadata.name]"
+    continueOnError: true
+    errorKey: namespacesError
+---
+kind: Table
+apiVersion: widgets.templates.krateo.io/v1beta1
+metadata:
+  name: table-of-namespaces
+  namespace: demo-system
+spec:
+  widgetData:
+    pageSize: 10
+    data: ""
+    columns:
+      - valueKey: name
+        title: Cluster Namespaces
+
+  widgetDataTemplate:
+    - forPath: data
+      expression: ${ .namespaces }
+  apiRef:
+    name: cluster-namespaces
+    namespace: demo-system

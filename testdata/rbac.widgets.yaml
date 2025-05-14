@@ -8,6 +8,7 @@ rules:
   - widgets.templates.krateo.io
   resources:
   - buttons
+  - tables
   verbs:
   - get
   - list

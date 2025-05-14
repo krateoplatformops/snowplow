@@ -1,25 +1,25 @@
 package schema
 
 import (
-	"encoding/json"
 	"errors"
+	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 )
 
-func validateCustomResource(crv *apiextensions.CustomResourceValidation, document []byte) error {
-	var jsonObj map[string]any
-	if err := json.Unmarshal(document, &jsonObj); err != nil {
-		return err
-	}
-
+func validateCustomResource(crv *apiextensions.CustomResourceValidation, doc map[string]any) error {
 	validator, _, err := validation.NewSchemaValidator(crv.OpenAPIV3Schema)
 	if err != nil {
 		return err
 	}
 
-	errs := validation.ValidateCustomResource(nil, jsonObj, validator)
+	spew.Dump(doc)
+	fmt.Printf("\n\n\n")
+	spew.Dump(crv)
+
+	errs := validation.ValidateCustomResource(nil, doc, validator)
 	if len(errs) == 0 {
 		return nil
 	}

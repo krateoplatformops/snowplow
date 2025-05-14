@@ -2,6 +2,8 @@ package dispatchers
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/krateoplatformops/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func Widgets() http.Handler {
@@ -49,6 +52,13 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 			slog.String("name", got.Unstructured.GetName()),
 			slog.String("namespace", got.Unstructured.GetNamespace()),
 			slog.Any("err", err))
+		var statusErr *apierrors.StatusError
+		if errors.As(err, &statusErr) {
+			code := int(statusErr.Status().Code)
+			msg := fmt.Errorf("%s", statusErr.Status().Message)
+			response.Encode(wri, response.New(code, msg))
+			return
+		}
 		response.InternalError(wri, err)
 		return
 	}

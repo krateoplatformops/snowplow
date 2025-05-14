@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,20 +22,20 @@ func TestValidate(t *testing.T) {
 
 	validDocument := []byte(`{"name": "John", "age": 30}`)
 	invalidDocument := []byte(`{"name": "John", "age": "thirty"}`)
-	malformedDocument := []byte(`{"name": "John", "age": 30`) // JSON non valido
 
 	t.Run("valid document", func(t *testing.T) {
-		err := validateCustomResource(validSchema, validDocument)
+		var jsonObj map[string]any
+		err := json.Unmarshal(validDocument, &jsonObj)
+		assert.NoError(t, err)
+		err = validateCustomResource(validSchema, jsonObj)
 		assert.NoError(t, err)
 	})
 
 	t.Run("invalid document type mismatch", func(t *testing.T) {
-		err := validateCustomResource(validSchema, invalidDocument)
-		assert.Error(t, err)
-	})
-
-	t.Run("malformed JSON", func(t *testing.T) {
-		err := validateCustomResource(validSchema, malformedDocument)
+		var jsonObj map[string]any
+		err := json.Unmarshal(invalidDocument, &jsonObj)
+		assert.NoError(t, err)
+		err = validateCustomResource(validSchema, jsonObj)
 		assert.Error(t, err)
 	})
 }

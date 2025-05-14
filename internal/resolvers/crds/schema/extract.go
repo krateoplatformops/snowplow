@@ -23,25 +23,29 @@ func extractOpenAPISchemaFromCRD(crd map[string]any, version string) (*apiextens
 			continue
 		}
 
-		if name, found := versionMap["name"].(string); found && name == version {
-			schemaData, exists, err := unstructured.NestedMap(versionMap, "schema", "openAPIV3Schema")
-			if err != nil {
-				return nil, err
-			}
-			if !exists {
-				return nil, fmt.Errorf("schema OpenAPI v3 not found for version: %s", version)
-			}
-
-			schemaProps := &apiextensions.JSONSchemaProps{}
-			err = runtime.DefaultUnstructuredConverter.FromUnstructured(schemaData, schemaProps)
-			if err != nil {
-				return nil, err
-			}
-
-			return &apiextensions.CustomResourceValidation{
-				OpenAPIV3Schema: schemaProps,
-			}, nil
+		if name, found := versionMap["name"].(string); !found || name != version {
+			continue
 		}
+
+		schemaData, exists, err := unstructured.NestedMap(versionMap,
+			"schema", "openAPIV3Schema",
+			"properties", "spec", "properties", widgetDataKey)
+		if err != nil {
+			return nil, err
+		}
+		if !exists {
+			return nil, fmt.Errorf("schema OpenAPI v3 not found for version: %s", version)
+		}
+
+		schemaProps := &apiextensions.JSONSchemaProps{}
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(schemaData, schemaProps)
+		if err != nil {
+			return nil, err
+		}
+
+		return &apiextensions.CustomResourceValidation{
+			OpenAPIV3Schema: schemaProps,
+		}, nil
 	}
 
 	return nil, fmt.Errorf("version [%s] not found in CRD schema", version)
