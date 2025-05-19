@@ -2,40 +2,30 @@ package widgets
 
 import (
 	"fmt"
-	"net/http"
+	"strings"
 
 	"github.com/krateoplatformops/plumbing/maps"
-	"github.com/krateoplatformops/snowplow/internal/dynamic"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtimeschema "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func getWidgetData(obj map[string]any, key string) (map[string]any, error) {
-	data, ok, err := maps.NestedMap(obj, "spec", key)
-	if err != nil {
-		return map[string]any{}, err
+func toAnySlice[T any](in []T) []any {
+	out := make([]any, len(in))
+	for i, v := range in {
+		out[i] = v
 	}
-	if !ok {
-		name := dynamic.GetName(obj)
-		namespace := dynamic.GetNamespace(obj)
-		gv, _ := runtimeschema.ParseGroupVersion(dynamic.GetAPIVersion(obj))
-		err := &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status: metav1.StatusFailure,
-				Code:   http.StatusNotFound,
-				Reason: metav1.StatusReasonNotFound,
-				Details: &metav1.StatusDetails{
-					Group: gv.Group,
-					Kind:  dynamic.GetKind(obj),
-					Name:  name,
-				},
-				Message: fmt.Sprintf("spec %q not found in %s @ %s", key, name, namespace),
-			}}
-		return map[string]any{}, err
-	}
+	return out
+}
 
-	return data, nil
+func nestedString(obj map[string]any, fields ...string) (string, error) {
+	val, found := maps.NestedValue(obj, fields)
+	if !found {
+		return "", nil
+	}
+	s, ok := val.(string)
+	if !ok {
+		return "", fmt.Errorf("%v access error: %v is of the type %T, expected string",
+			strings.Join(fields, "."), val, val)
+	}
+	return s, nil
 }
 
 /*

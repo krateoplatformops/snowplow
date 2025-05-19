@@ -8,6 +8,7 @@ import (
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	"github.com/krateoplatformops/plumbing/http/response"
 	"github.com/krateoplatformops/plumbing/kubeconfig"
+	templatesv1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,14 +25,7 @@ type Result struct {
 	Err          *response.Status
 }
 
-type Reference struct {
-	Name       string
-	Namespace  string
-	Resource   string
-	APIVersion string
-}
-
-func Get(ctx context.Context, ref Reference) (res Result) {
+func Get(ctx context.Context, ref templatesv1.ObjectReference) (res Result) {
 	log := xcontext.Logger(ctx)
 
 	gv, err := schema.ParseGroupVersion(ref.APIVersion)

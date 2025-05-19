@@ -5,20 +5,17 @@ import (
 	"log/slog"
 	"net/http"
 
-	xcontext "github.com/krateoplatformops/plumbing/context"
 	httpcall "github.com/krateoplatformops/plumbing/http/request"
 	"github.com/krateoplatformops/plumbing/jqutil"
 	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 )
 
-func createRequestOptions(ctx context.Context, in *templates.API, dict map[string]any) (all []httpcall.RequestOptions) {
+func createRequestOptions(log *slog.Logger, in *templates.API, dict map[string]any) (all []httpcall.RequestOptions) {
 	it := ""
 	if in.DependsOn != nil {
 		it = ptr.Deref(in.DependsOn.Iterator, "")
 	}
-
-	log := xcontext.Logger(ctx)
 
 	if len(it) == 0 {
 		all = make([]httpcall.RequestOptions, 0, 1)

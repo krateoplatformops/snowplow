@@ -115,6 +115,9 @@ spec:
           status:
             type: object
             x-kubernetes-preserve-unknown-fields: true
+        required:
+        - metadata
+        - spec
         type: object
     served: true
     storage: true

@@ -101,7 +101,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 		log.Debug("resolved endpoint for api call",
 			slog.String("name", id), slog.String("host", ep.ServerURL))
 
-		tmp := createRequestOptions(ctx, apiCall, dict)
+		tmp := createRequestOptions(log, apiCall, dict)
 		if len(tmp) == 0 {
 			log.Warn("empty request options for http call", slog.Any("name", id))
 			continue

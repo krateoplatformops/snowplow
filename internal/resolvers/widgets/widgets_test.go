@@ -15,6 +15,7 @@ import (
 	"github.com/krateoplatformops/plumbing/e2e"
 	xenv "github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/snowplow/apis"
+	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/objects"
 
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -142,8 +143,10 @@ func resolveWidget(name string) func(ctx context.Context, t *testing.T, c *envco
 		r.WithNamespace(namespace)
 		apis.AddToScheme(r.GetScheme())
 
-		res := objects.Get(ctx, objects.Reference{
-			Name: name, Namespace: namespace,
+		res := objects.Get(ctx, v1.ObjectReference{
+			Reference: v1.Reference{
+				Name: name, Namespace: namespace,
+			},
 			Resource: "buttons", APIVersion: "widgets.templates.krateo.io/v1beta1",
 		})
 		if res.Err != nil {

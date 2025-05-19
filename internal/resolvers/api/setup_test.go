@@ -4,9 +4,10 @@
 package api
 
 import (
-	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
@@ -17,7 +18,9 @@ func Example_createRequestOptions() {
 		"namespaces": []any{"demo-system", "krateo-system", "example-system"},
 	}
 
-	all := createRequestOptions(context.TODO(), &templates.API{
+	logger := slog.New(slog.NewJSONHandler(os.Stderr, nil))
+
+	all := createRequestOptions(logger, &templates.API{
 		Name: "example",
 		Path: `${ "/api/v1/namespaces/" + (.) + "/pods" }`,
 		DependsOn: &templates.Dependency{
@@ -50,7 +53,9 @@ func Example_createRequestOptions_no_iter() {
 		"namespaces": []any{"demo-system", "krateo-system", "example-system"},
 	}
 
-	all := createRequestOptions(context.TODO(), &templates.API{
+	logger := slog.New(slog.NewJSONHandler(os.Stderr, nil))
+
+	all := createRequestOptions(logger, &templates.API{
 		Name: "example",
 		Path: `${ "/api/v1/namespaces/" + (.namespaces[2]) + "/pods" }`,
 		Verb: ptr.To(string(http.MethodPost)),

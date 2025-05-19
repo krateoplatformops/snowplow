@@ -1,118 +1,137 @@
 package widgets
 
 import (
-	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
-	"net/http"
 
-	xcontext "github.com/krateoplatformops/plumbing/context"
-	xenv "github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/plumbing/maps"
-	crdschema "github.com/krateoplatformops/snowplow/internal/resolvers/crds/schema"
-	"github.com/krateoplatformops/snowplow/internal/resolvers/resourcesrefs"
-	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/apiref"
-	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets/data"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/rest"
+	templatesv1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 )
 
 const (
-	widgetDataKey         = "widgetData"
-	widgetDataTemplateKey = "widgetDataTemplate"
-	resourcesRefsKey      = "resourcesRefs"
+	widgetDataKey            = "widgetData"
+	widgetDataTemplateKey    = "widgetDataTemplate"
+	apiRefKey                = "apiRef"
+	resourcesRefsKey         = "resourcesRefs"
+	resourcesRefsTemplateKey = "resourcesRefsTemplate"
 )
 
-type Widget = unstructured.Unstructured
-
-type ResolveOptions struct {
-	In      *Widget
-	RC      *rest.Config
-	AuthnNS string
+func GetAPIVersion(obj map[string]any) string {
+	val, err := nestedString(obj, "apiVersion")
+	if err != nil {
+		return ""
+	}
+	return val
 }
 
-func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
-	log := xcontext.Logger(ctx)
-
-	src, err := getWidgetData(opts.In.Object, widgetDataKey)
+func GetKind(obj map[string]any) string {
+	val, err := nestedString(obj, "kind")
 	if err != nil {
-		return opts.In, err
+		return ""
 	}
-	log.Debug("WidgetData before resolving API Ref", slog.Any(widgetDataKey, src))
+	return val
+}
 
-	dict, err := apiref.Resolve(ctx, apiref.ResolveOptions{
-		RC:      opts.RC,
-		Widget:  opts.In,
-		AuthnNS: opts.AuthnNS,
-	})
+func GetNamespace(obj map[string]any) string {
+	val, err := nestedString(obj, "metadata", "namespace")
 	if err != nil {
-		log.Error("unable to resolve api reference", slog.Any("err", err))
-		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
-		return opts.In, err
+		return ""
 	}
-	log.Debug("resolved API reference", slog.Any("apiRef", dict))
+	return val
+}
 
-	evals, err := data.ResolveTemplates(ctx, data.ResolveOptions{
-		Widget: opts.In,
-		Dict:   dict,
-	})
+func GetName(obj map[string]any) string {
+	val, err := nestedString(obj, "metadata", "name")
 	if err != nil {
-		log.Error("unable to resolve widget data templates", slog.Any("err", err))
-		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
-		return opts.In, err
+		return ""
 	}
-	log.Debug("widgetDataTemplate array after evaluation", slog.Any("widgetDataTemplate", evals))
+	return val
+}
 
-	for _, el := range evals {
-		fields := maps.ParsePath(el.Path)
-		if len(fields) == 0 {
-			continue
-		}
-
-		err = maps.SetNestedValue(src, fields, el.Value)
-		if err != nil {
-			log.Error("unable to set nested field value", slog.Any("err", err))
-			return opts.In, err
-		}
-	}
-
-	resrefs, err := resourcesrefs.Resolve(ctx, resourcesrefs.ResolveOptions{
-		RC: opts.RC, Widget: opts.In,
-		AuthnNS: opts.AuthnNS,
-	})
+func GetUID(obj map[string]any) string {
+	val, err := nestedString(obj, "metadata", "uid")
 	if err != nil {
-		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
-		return opts.In, err
+		return ""
+	}
+	return val
+}
+
+func GetWidgetData(obj map[string]any) map[string]any {
+	data, ok, err := maps.NestedMap(obj, "spec", widgetDataKey)
+	if !ok || err != nil {
+		return map[string]any{}
+	}
+	return data
+}
+
+func GetWidgetDataTemplate(obj map[string]any) ([]templatesv1.WidgetDataTemplate, error) {
+	data, ok, err := maps.NestedSliceNoCopy(obj, "spec", widgetDataTemplateKey)
+	if !ok || err != nil {
+		return nil, err
 	}
 
-	err = unstructured.SetNestedMap(opts.In.Object, src, "status", widgetDataKey)
+	items, err := maps.ToMapSlice(data)
 	if err != nil {
-		return opts.In, err
+		return nil, err
 	}
 
-	if len(resrefs) > 0 {
-		err = unstructured.SetNestedSlice(opts.In.Object, resrefs, "status", resourcesRefsKey)
-		if err != nil {
-			return opts.In, err
-		}
+	return maps.MapSliceToStructSlice[templatesv1.WidgetDataTemplate](items)
+}
+
+func GetApiRef(obj map[string]any) (templatesv1.ObjectReference, error) {
+	src, ok, err := maps.NestedMapNoCopy(obj, "spec", apiRefKey)
+	if !ok || err != nil {
+		return templatesv1.ObjectReference{}, err
 	}
 
-	if xenv.TestMode() {
-		err = crdschema.ValidateObjectStatus(ctx, opts.RC, opts.In.Object)
-	} else {
-		err = crdschema.ValidateObjectStatus(ctx, nil, opts.In.Object)
-	}
+	dat, err := json.Marshal(src)
 	if err != nil {
-		maps.SetNestedField(opts.In.Object, err.Error(), "status", "error")
-		return opts.In, &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusBadRequest,
-				Reason:  metav1.StatusReasonBadRequest,
-				Message: err.Error(),
-			}}
+		return templatesv1.ObjectReference{}, err
 	}
 
-	return opts.In, nil
+	ref := templatesv1.ObjectReference{
+		Resource:   "restactions",
+		APIVersion: fmt.Sprintf("%s/%s", templatesv1.Group, templatesv1.Version),
+	}
+	err = json.Unmarshal(dat, &ref)
+
+	return ref, err
+}
+
+func GetResourcesRefs(obj map[string]any) ([]templatesv1.ResourceRef, error) {
+	arr, ok, err := maps.NestedSlice(obj, "spec", resourcesRefsKey)
+	if !ok || err != nil {
+		return []templatesv1.ResourceRef{}, err
+	}
+
+	mapSlice, err := maps.ToMapSlice(arr)
+	if err != nil {
+		return []templatesv1.ResourceRef{}, err
+	}
+
+	return maps.MapSliceToStructSlice[templatesv1.ResourceRef](mapSlice)
+}
+
+func GetResourcesRefsTemplate(obj map[string]any) ([]templatesv1.ResourceRefTemplate, error) {
+	arr, ok, err := maps.NestedSlice(obj, "spec", resourcesRefsTemplateKey)
+	if !ok || err != nil {
+		return []templatesv1.ResourceRefTemplate{}, err
+	}
+
+	mapSlice, err := maps.ToMapSlice(arr)
+	if err != nil {
+		return []templatesv1.ResourceRefTemplate{}, err
+	}
+
+	return maps.MapSliceToStructSlice[templatesv1.ResourceRefTemplate](mapSlice)
+}
+
+func loggerAttr(obj map[string]any) slog.Attr {
+	return slog.Group("widget",
+		slog.String("name", GetName(obj)),
+		slog.String("namespace", GetNamespace(obj)),
+		slog.String("apiVersion", GetAPIVersion(obj)),
+		slog.String("kind", GetKind(obj)),
+	)
 }
