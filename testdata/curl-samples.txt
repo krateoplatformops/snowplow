@@ -57,7 +57,7 @@ curl -v -G GET \
 
 
 curl -v -G GET \
-  -H "Authorization: Bearer ACCESS_TOKEN_HERE" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
   -d 'resource=buttons' \
   -d 'namespace=demo-system' \

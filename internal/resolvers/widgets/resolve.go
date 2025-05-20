@@ -64,7 +64,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 			return opts.In, err
 		}
 
-		err = maps.SetNestedField(opts.In.Object, toAnySlice(tmp), "status", resourcesRefsKey)
+		err = maps.SetNestedField(opts.In.Object, tmp, "status", resourcesRefsKey)
 		if err != nil {
 			return opts.In, err
 		}

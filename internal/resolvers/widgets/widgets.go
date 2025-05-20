@@ -18,7 +18,7 @@ const (
 )
 
 func GetAPIVersion(obj map[string]any) string {
-	val, err := nestedString(obj, "apiVersion")
+	val, err := maps.NestedString(obj, "apiVersion")
 	if err != nil {
 		return ""
 	}
@@ -26,7 +26,7 @@ func GetAPIVersion(obj map[string]any) string {
 }
 
 func GetKind(obj map[string]any) string {
-	val, err := nestedString(obj, "kind")
+	val, err := maps.NestedString(obj, "kind")
 	if err != nil {
 		return ""
 	}
@@ -34,7 +34,7 @@ func GetKind(obj map[string]any) string {
 }
 
 func GetNamespace(obj map[string]any) string {
-	val, err := nestedString(obj, "metadata", "namespace")
+	val, err := maps.NestedString(obj, "metadata", "namespace")
 	if err != nil {
 		return ""
 	}
@@ -42,7 +42,7 @@ func GetNamespace(obj map[string]any) string {
 }
 
 func GetName(obj map[string]any) string {
-	val, err := nestedString(obj, "metadata", "name")
+	val, err := maps.NestedString(obj, "metadata", "name")
 	if err != nil {
 		return ""
 	}
@@ -50,7 +50,7 @@ func GetName(obj map[string]any) string {
 }
 
 func GetUID(obj map[string]any) string {
-	val, err := nestedString(obj, "metadata", "uid")
+	val, err := maps.NestedString(obj, "metadata", "uid")
 	if err != nil {
 		return ""
 	}

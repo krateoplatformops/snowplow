@@ -31,8 +31,6 @@ type widgetsHandler struct {
 var _ http.Handler = (*widgetsHandler)(nil)
 
 func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
-	log := xcontext.Logger(req.Context())
-
 	start := time.Now()
 
 	got := fetchObject(req)
@@ -41,6 +39,16 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	log := xcontext.Logger(req.Context()).
+		With(
+			slog.Group("widget",
+				slog.String("name", widgets.GetName(got.Unstructured.Object)),
+				slog.String("namespace", widgets.GetNamespace(got.Unstructured.Object)),
+				slog.String("apiVersion", widgets.GetAPIVersion(got.Unstructured.Object)),
+				slog.String("kind", widgets.GetKind(got.Unstructured.Object)),
+			),
+		)
+
 	ctx := xcontext.BuildContext(req.Context())
 
 	res, err := widgets.Resolve(ctx, widgets.ResolveOptions{
@@ -48,10 +56,7 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		AuthnNS: r.authnNS,
 	})
 	if err != nil {
-		log.Error("unable to resolve widget",
-			slog.String("name", got.Unstructured.GetName()),
-			slog.String("namespace", got.Unstructured.GetNamespace()),
-			slog.Any("err", err))
+		log.Error("unable to resolve widget", slog.Any("err", err))
 		var statusErr *apierrors.StatusError
 		if errors.As(err, &statusErr) {
 			code := int(statusErr.Status().Code)
@@ -64,10 +69,6 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	}
 
 	log.Info("Widget successfully resolved",
-		slog.String("kind", res.GetKind()),
-		slog.String("apiVersion", res.GetAPIVersion()),
-		slog.String("name", res.GetName()),
-		slog.String("namespace", res.GetNamespace()),
 		slog.String("duration", util.ETA(start)),
 	)
 
