@@ -21,9 +21,9 @@ type RESTActionSpec struct {
 // RESTAction allows users to declaratively define calls to APIs that may in turn depend on other calls.
 type RESTAction struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
-	Spec   RESTActionSpec        `json:"spec,omitempty"`
+	Spec   RESTActionSpec        `json:"spec"`
 	Status *runtime.RawExtension `json:"status,omitempty"`
 }
 
@@ -32,6 +32,6 @@ type RESTAction struct {
 // RESTActionList contains a list of RESTAction
 type RESTActionList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 	Items           []RESTAction `json:"items"`
 }

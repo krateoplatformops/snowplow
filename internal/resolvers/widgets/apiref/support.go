@@ -3,8 +3,21 @@ package apiref
 import (
 	"encoding/json"
 
+	templatesv1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+func convertToRESTAction(api map[string]any) (templatesv1.RESTAction, error) {
+	dat, err := json.Marshal(api)
+	if err != nil {
+		return templatesv1.RESTAction{}, err
+	}
+
+	var ra templatesv1.RESTAction
+	err = json.Unmarshal(dat, &ra)
+
+	return ra, err
+}
 
 func rawExtensionToMap(raw *runtime.RawExtension) (map[string]any, error) {
 	if raw == nil {

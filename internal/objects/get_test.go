@@ -15,7 +15,7 @@ import (
 	"github.com/krateoplatformops/plumbing/e2e"
 	xenv "github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/snowplow/apis"
-
+	templatesv1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -126,9 +126,11 @@ func getRESTAction(name string) func(ctx context.Context, t *testing.T, c *envco
 		r.WithNamespace(namespace)
 		apis.AddToScheme(r.GetScheme())
 
-		res := Get(ctx, Reference{
-			Name:       name,
-			Namespace:  namespace,
+		res := Get(ctx, templatesv1.ObjectReference{
+			Reference: templatesv1.Reference{
+				Name:      name,
+				Namespace: namespace,
+			},
 			Resource:   "restactions",
 			APIVersion: "templates.krateo.io/v1",
 		})

@@ -57,7 +57,7 @@ curl -v -G GET \
 
 
 curl -v -G GET \
-  -H "Authorization: Bearer ACCESS_TOKEN_HERE" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
   -d 'resource=buttons' \
   -d 'namespace=demo-system' \
@@ -78,6 +78,14 @@ curl -v -G GET \
   -d 'resource=tables' \
   -d 'namespace=demo-system' \
   -d 'name=table-of-namespaces' \
+  "http://127.0.0.1:30081/call"
+
+curl -v -G GET \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
+  -d 'resource=buttons' \
+  -d 'namespace=demo-system' \
+  -d 'name=button-with-resourcesrefstemplate' \
   "http://127.0.0.1:30081/call"
 
 Call (POST example)

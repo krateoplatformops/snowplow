@@ -1,0 +1,42 @@
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  annotations:
+    "krateo.io/verbose": "false"
+  name: cluster-namespaces
+  namespace: demo-system
+spec:
+  api:
+  - name: namespaces
+    path: "/api/v1/namespaces?limit=50"
+    filter: "[.items[] | .metadata.name]"
+    continueOnError: true
+    errorKey: namespacesError
+---
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Button
+metadata:
+  namespace: demo-system
+  name: button-with-resourcesrefstemplate
+spec:
+  widgetData:
+    label: label
+    icon: fa-clock
+    type: text
+  apiRef:
+    name: cluster-namespaces
+    namespace: demo-system
+  resourcesRefs:
+    - id: submit
+      apiVersion: v1
+      resource: pods
+      name: nginx
+      namespace: demo-system
+      verb: GET
+  resourcesRefsTemplate:
+    - iterator: ${ .namespaces }
+      template:
+        apiVersion: v1
+        resource: namespaces
+        name: ${ . }
+        verb: GET
