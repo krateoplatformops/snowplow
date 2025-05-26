@@ -1,6 +1,7 @@
 package resourcesrefs
 
 import (
+	"net/http"
 	"strings"
 )
 
@@ -32,16 +33,16 @@ func contains(slice []string, str string) bool {
 
 var (
 	kubeToREST = map[string]string{
-		"create": "POST",
-		"update": "PUT",
-		"delete": "DELETE",
-		"get":    "GET",
+		"create": http.MethodPost,
+		"update": http.MethodPut,
+		"delete": http.MethodDelete,
+		"get":    http.MethodGet,
 	}
 
 	restToKube = map[string]string{
-		"POST":   "create",
-		"PUT":    "update",
-		"DELETE": "delete",
-		"GET":    "get",
+		http.MethodPost:   "create",
+		http.MethodPut:    "update",
+		http.MethodDelete: "delete",
+		http.MethodGet:    "get",
 	}
 )

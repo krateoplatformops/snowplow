@@ -32,11 +32,12 @@ spec:
       resource: pods
       name: nginx
       namespace: demo-system
-      verb: GET
+      verb: POST
   resourcesRefsTemplate:
     - iterator: ${ .namespaces }
       template:
+        id: ${ "getns-" + . }
         apiVersion: v1
         resource: namespaces
-        name: ${ . }
+        namespace: ${ . }
         verb: GET

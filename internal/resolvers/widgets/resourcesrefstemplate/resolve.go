@@ -66,7 +66,7 @@ func createResourceReferencesFromTemplate(ctx context.Context, in *templatesv1.R
 }
 
 func createResourceRef(in *templatesv1.ResourceRefTemplate, ds any) (out templatesv1.ResourceRef) {
-	out.ID = in.Template.ID
+	out.ID = evalJQ(in.Template.ID, ds)
 	out.Verb = in.Template.Verb
 
 	out.APIVersion = evalJQ(in.Template.APIVersion, ds)

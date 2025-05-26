@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	"github.com/krateoplatformops/plumbing/kubeconfig"
@@ -77,17 +78,24 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 		el := templatesv1.ResourceRefResult{
 			ID:   in.ID,
 			Verb: kubeToREST[verb],
-			Path: fmt.Sprintf("/call?resource=%s&apiVersion=%s&name=%s&namespace=%s",
-				gvr.Resource, gvr.GroupVersion().String(), in.Name, in.Namespace),
+		}
+		if in.Name == "" {
+			el.Path = fmt.Sprintf("/call?resource=%s&apiVersion=%s&namespace=%s",
+				gvr.Resource, gvr.GroupVersion().String(), in.Namespace)
+		} else {
+			el.Path = fmt.Sprintf("/call?resource=%s&apiVersion=%s&name=%s&namespace=%s",
+				gvr.Resource, gvr.GroupVersion().String(), in.Name, in.Namespace)
 		}
 
-		el.Payload = &templatesv1.ResourceRefPayload{
-			Kind:       gvk.Kind,
-			APIVersion: in.APIVersion,
-			MetaData: &templatesv1.Reference{
-				Name:      in.Name,
-				Namespace: in.Namespace,
-			},
+		if el.Verb == http.MethodPost || el.Verb == http.MethodPut {
+			el.Payload = &templatesv1.ResourceRefPayload{
+				Kind:       gvk.Kind,
+				APIVersion: in.APIVersion,
+				MetaData: &templatesv1.Reference{
+					Name:      in.Name,
+					Namespace: in.Namespace,
+				},
+			}
 		}
 
 		all = append(all, el)
