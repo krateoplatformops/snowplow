@@ -45,7 +45,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (res []EvalResult, err er
 		if exp, ok := jqutil.MaybeQuery(expression); ok {
 
 			s, err = jqutil.Eval(ctx, jqutil.EvalOptions{
-				Query: exp, Data: opts.DataSource, Unquote: true,
+				Query: exp, Data: opts.DataSource, Unquote: false,
 			})
 			if err != nil {
 				return res, err
