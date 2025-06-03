@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"reflect"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	xenv "github.com/krateoplatformops/plumbing/env"
@@ -47,8 +48,10 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		return opts.In, err
 	}
 
-	err = unstructured.SetNestedMap(opts.In.Object, widgetData, "status", widgetDataKey)
+	err = maps.SetNestedField(opts.In.Object, widgetData, "status", widgetDataKey)
 	if err != nil {
+		log.Error("unable to set status as unstructured.NestedMap",
+			slog.Any("err", err))
 		return opts.In, err
 	}
 
@@ -118,10 +121,10 @@ func resolveWidgetData(ctx context.Context, obj *Widget, ds map[string]any) (map
 		DataSource: ds,
 	})
 	if err != nil {
-		log.Error("unable to resolve widget data templates", slog.Any("err", err))
+		log.Error("unable to resolve widgetDataTemplate", slog.Any("err", err))
 		return src, err
 	}
-	log.Debug("widgetDataTemplate array after evaluation", slog.Any("widgetDataTemplate", evals))
+	log.Debug("widgetDataTemplate JQ evaluation results", slog.Any("evals", evals))
 
 	for _, el := range evals {
 		fields := maps.ParsePath(el.Path)
@@ -129,9 +132,20 @@ func resolveWidgetData(ctx context.Context, obj *Widget, ds map[string]any) (map
 			continue
 		}
 
+		log.Debug("widgetDataTemplate setting nested value",
+			slog.Any("fields", fields),
+			slog.String("path", el.Path),
+			slog.Any("value", el.Value),
+			slog.Any("type", reflect.TypeOf(el.Value)),
+		)
+
 		err = maps.SetNestedValue(src, fields, el.Value)
 		if err != nil {
-			log.Error("unable to set nested field value", slog.Any("err", err))
+			log.Error("unable to set nested value",
+				slog.Any("fields", fields),
+				slog.Any("value", el.Value),
+				slog.Any("valueType", reflect.TypeOf(el.Value)),
+				slog.Any("err", err))
 			return src, err
 		}
 	}
