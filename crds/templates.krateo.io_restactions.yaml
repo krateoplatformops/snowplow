@@ -84,6 +84,8 @@ spec:
                       type: object
                     errorKey:
                       type: string
+                    exportJwt:
+                      type: boolean
                     filter:
                       type: string
                     headers:

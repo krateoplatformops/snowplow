@@ -39,6 +39,8 @@ type API struct {
 	ContinueOnError *bool `json:"continueOnError,omitempty"`
 
 	ErrorKey *string `json:"errorKey,omitempty"`
+
+	ExportJWT *bool `json:"exportJwt,omitempty"`
 }
 
 // ObjectReference is a reference to a named object in a specified namespace.
