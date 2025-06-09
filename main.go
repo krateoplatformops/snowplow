@@ -41,6 +41,7 @@ func main() {
 	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "enable or disable debug logs")
 	blizzardOn := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
 	sseLogs := flag.Bool("sselogs", env.Bool("SSE_LOGS", false), "broadcast logs using Server Side Events")
+	prettyLog := flag.Bool("pretty-log", env.Bool("PRETTY_LOG", true), "print a nice JSON formatted log")
 	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
 	authnNS := flag.String("authn-namespace", env.String("AUTHN_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
@@ -62,14 +63,22 @@ func main() {
 		logLevel = slog.LevelDebug
 	}
 
-	lh := pretty.New(&slog.HandlerOptions{
-		Level:     logLevel,
-		AddSource: false,
-	},
-		pretty.WithDestinationWriter(os.Stderr),
-		pretty.WithColor(),
-		pretty.WithOutputEmptyAttrs(),
-	)
+	var lh slog.Handler
+	if *prettyLog {
+		lh = pretty.New(&slog.HandlerOptions{
+			Level:     logLevel,
+			AddSource: false,
+		},
+			pretty.WithDestinationWriter(os.Stderr),
+			pretty.WithColor(),
+			pretty.WithOutputEmptyAttrs(),
+		)
+	} else {
+		lh = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level:     logLevel,
+			AddSource: false,
+		})
+	}
 
 	var log *slog.Logger
 	var sseH *ssex.Handler

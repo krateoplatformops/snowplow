@@ -8,6 +8,7 @@ import (
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	httpcall "github.com/krateoplatformops/plumbing/http/request"
 	"github.com/krateoplatformops/plumbing/http/response"
+	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"k8s.io/client-go/rest"
 )
@@ -83,9 +84,12 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 		if apiCall.Headers == nil {
 			apiCall.Headers = []string{headerAcceptJSON}
 		}
-		if accessToken, _ := xcontext.AccessToken(ctx); accessToken != "" && apiCall.EndpointRef == nil {
-			apiCall.Headers = append(apiCall.Headers,
-				fmt.Sprintf("Authorization: Bearer %s", accessToken))
+
+		if accessToken, _ := xcontext.AccessToken(ctx); accessToken != "" {
+			if apiCall.EndpointRef == nil || ptr.Deref(apiCall.ExportJWT, false) {
+				apiCall.Headers = append(apiCall.Headers,
+					fmt.Sprintf("Authorization: Bearer %s", accessToken))
+			}
 		}
 
 		// Resolve the endpoint
