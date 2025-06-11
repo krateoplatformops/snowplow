@@ -57,6 +57,7 @@ spec:
           - --port=8081
           - --authn-namespace=demo-system
           - --jwt-sign-key=AbbraCadabbra
+          - --pretty-log=false
         ports:
         - name: http
           containerPort: 8081
