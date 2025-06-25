@@ -35,6 +35,7 @@ var (
 	kubeToREST = map[string]string{
 		"create": http.MethodPost,
 		"update": http.MethodPut,
+		"patch":  http.MethodPatch,
 		"delete": http.MethodDelete,
 		"get":    http.MethodGet,
 	}
@@ -42,6 +43,7 @@ var (
 	restToKube = map[string]string{
 		http.MethodPost:   "create",
 		http.MethodPut:    "update",
+		http.MethodPatch:  "patch",
 		http.MethodDelete: "delete",
 		http.MethodGet:    "get",
 	}
