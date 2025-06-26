@@ -2,10 +2,12 @@ package schema
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	"sigs.k8s.io/yaml"
 )
 
 func TestValidate(t *testing.T) {
@@ -38,4 +40,33 @@ func TestValidate(t *testing.T) {
 		err = validateCustomResource(validSchema, jsonObj)
 		assert.Error(t, err)
 	})
+}
+
+func TestValidateIssue(t *testing.T) {
+	data, err := os.ReadFile("../../../../testdata/issues/validation/sample-schema.yaml")
+	assert.NoError(t, err)
+
+	var crd map[string]any
+	err = yaml.Unmarshal(data, &crd)
+	assert.NoError(t, err)
+
+	schema, err := extractOpenAPISchemaFromCRD(crd, "v1beta1")
+	assert.NoError(t, err)
+
+	doc, err := os.ReadFile("../../../../testdata/issues/validation/sample-cr.json")
+	assert.NoError(t, err)
+
+	var jsonObj map[string]any
+	err = json.Unmarshal(doc, &jsonObj)
+	assert.NoError(t, err)
+
+	tmp, ok := jsonObj["status"].(map[string]any)
+	assert.True(t, ok, "status should be map[string]any")
+
+	tmp, ok = tmp["widgetData"].(map[string]any)
+	assert.True(t, ok, "widgetData should be map[string]any")
+	//spew.Dump(tmp)
+
+	err = validateCustomResource(schema, tmp)
+	assert.Error(t, err)
 }
