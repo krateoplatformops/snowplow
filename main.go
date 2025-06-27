@@ -137,7 +137,7 @@ func main() {
 		Addr: fmt.Sprintf(":%d", *port),
 		Handler: use.CORS(cors.Options{
 			AllowedOrigins: []string{"*"},
-			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 			AllowedHeaders: []string{
 				"Accept",
 				"Authorization",
