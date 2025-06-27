@@ -51,6 +51,7 @@ type callHandler struct {
 // @Router /call [get]
 // @Router /call [post]
 // @Router /call [put]
+// @Router /call [patch]
 // @Router /call [delete]
 func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	opts, err := r.validateRequest(req)
