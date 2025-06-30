@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -90,7 +91,10 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		Endpoint:        &ep,
 		ResponseHandler: callResponseHandler(dict),
 	}
-	if has([]string{http.MethodPost, http.MethodPut}, opts.verb) {
+	if opts.dat != nil && has([]string{http.MethodPost, http.MethodPut, http.MethodPatch}, opts.verb) {
+		callOpts.Headers = append(callOpts.Headers,
+			fmt.Sprintf("Content-Type: %s", opts.contentType),
+		)
 		callOpts.Payload = ptr.To(string(opts.dat))
 	}
 
@@ -122,6 +126,12 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err error) {
 	opts.verb = req.Method
+	if has([]string{http.MethodPost, http.MethodPut, http.MethodPatch}, opts.verb) {
+		opts.contentType = req.Header.Get("Content-type")
+		if opts.contentType == "" {
+			opts.contentType = "application/json"
+		}
+	}
 
 	opts.gvr, err = util.ParseGVR(req)
 	if err != nil {
@@ -133,19 +143,22 @@ func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err 
 		return
 	}
 
-	opts.dat, err = io.ReadAll(io.LimitReader(req.Body, 1048576))
-	if err != nil {
-		return
+	if req.Body != nil {
+		opts.dat, err = io.ReadAll(io.LimitReader(req.Body, 1048576))
+		if err != nil {
+			return
+		}
 	}
 
 	return
 }
 
 type callOptions struct {
-	gvr  schema.GroupVersionResource
-	nsn  types.NamespacedName
-	verb string
-	dat  []byte
+	gvr         schema.GroupVersionResource
+	nsn         types.NamespacedName
+	verb        string
+	contentType string
+	dat         []byte
 }
 
 func buildURI(opts callOptions) (string, error) {
