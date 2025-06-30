@@ -91,8 +91,6 @@ func (r *convertHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	response.NotAcceptable(wri,
 		fmt.Errorf("unsupported content type '%s' use 'application/json' or 'application/x-yaml'", contentType))
-
-	return
 }
 
 func truncate(data []byte, limit int) string {
