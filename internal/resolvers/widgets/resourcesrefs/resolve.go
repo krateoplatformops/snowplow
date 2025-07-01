@@ -87,7 +87,7 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 				gvr.Resource, gvr.GroupVersion().String(), in.Name, in.Namespace)
 		}
 
-		if el.Verb == http.MethodPost || el.Verb == http.MethodPut {
+		if el.Verb == http.MethodPost || el.Verb == http.MethodPut || el.Verb == http.MethodPatch {
 			el.Payload = &templatesv1.ResourceRefPayload{
 				Kind:       gvk.Kind,
 				APIVersion: in.APIVersion,
