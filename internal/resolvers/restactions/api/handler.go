@@ -9,6 +9,7 @@ import (
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	"github.com/krateoplatformops/plumbing/jqutil"
 	"github.com/krateoplatformops/plumbing/ptr"
+	jqsupport "github.com/krateoplatformops/snowplow/internal/support/jq"
 )
 
 type jsonHandlerOptions struct {
@@ -36,6 +37,7 @@ func jsonHandler(ctx context.Context, opts jsonHandlerOptions) func(io.ReadClose
 			log.Debug("found local filter on api results", slog.String("filter", q))
 			s, err := jqutil.Eval(context.TODO(), jqutil.EvalOptions{
 				Query: q, Data: tmp,
+				ModuleLoader: jqsupport.ModuleLoader(),
 			})
 			if err != nil {
 				log.Error("evaluating JQ", slog.Any("error", err))

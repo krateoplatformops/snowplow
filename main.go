@@ -22,6 +22,7 @@ import (
 	_ "github.com/krateoplatformops/snowplow/docs"
 	"github.com/krateoplatformops/snowplow/internal/handlers"
 	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
+	jqsupport "github.com/krateoplatformops/snowplow/internal/support/jq"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -46,6 +47,8 @@ func main() {
 	authnNS := flag.String("authn-namespace", env.String("AUTHN_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
 	signKey := flag.String("jwt-sign-key", env.String("JWT_SIGN_KEY", ""), "secret key used to sign JWT tokens")
+	jqModPath := flag.String("jq-modules-path", env.String(jqsupport.EnvModulesPath, ""),
+		"loads JQ custom modules from the filesystem")
 
 	flag.Usage = func() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
@@ -57,6 +60,7 @@ func main() {
 	os.Setenv("DEBUG", strconv.FormatBool(*debugOn))
 	os.Setenv("TRACE", strconv.FormatBool(*blizzardOn))
 	os.Setenv("AUTHN_NAMESPACE", *authnNS)
+	os.Setenv(jqsupport.EnvModulesPath, *jqModPath)
 
 	logLevel := slog.LevelInfo
 	if *debugOn {

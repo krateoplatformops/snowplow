@@ -8,6 +8,7 @@ import (
 	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/restactions/api"
+	jqsupport "github.com/krateoplatformops/snowplow/internal/support/jq"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,6 +42,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 		q := ptr.Deref(opts.In.Spec.Filter, "")
 		s, err := jqutil.Eval(context.TODO(), jqutil.EvalOptions{
 			Query: q, Data: dict,
+			ModuleLoader: jqsupport.ModuleLoader(),
 		})
 		if err != nil {
 			return opts.In, err

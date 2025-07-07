@@ -115,8 +115,9 @@ func TestRESTAction(t *testing.T) {
 		Assess("Resolve GitHub", resolveRESTAction("github")).
 		Assess("Resolve HttpBin", resolveRESTAction("httpbin")).
 		Assess("Resolve Typicode", resolveRESTAction("typicode")).
-		Assess("Resolve Kube List", resolveRESTAction("kube-list")).
+		Assess("Resolve Cluster PODs", resolveRESTAction("cluster-pods")).
 		Assess("Resolve Kube Get", resolveRESTAction("kube-get")).
+		Assess("Resolve Cluster Namespaces", resolveRESTAction("cluster-namespaces")).
 		Feature()
 
 	testenv.Test(t, f)

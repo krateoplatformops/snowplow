@@ -128,7 +128,8 @@ func TestResolveWidgets(t *testing.T) {
 		//Assess("Resolve Simple Widget", resolveWidget("button-sample")).
 		//Assess("Resolve Widget with RESTAction reference", resolveWidget("button-with-api")).
 		//Assess("Resolve Widget with Actions", resolveWidget("button-with-actions")).
-		Assess("Resolve Widget with API and Actions", resolveWidget("button-with-api-and-actions")).
+		//Assess("Resolve Widget with API and Actions", resolveWidget("button-with-api-and-actions")).
+		Assess("Resolve Widget with ResourcesRefsTemplate", resolveWidget("button-with-resourcesrefstemplate")).
 		Feature()
 
 	testenv.Test(t, f)

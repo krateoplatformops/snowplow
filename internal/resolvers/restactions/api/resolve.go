@@ -96,7 +96,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 		ep, err := mapper.resolveOne(ctx, apiCall.EndpointRef)
 		if err != nil {
 			log.Error("unable to resolve api endpoint reference",
-				slog.String("name", id), slog.Any("error", err))
+				slog.String("name", id), slog.Any("ref", apiCall.EndpointRef), slog.Any("error", err))
 			return dict
 		}
 		if opts.Verbose {
@@ -137,11 +137,9 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 					dict[call.ErrorKey] = res.Message
 				}
 
-				if call.ContinueOnError {
-					continue
+				if !call.ContinueOnError {
+					return dict
 				}
-
-				return dict
 			}
 		}
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/krateoplatformops/plumbing/jqutil"
 	templatesv1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
+	jqsupport "github.com/krateoplatformops/snowplow/internal/support/jq"
 )
 
 type EvalResult struct {
@@ -46,6 +47,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (res []EvalResult, err er
 
 			s, err = jqutil.Eval(ctx, jqutil.EvalOptions{
 				Query: exp, Data: opts.DataSource, Unquote: false,
+				ModuleLoader: jqsupport.ModuleLoader(),
 			})
 			if err != nil {
 				return res, err

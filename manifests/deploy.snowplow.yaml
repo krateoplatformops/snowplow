@@ -46,6 +46,10 @@ spec:
         app: snowplow
     spec:
       serviceAccountName: snowplow
+      volumes:
+      - name: jq-modules
+        configMap:
+          name: jq-custom-modules
       containers:
       - name: snowplow
         image: kind.local/snowplow:latest
@@ -58,9 +62,14 @@ spec:
           - --authn-namespace=demo-system
           - --jwt-sign-key=AbbraCadabbra
           - --pretty-log=false
+          - --jq-modules-path=/jq-modules
         ports:
         - name: http
           containerPort: 8081
+        volumeMounts:
+        - name: jq-modules
+          mountPath: /jq-modules
+          readOnly: true
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
