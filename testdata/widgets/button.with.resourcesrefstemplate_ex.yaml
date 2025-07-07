@@ -1,7 +1,9 @@
 apiVersion: templates.krateo.io/v1
 kind: RESTAction
 metadata:
-  name: cluster-namespaces
+  annotations:
+    "krateo.io/verbose": "false"
+  name: cluster-pods
   namespace: demo-system
 spec:
   api:
@@ -10,19 +12,27 @@ spec:
     filter: "[.items[] | .metadata.name]"
     continueOnError: true
     errorKey: namespacesError
+  - name: pods
+    continueOnError: true
+    errorKey: podsError
+    dependsOn: 
+      name: namespaces
+      iterator: .[]
+    path: ${ "/api/v1/namespaces/" + (.) + "/pods" }
+    #filter: "[.items[] | .metadata | {name: .name, namespace: .namespace, uid: .uid}]"
 ---
 apiVersion: widgets.templates.krateo.io/v1beta1
 kind: Button
 metadata:
   namespace: demo-system
-  name: button-with-resourcesrefstemplate
+  name: button-with-resourcesrefstemplate-ex
 spec:
   widgetData:
     label: label
     icon: fa-clock
     type: text
   apiRef:
-    name: cluster-namespaces
+    name: cluster-pods
     namespace: demo-system
   resourcesRefs:
     - id: submit
@@ -32,10 +42,10 @@ spec:
       namespace: demo-system
       verb: POST
   resourcesRefsTemplate:
-    - iterator: ${ .namespaces }
+    - iterator: ${ .pods }
       template:
-        id: ${ "getns-" + . }
+        id: ${ .metadata.name }
         apiVersion: v1
-        resource: namespaces
-        namespace: ${ . }
+        resource: pods
+        namespace: ${ .metadata.namespace }
         verb: GET

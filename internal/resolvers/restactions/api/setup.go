@@ -9,6 +9,7 @@ import (
 	"github.com/krateoplatformops/plumbing/jqutil"
 	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
+	jqsupport "github.com/krateoplatformops/snowplow/internal/support/jq"
 )
 
 func createRequestOptions(log *slog.Logger, in *templates.API, dict map[string]any) (all []httpcall.RequestOptions) {
@@ -68,7 +69,13 @@ func evalJQ(q string, ds any) string {
 		return q
 	}
 
-	out, err := jqutil.Eval(context.TODO(), jqutil.EvalOptions{Query: q, Unquote: true, Data: ds})
+	out, err := jqutil.Eval(context.TODO(),
+		jqutil.EvalOptions{
+			Query:        q,
+			Unquote:      true,
+			Data:         ds,
+			ModuleLoader: jqsupport.ModuleLoader(),
+		})
 	if err != nil {
 		out = err.Error()
 	}

@@ -8,6 +8,7 @@ import (
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	"github.com/krateoplatformops/plumbing/jqutil"
 	templatesv1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
+	jqsupport "github.com/krateoplatformops/snowplow/internal/support/jq"
 	"k8s.io/utils/ptr"
 )
 
@@ -55,11 +56,12 @@ func createResourceReferencesFromTemplate(ctx context.Context, in *templatesv1.R
 		return nil
 	}
 
-	err = jqutil.ForEach(context.TODO(),
-		jqutil.EvalOptions{Query: q, Unquote: true, Data: ds}, action)
+	err = jqutil.ForEach(context.TODO(), jqutil.EvalOptions{
+		Query: q, Unquote: true, Data: ds,
+	}, action)
 	if err != nil {
 		log := xcontext.Logger(ctx)
-		log.Error("unable to execute iterator", slog.String("iteratir", it), slog.Any("err", err))
+		log.Error("unable to execute iterator", slog.String("iterator", it), slog.Any("err", err))
 	}
 
 	return
@@ -83,7 +85,13 @@ func evalJQ(q string, ds any) string {
 		return q
 	}
 
-	out, err := jqutil.Eval(context.TODO(), jqutil.EvalOptions{Query: q, Unquote: true, Data: ds})
+	out, err := jqutil.Eval(context.TODO(),
+		jqutil.EvalOptions{
+			Query:        q,
+			Unquote:      true,
+			Data:         ds,
+			ModuleLoader: jqsupport.ModuleLoader(),
+		})
 	if err != nil {
 		out = err.Error()
 	}
