@@ -14,6 +14,8 @@ type ResolveOptions struct {
 	RC      *rest.Config
 	ApiRef  templatesv1.ObjectReference
 	AuthnNS string
+	PerPage int
+	Page    int
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
@@ -35,6 +37,8 @@ func Resolve(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
 		In:      &ra,
 		SArc:    opts.RC,
 		AuthnNS: opts.AuthnNS,
+		PerPage: opts.PerPage,
+		Page:    opts.Page,
 	}
 
 	if _, err = restactions.Resolve(ctx, raopts); err != nil {

@@ -1,0 +1,21 @@
+apiVersion: widgets.templates.krateo.io/v1beta1
+kind: Button
+metadata:
+  namespace: demo-system
+  name: pagination-demo
+spec:
+  widgetData:
+    label: label
+    icon: fa-clock
+    type: text
+  apiRef:
+    name: list-pods
+    namespace: demo-system
+  resourcesRefsTemplate:
+    - iterator: ${ .pods }
+      template:
+        id: ${ .metadata.name }
+        apiVersion: v1
+        resource: pods
+        namespace: ${ .metadata.namespace }
+        verb: GET

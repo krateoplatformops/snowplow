@@ -23,11 +23,21 @@ type ResolveOptions struct {
 	AuthnNS string
 	Verbose bool
 	Items   []*templates.API
+	PerPage int
+	Page    int
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	if len(opts.Items) == 0 {
 		return map[string]any{}
+	}
+
+	if opts.Page <= 0 {
+		opts.Page = 1
+	}
+
+	if opts.PerPage <= 0 {
+		opts.PerPage = 300
 	}
 
 	if opts.RC == nil {
@@ -73,6 +83,9 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	dict := map[string]any{}
+	dict["page"] = opts.Page
+	dict["perPage"] = opts.PerPage
+	dict["offset"] = (opts.Page - 1) * opts.PerPage
 
 	for _, id := range names {
 		// Get the api with this identifier
@@ -118,7 +131,9 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 			})
 
 			log.Debug("calling api", slog.String("name", id),
-				slog.String("host", call.Endpoint.ServerURL), slog.String("path", call.Path))
+				slog.String("host", call.Endpoint.ServerURL), slog.String("path", call.Path),
+				slog.Any("out", dict),
+			)
 
 			res := httpcall.Do(ctx, call)
 			if res.Status == response.StatusFailure {

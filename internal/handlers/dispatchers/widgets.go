@@ -49,11 +49,15 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 			),
 		)
 
+	perPage, page := paginationInfo(log, req)
+
 	ctx := xcontext.BuildContext(req.Context())
 
 	res, err := widgets.Resolve(ctx, widgets.ResolveOptions{
 		In:      got.Unstructured,
 		AuthnNS: r.authnNS,
+		PerPage: perPage,
+		Page:    page,
 	})
 	if err != nil {
 		log.Error("unable to resolve widget", slog.Any("err", err))

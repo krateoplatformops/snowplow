@@ -23,79 +23,27 @@ curl --silent \
   "http://127.0.0.1:30081/list?category=pods"
 
 
-Call (GET example - RESTAction)
+Call (GET example)
 ===============================
 
-curl -v -G GET \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -d 'apiVersion=templates.krateo.io/v1' \
-  -d 'resource=restactions' \
+ curl -v -G GET \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
+  -d 'resource=buttons' \    
   -d 'namespace=demo-system' \
-  -d 'name=typicode' \
-  "http://127.0.0.1:30081/call"
+  -d 'name=pagination-demo' \
+  -d 'per_page=3' -d 'page=1' \
+  "http://127.0.0.1:30081/call" 
+
 
 curl -v -G GET \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
   -d 'apiVersion=templates.krateo.io/v1' \
   -d 'resource=restactions' \
   -d 'namespace=demo-system' \
-  -d 'name=kube-get' \
+  -d 'name=list-pods' \
+  -d 'per_page=3' \
   "http://127.0.0.1:30082/call"
-
-
-Call (GET example - Widgets:Button)
-=================================
-
-curl -v -G GET \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
-  -d 'resource=buttons' \
-  -d 'namespace=demo-system' \
-  -d 'name=button-sample' \
-  "http://127.0.0.1:30081/call"
-
-
-
-curl -v -G GET \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
-  -d 'resource=buttons' \
-  -d 'namespace=demo-system' \
-  -d 'name=button-with-api' \
-  "http://127.0.0.1:30081/call"
-
-curl -v -G GET \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
-  -d 'resource=buttons' \
-  -d 'namespace=demo-system' \
-  -d 'name=button-with-api-and-actions' \
-  "http://127.0.0.1:30081/call"
-
-curl -v -G GET \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
-  -d 'resource=tables' \
-  -d 'namespace=demo-system' \
-  -d 'name=table-of-namespaces' \
-  "http://127.0.0.1:30081/call"
-
-curl -v -G GET \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
-  -d 'resource=buttons' \
-  -d 'namespace=demo-system' \
-  -d 'name=button-with-resourcesrefstemplate' \
-  "http://127.0.0.1:30081/call"
-
-
-curl -v -G GET \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \
-  -d 'resource=buttons' \
-  -d 'namespace=demo-system' \
-  -d 'name=button-with-resourcesrefstemplate' \
-  "http://127.0.0.1:30081/call"
 
 Call (POST example)
 ==================

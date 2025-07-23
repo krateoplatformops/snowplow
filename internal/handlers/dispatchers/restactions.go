@@ -60,10 +60,14 @@ func (r *restActionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 		return
 	}
 
+	perPage, page := paginationInfo(log, req)
+
 	ctx := xcontext.BuildContext(req.Context())
 	res, err := restactions.Resolve(ctx, restactions.ResolveOptions{
 		In:      &cr,
 		AuthnNS: r.authnNS,
+		PerPage: perPage,
+		Page:    page,
 	})
 	if err != nil {
 		log.Error("unable to resolve rest action",

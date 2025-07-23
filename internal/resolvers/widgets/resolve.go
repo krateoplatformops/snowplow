@@ -29,10 +29,20 @@ type ResolveOptions struct {
 	In      *Widget
 	RC      *rest.Config
 	AuthnNS string
+	PerPage int
+	Page    int
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 	log := xcontext.Logger(ctx).With(loggerAttr(opts.In.Object))
+
+	if opts.Page <= 0 {
+		opts.Page = 1
+	}
+
+	if opts.PerPage <= 0 {
+		opts.PerPage = 300
+	}
 
 	ds, err := resolveApiRef(ctx, opts)
 	if err != nil {
@@ -102,6 +112,8 @@ func resolveApiRef(ctx context.Context, opts ResolveOptions) (map[string]any, er
 		RC:      opts.RC,
 		ApiRef:  apiRef,
 		AuthnNS: opts.AuthnNS,
+		PerPage: opts.PerPage,
+		Page:    opts.Page,
 	})
 }
 

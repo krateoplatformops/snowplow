@@ -3,6 +3,7 @@ package restactions
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/krateoplatformops/plumbing/jqutil"
 	"github.com/krateoplatformops/plumbing/ptr"
@@ -24,6 +25,8 @@ type ResolveOptions struct {
 	In      *templates.RESTAction
 	SArc    *rest.Config
 	AuthnNS string
+	PerPage int
+	Page    int
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, error) {
@@ -32,10 +35,24 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 		AuthnNS: opts.AuthnNS,
 		Verbose: isVerbose(opts.In),
 		Items:   opts.In.Spec.API,
+		PerPage: opts.PerPage,
+		Page:    opts.Page,
 	})
 	if dict == nil {
 		dict = map[string]any{}
 	}
+
+	if opts.Page <= 0 {
+		opts.Page = 1
+	}
+
+	if opts.PerPage <= 0 {
+		opts.PerPage = 300
+	}
+
+	dict["page"] = opts.Page
+	dict["perPage"] = opts.PerPage
+	dict["offset"] = (1 - opts.Page) * opts.PerPage
 
 	var raw []byte
 	if opts.In.Spec.Filter != nil {
@@ -45,10 +62,24 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 			ModuleLoader: jqsupport.ModuleLoader(),
 		})
 		if err != nil {
-			return opts.In, err
+			return opts.In, fmt.Errorf("unable to resolve filter: %w", err)
 		}
 
-		raw = []byte(s)
+		// try to deserialize in map[string]any
+		var maybeMap map[string]any
+		if err := json.Unmarshal([]byte(s), &maybeMap); err == nil {
+			maybeMap["perPage"] = dict["perPage"]
+			maybeMap["page"] = dict["page"]
+			maybeMap["offset"] = dict["offset"]
+
+			raw, err = json.Marshal(maybeMap)
+			if err != nil {
+				return opts.In, err
+			}
+		} else {
+			raw = []byte(s)
+		}
+
 	} else {
 		var err error
 		raw, err = json.Marshal(dict)

@@ -7,7 +7,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -61,7 +63,7 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	uri, err := buildURI(opts)
+	uri, err := buildURIPath(opts)
 	if err != nil {
 		response.InternalError(wri, err)
 		return
@@ -143,6 +145,20 @@ func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err 
 		return
 	}
 
+	if val := req.URL.Query().Get("per_page"); val != "" {
+		opts.perPage, err = strconv.Atoi(val)
+		if err != nil {
+			return
+		}
+	}
+
+	if val := req.URL.Query().Get("page"); val != "" {
+		opts.page, err = strconv.Atoi(val)
+		if err != nil {
+			return
+		}
+	}
+
 	if req.Body != nil {
 		opts.dat, err = io.ReadAll(io.LimitReader(req.Body, 1048576))
 		if err != nil {
@@ -158,25 +174,40 @@ type callOptions struct {
 	nsn         types.NamespacedName
 	verb        string
 	contentType string
+	perPage     int
+	page        int
 	dat         []byte
 }
 
-func buildURI(opts callOptions) (string, error) {
+func buildURIPath(opts callOptions) (string, error) {
 	base := path.Join("/apis", opts.gvr.Group, opts.gvr.Version)
 	if len(opts.gvr.Group) == 0 {
 		base = path.Join("/api", opts.gvr.Version)
 	}
 
-	uri := path.Join(base, "namespaces", opts.nsn.Namespace, opts.gvr.Resource)
+	uriPath := path.Join(base, "namespaces", opts.nsn.Namespace, opts.gvr.Resource)
 	if strings.EqualFold("namespaces", opts.gvr.Resource) {
-		uri = path.Join(base, opts.gvr.Resource)
+		uriPath = path.Join(base, opts.gvr.Resource)
 	}
 
 	if has([]string{http.MethodDelete, http.MethodGet, http.MethodPut}, opts.verb) {
-		uri = path.Join(uri, opts.nsn.Name)
+		uriPath = path.Join(uriPath, opts.nsn.Name)
 	}
 
-	return uri, nil
+	// Aggiunta dei query parametri, se necessario
+	query := url.Values{}
+	if opts.perPage > 0 {
+		query.Set("per_page", strconv.Itoa(opts.perPage))
+	}
+	if opts.page > 0 {
+		query.Set("page", strconv.Itoa(opts.page))
+	}
+
+	if len(query) > 0 {
+		uriPath += "?" + query.Encode()
+	}
+
+	return uriPath, nil
 }
 
 func has(s []string, e string) bool {
