@@ -43,7 +43,7 @@ curl -v -G GET \
   -d 'namespace=demo-system' \
   -d 'name=list-pods' \
   -d 'per_page=3' \
-  "http://127.0.0.1:30082/call"
+  "http://127.0.0.1:30081/call"
 
 Call (POST example)
 ==================

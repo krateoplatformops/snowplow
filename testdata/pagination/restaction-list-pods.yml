@@ -14,8 +14,8 @@ spec:
     path: ${ "/api/v1/namespaces/demo-system/pods" }
     filter: |
       .pods.items as $items
-      | .offset as $offset
-      | .perPage as $perPage
+      | ._slice_.offset as $offset
+      | ._slice_.perPage as $perPage
       | [$items
         | length as $len
         | range($offset; $offset + $perPage)

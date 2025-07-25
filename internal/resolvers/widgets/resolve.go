@@ -36,14 +36,6 @@ type ResolveOptions struct {
 func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 	log := xcontext.Logger(ctx).With(loggerAttr(opts.In.Object))
 
-	if opts.Page <= 0 {
-		opts.Page = 1
-	}
-
-	if opts.PerPage <= 0 {
-		opts.PerPage = 300
-	}
-
 	ds, err := resolveApiRef(ctx, opts)
 	if err != nil {
 		log.Error("unable to resolve api reference", slog.Any("err", err))
@@ -71,13 +63,29 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		return opts.In, err
 	}
 
-	if len(resourcesRefsResults) > 0 {
+	if tot := len(resourcesRefsResults); tot > 0 {
 		tmp, err := maps.StructSliceToMapSlice(resourcesRefsResults)
 		if err != nil {
 			return opts.In, err
 		}
 
-		err = maps.SetNestedField(opts.In.Object, tmp, "status", resourcesRefsKey)
+		pig := map[string]any{
+			"items": tmp,
+		}
+		if opts.PerPage > 0 && opts.Page > 0 {
+			hasNext := (tot >= opts.PerPage)
+			page := opts.Page
+			if hasNext {
+				page = page + 1
+			}
+			pig["_slice_"] = map[string]any{
+				"perPage":  opts.PerPage,
+				"page":     page,
+				"continue": hasNext,
+			}
+		}
+
+		err = maps.SetNestedField(opts.In.Object, pig, "status", resourcesRefsKey)
 		if err != nil {
 			return opts.In, err
 		}

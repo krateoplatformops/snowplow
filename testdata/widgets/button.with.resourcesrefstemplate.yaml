@@ -18,6 +18,8 @@ metadata:
   name: button-with-resourcesrefstemplate
 spec:
   widgetData:
+    actions: {}
+    clickActionId: nop
     label: label
     icon: fa-clock
     type: text
@@ -25,6 +27,7 @@ spec:
     name: cluster-namespaces
     namespace: demo-system
   resourcesRefs:
+    items:
     - id: submit
       apiVersion: v1
       resource: pods

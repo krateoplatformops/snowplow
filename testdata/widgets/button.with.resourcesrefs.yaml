@@ -6,10 +6,13 @@ metadata:
   name: button-with-actions
 spec:
   widgetData:
+    actions: {}
+    clickActionId: nop
     label: label
     icon: fa-clock
     type: text
   resourcesRefs:
+    items:
     - id: submit
       apiVersion: v1
       resource: pods

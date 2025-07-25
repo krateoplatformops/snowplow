@@ -32,14 +32,6 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 		return map[string]any{}
 	}
 
-	if opts.Page <= 0 {
-		opts.Page = 1
-	}
-
-	if opts.PerPage <= 0 {
-		opts.PerPage = 300
-	}
-
 	if opts.RC == nil {
 		var err error
 		opts.RC, err = rest.InClusterConfig()
@@ -83,9 +75,13 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	dict := map[string]any{}
-	dict["page"] = opts.Page
-	dict["perPage"] = opts.PerPage
-	dict["offset"] = (opts.Page - 1) * opts.PerPage
+	if opts.PerPage > 0 && opts.Page > 0 {
+		dict["_slice_"] = map[string]any{
+			"page":    opts.Page,
+			"perPage": opts.PerPage,
+			"offset":  (opts.Page - 1) * opts.PerPage,
+		}
+	}
 
 	for _, id := range names {
 		// Get the api with this identifier
@@ -158,6 +154,11 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 			}
 		}
 	}
+
+	// if si, ok := dict["_slice_"]; ok {
+	// 	delete(si.(map[string]any), "offset")
+	// }
+	delete(dict, "_slice_")
 
 	return dict
 }

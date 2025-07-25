@@ -6,6 +6,8 @@ metadata:
   name: button-with-api-error
 spec:
   widgetData:
+    actions: {}
+    clickActionId: nop
     label: label
     icon: fa-clock
     type: text

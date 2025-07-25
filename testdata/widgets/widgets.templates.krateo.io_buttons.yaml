@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: buttons.widgets.templates.krateo.io
 spec:
   group: widgets.templates.krateo.io
@@ -21,6 +21,9 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: READY
+      type: string
     name: v1beta1
     schema:
       openAPIV3Schema:
@@ -53,32 +56,51 @@ spec:
                 - namespace
                 type: object
               resourcesRefs:
-                items:
-                  properties:
-                    apiVersion:
-                      type: string
-                    id:
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                    payload:
+                properties:
+                  _slice_:
+                    properties:
+                      continue:
+                        type: boolean
+                      offset:
+                        type: integer
+                      page:
+                        type: integer
+                      perPage:
+                        type: integer
+                    required:
+                    - page
+                    - perPage
+                    type: object
+                  items:
+                    items:
+                      properties:
+                        apiVersion:
+                          type: string
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        namespace:
+                          type: string
+                        payload:
+                          type: object
+                        resource:
+                          type: string
+                        verb:
+                          enum:
+                          - POST
+                          - PUT
+                          - PATCH
+                          - DELETE
+                          - GET
+                          type: string
+                      required:
+                      - id
                       type: object
-                      x-kubernetes-preserve-unknown-fields: true
-                    resource:
-                      type: string
-                    verb:
-                      enum:
-                      - POST
-                      - PUT
-                      - DELETE
-                      - GET
-                      type: string
-                  required:
-                  - id
-                  type: object
-                type: array
+                    type: array
+                required:
+                - items
+                type: object
               resourcesRefsTemplate:
                 items:
                   properties:
@@ -103,6 +125,7 @@ spec:
                           enum:
                           - POST
                           - PUT
+                          - PATCH
                           - DELETE
                           - GET
                           type: string
@@ -110,14 +133,268 @@ spec:
                   type: object
                 type: array
               widgetData:
-                description: the data that will be passed to the widget on the frontend
                 properties:
+                  actions:
+                    description: the actions of the widget
+                    properties:
+                      navigate:
+                        description: client-side navigation actions
+                        items:
+                          properties:
+                            id:
+                              description: unique identifier for the action
+                              type: string
+                            loading:
+                              description: defines the loading indicator behavior
+                                during navigation
+                              enum:
+                              - global
+                              - inline
+                              - none
+                              type: string
+                            name:
+                              description: name of the navigation action
+                              type: string
+                            requireConfirmation:
+                              description: whether user confirmation is required before
+                                navigating
+                              type: boolean
+                            resourceRefId:
+                              description: the identifier of the k8s custom resource
+                                that should be represented
+                              type: string
+                            type:
+                              description: type of navigation action
+                              enum:
+                              - navigate
+                              type: string
+                          required:
+                          - id
+                          - name
+                          - resourceRefId
+                          - type
+                          type: object
+                        type: array
+                      openDrawer:
+                        description: actions to open side drawer components
+                        items:
+                          properties:
+                            id:
+                              description: unique identifier for the drawer action
+                              type: string
+                            loading:
+                              description: defines the loading indicator behavior
+                                for the drawer
+                              enum:
+                              - global
+                              - inline
+                              - none
+                              type: string
+                            requireConfirmation:
+                              description: whether user confirmation is required before
+                                opening
+                              type: boolean
+                            resourceRefId:
+                              description: the identifier of the k8s custom resource
+                                that should be represented
+                              type: string
+                            size:
+                              description: drawer size to be displayed
+                              enum:
+                              - default
+                              - large
+                              type: string
+                            title:
+                              description: title shown in the drawer header
+                              type: string
+                            type:
+                              description: type of drawer action
+                              enum:
+                              - openDrawer
+                              type: string
+                          required:
+                          - id
+                          - resourceRefId
+                          - type
+                          type: object
+                        type: array
+                      openModal:
+                        description: actions to open modal dialog components
+                        items:
+                          properties:
+                            id:
+                              description: unique identifier for the modal action
+                              type: string
+                            loading:
+                              description: defines the loading indicator behavior
+                                for the modal
+                              enum:
+                              - global
+                              - inline
+                              - none
+                              type: string
+                            name:
+                              description: name of the modal action
+                              type: string
+                            requireConfirmation:
+                              description: whether user confirmation is required before
+                                opening
+                              type: boolean
+                            resourceRefId:
+                              description: the identifier of the k8s custom resource
+                                that should be represented
+                              type: string
+                            title:
+                              description: title shown in the modal header
+                              type: string
+                            type:
+                              description: type of modal action
+                              enum:
+                              - openModal
+                              type: string
+                          required:
+                          - id
+                          - name
+                          - resourceRefId
+                          - type
+                          type: object
+                        type: array
+                      rest:
+                        description: rest api call actions triggered by the widget
+                        items:
+                          properties:
+                            errorMessage:
+                              description: a message that will be displayed inside
+                                a toast in case of error
+                              type: string
+                            headers:
+                              items:
+                                type: string
+                              type: array
+                            id:
+                              description: unique identifier for the action
+                              type: string
+                            loading:
+                              description: defines the loading indicator behavior
+                                for the action
+                              enum:
+                              - global
+                              - inline
+                              - none
+                              type: string
+                            onEventNavigateTo:
+                              description: conditional navigation triggered by a specific
+                                event
+                              properties:
+                                eventReason:
+                                  description: identifier of the awaited event reason
+                                  type: string
+                                timeout:
+                                  default: 50
+                                  description: the timeout in seconds to wait for
+                                    the event
+                                  type: integer
+                                url:
+                                  description: url to navigate to when the event is
+                                    received
+                                  type: string
+                              required:
+                              - eventReason
+                              - url
+                              type: object
+                            onSuccessNavigateTo:
+                              description: url to navigate to after successful execution
+                              type: string
+                            payload:
+                              description: static payload sent with the request
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            payloadKey:
+                              description: key used to nest the payload in the request
+                                body
+                              type: string
+                            payloadToOverride:
+                              description: list of payload fields to override dynamically
+                              items:
+                                properties:
+                                  name:
+                                    description: name of the field to override
+                                    type: string
+                                  value:
+                                    description: value to use for overriding the field
+                                    type: string
+                                required:
+                                - name
+                                - value
+                                type: object
+                              type: array
+                            requireConfirmation:
+                              description: whether user confirmation is required before
+                                triggering the action
+                              type: boolean
+                            resourceRefId:
+                              description: the identifier of the k8s custom resource
+                                that should be represented
+                              type: string
+                            successMessage:
+                              description: a message that will be displayed inside
+                                a toast in case of success
+                              type: string
+                            type:
+                              description: type of action to execute
+                              enum:
+                              - rest
+                              type: string
+                          required:
+                          - id
+                          - resourceRefId
+                          type: object
+                        type: array
+                    type: object
+                  clickActionId:
+                    description: the id of the action to be executed when the button
+                      is clicked
+                    type: string
+                  color:
+                    description: the color of the button
+                    enum:
+                    - default
+                    - primary
+                    - danger
+                    - blue
+                    - purple
+                    - cyan
+                    - green
+                    - magenta
+                    - pink
+                    - red
+                    - orange
+                    - yellow
+                    - volcano
+                    - geekblue
+                    - lime
+                    - gold
+                    type: string
                   icon:
                     description: 'the icon of the button (font awesome icon name eg:
-                      ''fa-inbox'')'
+                      `fa-inbox`)'
                     type: string
                   label:
                     description: the label of the button
+                    type: string
+                  shape:
+                    description: the shape of the button
+                    enum:
+                    - default
+                    - circle
+                    - round
+                    type: string
+                  size:
+                    description: the size of the button
+                    enum:
+                    - small
+                    - middle
+                    - large
                     type: string
                   type:
                     description: the visual style of the button
@@ -128,6 +405,9 @@ spec:
                     - primary
                     - dashed
                     type: string
+                required:
+                - actions
+                - clickActionId
                 type: object
               widgetDataTemplate:
                 items:

@@ -42,18 +42,6 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 		dict = map[string]any{}
 	}
 
-	if opts.Page <= 0 {
-		opts.Page = 1
-	}
-
-	if opts.PerPage <= 0 {
-		opts.PerPage = 300
-	}
-
-	dict["page"] = opts.Page
-	dict["perPage"] = opts.PerPage
-	dict["offset"] = (1 - opts.Page) * opts.PerPage
-
 	var raw []byte
 	if opts.In.Spec.Filter != nil {
 		q := ptr.Deref(opts.In.Spec.Filter, "")
@@ -65,21 +53,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 			return opts.In, fmt.Errorf("unable to resolve filter: %w", err)
 		}
 
-		// try to deserialize in map[string]any
-		var maybeMap map[string]any
-		if err := json.Unmarshal([]byte(s), &maybeMap); err == nil {
-			maybeMap["perPage"] = dict["perPage"]
-			maybeMap["page"] = dict["page"]
-			maybeMap["offset"] = dict["offset"]
-
-			raw, err = json.Marshal(maybeMap)
-			if err != nil {
-				return opts.In, err
-			}
-		} else {
-			raw = []byte(s)
-		}
-
+		raw = []byte(s)
 	} else {
 		var err error
 		raw, err = json.Marshal(dict)
