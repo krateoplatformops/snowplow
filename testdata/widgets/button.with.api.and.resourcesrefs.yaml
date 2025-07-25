@@ -6,6 +6,8 @@ metadata:
   name: button-with-api-and-actions
 spec:
   widgetData:
+    actions: {}
+    clickActionId: nop
     label: label
     icon: fa-clock
     type: text
@@ -18,6 +20,7 @@ spec:
     name: httpbin-simple
     namespace: demo-system
   resourcesRefs:
+    items:
     - id: submit
       apiVersion: v1
       resource: pods

@@ -23,6 +23,8 @@ type ResolveOptions struct {
 	AuthnNS string
 	Verbose bool
 	Items   []*templates.API
+	PerPage int
+	Page    int
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
@@ -73,6 +75,13 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	dict := map[string]any{}
+	if opts.PerPage > 0 && opts.Page > 0 {
+		dict["_slice_"] = map[string]any{
+			"page":    opts.Page,
+			"perPage": opts.PerPage,
+			"offset":  (opts.Page - 1) * opts.PerPage,
+		}
+	}
 
 	for _, id := range names {
 		// Get the api with this identifier
@@ -118,7 +127,9 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 			})
 
 			log.Debug("calling api", slog.String("name", id),
-				slog.String("host", call.Endpoint.ServerURL), slog.String("path", call.Path))
+				slog.String("host", call.Endpoint.ServerURL), slog.String("path", call.Path),
+				slog.Any("out", dict),
+			)
 
 			res := httpcall.Do(ctx, call)
 			if res.Status == response.StatusFailure {
@@ -143,6 +154,11 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 			}
 		}
 	}
+
+	// if si, ok := dict["_slice_"]; ok {
+	// 	delete(si.(map[string]any), "offset")
+	// }
+	delete(dict, "_slice_")
 
 	return dict
 }

@@ -32,15 +32,23 @@ func jsonHandler(ctx context.Context, opts jsonHandlerOptions) func(io.ReadClose
 			return err
 		}
 
+		pig := map[string]any{
+			opts.key: tmp,
+		}
+		if si, ok := opts.out["_slice_"]; ok {
+			pig["_slice_"] = si
+		}
+
 		if opts.filter != nil {
 			q := ptr.Deref(opts.filter, "")
-			log.Debug("found local filter on api results", slog.String("filter", q))
+			log.Debug("found local filter on api result", slog.String("filter", q))
 			s, err := jqutil.Eval(context.TODO(), jqutil.EvalOptions{
-				Query: q, Data: tmp,
+				Query: q, Data: pig,
 				ModuleLoader: jqsupport.ModuleLoader(),
 			})
 			if err != nil {
-				log.Error("evaluating JQ", slog.Any("error", err))
+				log.Error("unable to evaluate JQ filter",
+					slog.String("filter", q), slog.Any("error", err))
 			} else {
 				if err := json.Unmarshal([]byte(s), &tmp); err != nil {
 					return err

@@ -29,6 +29,8 @@ type ResolveOptions struct {
 	In      *Widget
 	RC      *rest.Config
 	AuthnNS string
+	PerPage int
+	Page    int
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
@@ -61,13 +63,29 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		return opts.In, err
 	}
 
-	if len(resourcesRefsResults) > 0 {
+	if tot := len(resourcesRefsResults); tot > 0 {
 		tmp, err := maps.StructSliceToMapSlice(resourcesRefsResults)
 		if err != nil {
 			return opts.In, err
 		}
 
-		err = maps.SetNestedField(opts.In.Object, tmp, "status", resourcesRefsKey)
+		pig := map[string]any{
+			"items": tmp,
+		}
+		if opts.PerPage > 0 && opts.Page > 0 {
+			hasNext := (tot >= opts.PerPage)
+			page := opts.Page
+			if hasNext {
+				page = page + 1
+			}
+			pig["_slice_"] = map[string]any{
+				"perPage":  opts.PerPage,
+				"page":     page,
+				"continue": hasNext,
+			}
+		}
+
+		err = maps.SetNestedField(opts.In.Object, pig, "status", resourcesRefsKey)
 		if err != nil {
 			return opts.In, err
 		}
@@ -102,6 +120,8 @@ func resolveApiRef(ctx context.Context, opts ResolveOptions) (map[string]any, er
 		RC:      opts.RC,
 		ApiRef:  apiRef,
 		AuthnNS: opts.AuthnNS,
+		PerPage: opts.PerPage,
+		Page:    opts.Page,
 	})
 }
 

@@ -3,6 +3,7 @@ package restactions
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/krateoplatformops/plumbing/jqutil"
 	"github.com/krateoplatformops/plumbing/ptr"
@@ -24,6 +25,8 @@ type ResolveOptions struct {
 	In      *templates.RESTAction
 	SArc    *rest.Config
 	AuthnNS string
+	PerPage int
+	Page    int
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, error) {
@@ -32,6 +35,8 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 		AuthnNS: opts.AuthnNS,
 		Verbose: isVerbose(opts.In),
 		Items:   opts.In.Spec.API,
+		PerPage: opts.PerPage,
+		Page:    opts.Page,
 	})
 	if dict == nil {
 		dict = map[string]any{}
@@ -45,7 +50,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 			ModuleLoader: jqsupport.ModuleLoader(),
 		})
 		if err != nil {
-			return opts.In, err
+			return opts.In, fmt.Errorf("unable to resolve filter: %w", err)
 		}
 
 		raw = []byte(s)

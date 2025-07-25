@@ -57,7 +57,7 @@ spec:
         args:
           - --debug=true
           - --blizzard=false
-          - --sselogs=true
+          - --sselogs=false
           - --port=8081
           - --authn-namespace=demo-system
           - --jwt-sign-key=AbbraCadabbra

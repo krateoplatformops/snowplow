@@ -1,0 +1,23 @@
+---
+apiVersion: templates.krateo.io/v1
+kind: RESTAction
+metadata:
+  annotations:
+    "krateo.io/verbose": "false"
+  name: list-pods
+  namespace: demo-system
+spec:
+  api:
+  - name: pods
+    continueOnError: true
+    errorKey: podsError
+    path: ${ "/api/v1/namespaces/demo-system/pods" }
+    filter: |
+      .pods.items as $items
+      | ._slice_.offset as $offset
+      | ._slice_.perPage as $perPage
+      | [$items
+        | length as $len
+        | range($offset; $offset + $perPage)
+        | select(. < $len)       # <-- evita out-of-bounds
+        | $items[.]]

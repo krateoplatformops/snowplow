@@ -28,6 +28,8 @@ metadata:
   name: button-with-api-and-jq-module
 spec:
   widgetData:
+    actions: {}
+    clickActionId: nop
     label: label
     icon: fa-clock
     type: text

@@ -6,6 +6,8 @@ metadata:
   name: button-sample
 spec:
   widgetData:
+    actions: {}
+    clickActionId: nop
     label: Hello Button
     icon: fa-gear-complex-code
     type: text
