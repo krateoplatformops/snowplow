@@ -100,7 +100,7 @@ func GetApiRef(obj map[string]any) (templatesv1.ObjectReference, error) {
 }
 
 func GetResourcesRefs(obj map[string]any) ([]templatesv1.ResourceRef, error) {
-	arr, ok, err := maps.NestedSlice(obj, "spec", resourcesRefsKey)
+	arr, ok, err := maps.NestedSlice(obj, "spec", resourcesRefsKey, "items")
 	if !ok || err != nil {
 		return []templatesv1.ResourceRef{}, err
 	}
