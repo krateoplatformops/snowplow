@@ -190,7 +190,12 @@ func buildURIPath(opts callOptions) (string, error) {
 		uriPath = path.Join(base, opts.gvr.Resource)
 	}
 
-	if has([]string{http.MethodDelete, http.MethodGet, http.MethodPut}, opts.verb) {
+	if has([]string{
+		http.MethodDelete,
+		http.MethodGet,
+		http.MethodPut,
+		http.MethodPatch,
+	}, opts.verb) {
 		uriPath = path.Join(uriPath, opts.nsn.Name)
 	}
 
