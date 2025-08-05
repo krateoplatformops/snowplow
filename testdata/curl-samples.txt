@@ -64,6 +64,28 @@ curl -v --request POST \
   "http://127.0.0.1:30081/call?apiVersion=apps/v1&namespace=demo-system&resource=deployments&name=nginx"
 
 
+Call (PATCH example)
+====================
+
+curl --trace-ascii - --request PATCH \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -H "Content-Type: application/merge-patch+json" \
+  -d '{"metadata":{"labels":{"environment":"staging"}}}' \
+  "http://127.0.0.1:30081/call?apiVersion=templates.krateo.io/v1&namespace=demo-system&resource=restactions&name=list-pods"
+
+
+curl v --request PATCH \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -H "Content-Type: application/merge-patch+json" \
+  -d '{"metadata":{"labels":{"environment":"staging"}}}' \
+  "http://127.0.0.1:30081/call?apiVersion=templates.krateo.io/v1&namespace=demo-system&resource=restactions&name=list-pods"
+
+
+curl -v --request GET \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  "http://127.0.0.1:30081/call?apiVersion=templates.krateo.io/v1&namespace=demo-system&resource=restactions&name=list-pods"
+
+
 Plurals 
 ==================
 curl -v --request GET \
