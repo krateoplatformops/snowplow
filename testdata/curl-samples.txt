@@ -26,6 +26,14 @@ curl --silent \
 Call (GET example)
 ===============================
 
+curl -v -G \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -d "apiVersion=widgets.templates.krateo.io/v1beta1" \
+  -d "resource=buttons" \
+  -d "namespace=demo-system" \
+  -d "name=button-sample" \
+  "http://127.0.0.1:30081/call"
+
  curl -v -G GET \
   -H "Authorization: Bearer ${KRATEO_TOKEN}" \
   -d 'apiVersion=widgets.templates.krateo.io/v1beta1' \

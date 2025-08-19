@@ -11,6 +11,7 @@ import (
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	"github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/plumbing/http/response"
+	"github.com/krateoplatformops/plumbing/maps"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
 	"github.com/krateoplatformops/snowplow/internal/resolvers/widgets"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -70,6 +71,14 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		}
 		response.InternalError(wri, err)
 		return
+	}
+
+	traceId := xcontext.TraceId(ctx, false)
+	if traceId != "" {
+		err := maps.SetNestedField(res.Object, traceId, "status", "traceId")
+		if err != nil {
+			log.Warn("unable to set traceId in status", slog.Any("err", err))
+		}
 	}
 
 	log.Info("Widget successfully resolved",
