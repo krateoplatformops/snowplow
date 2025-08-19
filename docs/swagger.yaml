@@ -1,5 +1,11 @@
 basePath: /
 definitions:
+  handlers.jqin:
+    properties:
+      data: {}
+      query:
+        type: string
+    type: object
   handlers.names:
     properties:
       plural:
@@ -62,6 +68,7 @@ definitions:
     - NotAcceptable
     - RequestEntityTooLarge
     - UnsupportedMediaType
+    - UnprocessableEntity
     - InternalError
     - ServiceUnavailable
     type: string
@@ -80,6 +87,7 @@ definitions:
     - StatusReasonNotAcceptable
     - StatusReasonRequestEntityTooLarge
     - StatusReasonUnsupportedMediaType
+    - StatusUnprocessableEntity
     - StatusReasonInternalError
     - StatusReasonServiceUnavailable
 info:
@@ -183,6 +191,60 @@ paths:
             $ref: '#/definitions/response.Status'
       summary: Call Endpoint
     get:
+      description: Handle Resources
+      operationId: call
+      parameters:
+      - description: Resource API Group and Version
+        in: query
+        name: apiVersion
+        required: true
+        type: string
+      - description: Resource Plural
+        in: query
+        name: resource
+        required: true
+        type: string
+      - description: Resource name
+        in: query
+        name: name
+        required: true
+        type: string
+      - description: Resource namespace
+        in: query
+        name: namespace
+        required: true
+        type: string
+      - description: Object
+        in: body
+        name: data
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Status'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Status'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Status'
+      summary: Call Endpoint
+    patch:
       description: Handle Resources
       operationId: call
       parameters:
@@ -393,6 +455,45 @@ paths:
           schema:
             $ref: '#/definitions/handlers.serviceInfo'
       summary: Liveness Endpoint
+  /jq:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        This endpoint accepts a JSON body containing a JQ `query` and some `data`.
+        It evaluates the query against the data and returns the result as formatted JSON.
+      parameters:
+      - description: Input payload containing JQ query and JSON data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.jqin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully evaluated JQ query
+          schema: {}
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Status'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Status'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Status'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Status'
+      summary: Evaluate a JQ query against JSON input
+      tags:
+      - jq
   /list:
     get:
       description: Resources List
