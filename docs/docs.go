@@ -389,6 +389,85 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "patch": {
+                "description": "Handle Resources",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Call Endpoint",
+                "operationId": "call",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Resource API Group and Version",
+                        "name": "apiVersion",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource Plural",
+                        "name": "resource",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource namespace",
+                        "name": "namespace",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Object",
+                        "name": "data",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    }
+                }
             }
         },
         "/convert": {
@@ -462,6 +541,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/jq": {
+            "post": {
+                "description": "This endpoint accepts a JSON body containing a JQ ` + "`" + `query` + "`" + ` and some ` + "`" + `data` + "`" + `.\nIt evaluates the query against the data and returns the result as formatted JSON.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "jq"
+                ],
+                "summary": "Evaluate a JQ query against JSON input",
+                "parameters": [
+                    {
+                        "description": "Input payload containing JQ query and JSON data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.jqin"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully evaluated JQ query",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Status"
+                        }
+                    }
+                }
+            }
+        },
         "/list": {
             "get": {
                 "description": "Resources List",
@@ -522,6 +657,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handlers.jqin": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "query": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.names": {
             "type": "object",
             "properties": {
@@ -601,6 +745,7 @@ const docTemplate = `{
                 "NotAcceptable",
                 "RequestEntityTooLarge",
                 "UnsupportedMediaType",
+                "UnprocessableEntity",
                 "InternalError",
                 "ServiceUnavailable"
             ],
@@ -619,6 +764,7 @@ const docTemplate = `{
                 "StatusReasonNotAcceptable",
                 "StatusReasonRequestEntityTooLarge",
                 "StatusReasonUnsupportedMediaType",
+                "StatusUnprocessableEntity",
                 "StatusReasonInternalError",
                 "StatusReasonServiceUnavailable"
             ]

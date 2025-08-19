@@ -18,10 +18,6 @@ func Converter() http.Handler {
 	return &convertHandler{}
 }
 
-const (
-	MaxBodySize = 1 * 1024 * 1024 // 1MB
-)
-
 var _ http.Handler = (*convertHandler)(nil)
 
 type convertHandler struct{}

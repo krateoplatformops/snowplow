@@ -1,0 +1,6 @@
+{
+   "query":"{firstName: .name}",
+   "data":{
+      "name":"John"
+   }
+}

@@ -74,7 +74,7 @@ curl --trace-ascii - --request PATCH \
   "http://127.0.0.1:30081/call?apiVersion=templates.krateo.io/v1&namespace=demo-system&resource=restactions&name=list-pods"
 
 
-curl v --request PATCH \
+curl -v --request PATCH \
   -H "Authorization: Bearer ${KRATEO_TOKEN}" \
   -H "Content-Type: application/merge-patch+json" \
   -d '{"metadata":{"labels":{"environment":"staging"}}}' \
@@ -108,3 +108,13 @@ curl -v --request GET \
   "message":"the server could not find the requested resource","reason":"NotFound",
   "code":404,
 }
+
+
+JQE
+---
+
+curl -v --request POST \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d @testdata/jqe/input.json \
+  "http://127.0.0.1:30081/jq"
