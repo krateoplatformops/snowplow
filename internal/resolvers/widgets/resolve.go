@@ -31,6 +31,7 @@ type ResolveOptions struct {
 	AuthnNS string
 	PerPage int
 	Page    int
+	Extras  map[string]any
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {

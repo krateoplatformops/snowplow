@@ -35,6 +35,12 @@ func (r *restActionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 
 	start := time.Now()
 
+	extras, err := util.ParseExtras(req)
+	if err != nil {
+		response.BadRequest(wri, err)
+		return
+	}
+
 	got := fetchObject(req)
 	if got.Err != nil {
 		response.Encode(wri, got.Err)
@@ -50,7 +56,7 @@ func (r *restActionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 	}
 
 	var cr v1.RESTAction
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(got.Unstructured.Object, &cr)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(got.Unstructured.Object, &cr)
 	if err != nil {
 		log.Error("unable to convert unstructured to typed rest action",
 			slog.String("name", got.Unstructured.GetName()),
@@ -68,6 +74,7 @@ func (r *restActionHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request
 		AuthnNS: r.authnNS,
 		PerPage: perPage,
 		Page:    page,
+		Extras:  extras,
 	})
 	if err != nil {
 		log.Error("unable to resolve rest action",

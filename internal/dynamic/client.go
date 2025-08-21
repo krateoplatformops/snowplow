@@ -47,7 +47,10 @@ type Options struct {
 type Client interface {
 	Get(ctx context.Context, name string, opts Options) (*unstructured.Unstructured, error)
 	List(ctx context.Context, opts Options) (*unstructured.UnstructuredList, error)
-	Convert(in map[string]any, out any) error
+	Create(ctx context.Context, obj *unstructured.Unstructured, opts Options) (*unstructured.Unstructured, error)
+	Delete(ctx context.Context, name string, opts Options) error
+	FromUnstructured(in map[string]any, out any) error
+	ToUnstructured(in any) (map[string]any, error)
 	Discover(ctx context.Context, category string) ([]schema.GroupVersionResource, error)
 }
 
@@ -58,6 +61,15 @@ type unstructuredClient struct {
 	discoveryClient discovery.DiscoveryInterface
 	mapper          *restmapper.DeferredDiscoveryRESTMapper
 	converter       runtime.UnstructuredConverter
+}
+
+func (uc *unstructuredClient) Create(ctx context.Context, obj *unstructured.Unstructured, opts Options) (*unstructured.Unstructured, error) {
+	ri, err := uc.resourceInterfaceFor(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return ri.Create(ctx, obj, metav1.CreateOptions{})
 }
 
 func (uc *unstructuredClient) Get(ctx context.Context, name string, opts Options) (*unstructured.Unstructured, error) {
@@ -87,8 +99,12 @@ func (uc *unstructuredClient) Delete(ctx context.Context, name string, opts Opti
 	return ri.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-func (uc *unstructuredClient) Convert(in map[string]any, out any) error {
+func (uc *unstructuredClient) FromUnstructured(in map[string]any, out any) error {
 	return uc.converter.FromUnstructured(in, out)
+}
+
+func (uc *unstructuredClient) ToUnstructured(in any) (map[string]any, error) {
+	return uc.converter.ToUnstructured(in)
 }
 
 func (uc *unstructuredClient) Discover(ctx context.Context, category string) (all []schema.GroupVersionResource, err error) {

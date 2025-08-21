@@ -16,9 +16,7 @@ import (
 	"github.com/krateoplatformops/plumbing/kubeutil"
 	"github.com/krateoplatformops/plumbing/server/use"
 	"github.com/krateoplatformops/plumbing/server/use/cors"
-	"github.com/krateoplatformops/plumbing/slogs/multi"
 	"github.com/krateoplatformops/plumbing/slogs/pretty"
-	"github.com/krateoplatformops/plumbing/slogs/ssex"
 	_ "github.com/krateoplatformops/snowplow/docs"
 	"github.com/krateoplatformops/snowplow/internal/handlers"
 	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
@@ -41,7 +39,6 @@ var (
 func main() {
 	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "enable or disable debug logs")
 	blizzardOn := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
-	sseLogs := flag.Bool("sselogs", env.Bool("SSE_LOGS", false), "broadcast logs using Server Side Events")
 	prettyLog := flag.Bool("pretty-log", env.Bool("PRETTY_LOG", true), "print a nice JSON formatted log")
 	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
 	authnNS := flag.String("authn-namespace", env.String("AUTHN_NAMESPACE", ""),
@@ -84,19 +81,7 @@ func main() {
 		})
 	}
 
-	var log *slog.Logger
-	var sseH *ssex.Handler
-	if *sseLogs {
-		sseH = ssex.New(&slog.HandlerOptions{
-			Level:     logLevel,
-			AddSource: false,
-		})
-		multiH := multi.NewMultiHandler(lh, sseH)
-		log = slog.New(multiH)
-	} else {
-		log = slog.New(lh)
-	}
-
+	log := slog.New(lh)
 	if *debugOn {
 		log.Debug("environment variables", slog.Any("env", os.Environ()))
 	}
@@ -108,12 +93,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	if sseH != nil {
-		mux.Handle("GET /logs", sseH)
-	}
-
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
-	mux.Handle("POST /convert", chain.Then(handlers.Converter()))
+	//mux.Handle("POST /convert", chain.Then(handlers.Converter()))
 
 	mux.Handle("GET /health", handlers.HealthCheck(serviceName, build, kubeutil.ServiceAccountNamespace))
 	mux.Handle("GET /api-info/names", chain.Then(handlers.Plurals()))
