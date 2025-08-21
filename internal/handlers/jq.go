@@ -51,8 +51,9 @@ func JQ() http.HandlerFunc {
 
 		contentType := req.Header.Get("Content-Type")
 		if !strings.Contains(contentType, "application/json") {
-			response.NotAcceptable(wri,
-				fmt.Errorf("unsupported content type '%s' use 'application/json'", contentType))
+			err := fmt.Errorf("unsupported content type '%s' use 'application/json'", contentType)
+			log.Error(err.Error())
+			response.NotAcceptable(wri, err)
 			return
 		}
 
@@ -60,6 +61,7 @@ func JQ() http.HandlerFunc {
 		dec := json.NewDecoder(io.LimitReader(req.Body, MaxBodySize))
 		err = dec.Decode(in)
 		if err != nil {
+			log.Error("unable to decode JSON body", slog.Any("err", err))
 			response.InternalError(wri, err)
 			return
 		}
@@ -70,6 +72,7 @@ func JQ() http.HandlerFunc {
 			ModuleLoader: jqsupport.ModuleLoader(),
 		})
 		if err != nil {
+			log.Error("unable to evaluate JQ query", slog.Any("err", err))
 			response.InternalError(wri, err)
 			return
 		}

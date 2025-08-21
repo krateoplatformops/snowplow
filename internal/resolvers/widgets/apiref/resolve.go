@@ -16,6 +16,7 @@ type ResolveOptions struct {
 	AuthnNS string
 	PerPage int
 	Page    int
+	Extras  map[string]any
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
@@ -39,6 +40,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (map[string]any, error) {
 		AuthnNS: opts.AuthnNS,
 		PerPage: opts.PerPage,
 		Page:    opts.Page,
+		Extras:  opts.Extras,
 	}
 
 	if _, err = restactions.Resolve(ctx, raopts); err != nil {

@@ -34,6 +34,12 @@ var _ http.Handler = (*widgetsHandler)(nil)
 func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 
+	extras, err := util.ParseExtras(req)
+	if err != nil {
+		response.BadRequest(wri, err)
+		return
+	}
+
 	got := fetchObject(req)
 	if got.Err != nil {
 		response.Encode(wri, got.Err)
@@ -59,6 +65,7 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		AuthnNS: r.authnNS,
 		PerPage: perPage,
 		Page:    page,
+		Extras:  extras,
 	})
 	if err != nil {
 		log.Error("unable to resolve widget", slog.Any("err", err))

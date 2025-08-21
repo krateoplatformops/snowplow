@@ -8,14 +8,15 @@ import (
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	httpcall "github.com/krateoplatformops/plumbing/http/request"
 	"github.com/krateoplatformops/plumbing/http/response"
+	"github.com/krateoplatformops/plumbing/maps"
 	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
 	"k8s.io/client-go/rest"
 )
 
 const (
-	annotationKeyVerboseAPI = "krateo.io/verbose"
-	headerAcceptJSON        = "Accept: application/json"
+	//annotationKeyVerboseAPI = "krateo.io/verbose"
+	headerAcceptJSON = "Accept: application/json"
 )
 
 type ResolveOptions struct {
@@ -25,6 +26,7 @@ type ResolveOptions struct {
 	Items   []*templates.API
 	PerPage int
 	Page    int
+	Extras  map[string]any
 }
 
 func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
@@ -75,6 +77,10 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	dict := map[string]any{}
+	if opts.Extras != nil {
+		dict = maps.DeepCopyJSON(opts.Extras)
+	}
+
 	if opts.PerPage > 0 && opts.Page > 0 {
 		dict["_slice_"] = map[string]any{
 			"page":    opts.Page,

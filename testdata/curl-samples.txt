@@ -62,6 +62,17 @@ curl -v -G GET \
   -d 'per_page=3' \
   "http://127.0.0.1:30081/call"
 
+### With Extras
+
+curl -v -G GET \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -d 'apiVersion=templates.krateo.io/v1' \
+  -d 'resource=restactions' \
+  -d 'namespace=demo-system' \
+  -d 'name=httpbin-extras' \
+  -d 'extras={"age":35,"name":"Pippo","email":"pippo@test.com","uid":"AAA-BBB-CCC"}' \
+  "http://127.0.0.1:30081/call"
+
 Call (POST example)
 ==================
 
