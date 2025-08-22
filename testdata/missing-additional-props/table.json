@@ -1,0 +1,220 @@
+{
+  "kind": "Table",
+  "apiVersion": "widgets.templates.krateo.io/v1beta1",
+  "metadata": {
+    "name": "table-fin-ops-test",
+    "namespace": "krateo-system"
+  },
+  "spec": {
+    "widgetData": {
+      "columns": [
+        {
+          "valueKey": "releaseName",
+          "title": "Name"
+        },
+        {
+          "title": "Namespace",
+          "valueKey": "namespace"
+        },
+        {
+          "title": "App Version",
+          "valueKey": "appVersion"
+        },
+        {
+          "title": "Chart Version",
+          "valueKey": "chartVersion"
+        },
+        {
+          "title": "Revision",
+          "valueKey": "revision"
+        },
+        {
+          "title": "Status",
+          "valueKey": "status"
+        },
+        {
+          "title": "Last Update",
+          "valueKey": "updated"
+        }
+      ],
+      "data": [
+        {
+          "releaseName": "test"
+        },
+        {
+          "appVersion": "9.0.1",
+          "chartVersion": "0.1.0",
+          "namespace": "krateo-system",
+          "releaseName": "opa-kube-mgmt",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:22:07Z"
+        },
+        {
+          "appVersion": "0.1.0",
+          "chartVersion": "0.1.0",
+          "namespace": "krateo-system",
+          "releaseName": "finops-moving-window-policy",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:22:04Z"
+        },
+        {
+          "appVersion": "0.4.1",
+          "chartVersion": "0.4.1",
+          "namespace": "krateo-system",
+          "releaseName": "finops-operator-scraper",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:22:03Z"
+        },
+        {
+          "appVersion": "0.1.2",
+          "chartVersion": "0.1.3",
+          "namespace": "krateo-system",
+          "releaseName": "finops-composition-definition-parser",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:22:01Z"
+        },
+        {
+          "appVersion": "0.4.3",
+          "chartVersion": "0.4.3",
+          "namespace": "krateo-system",
+          "releaseName": "finops-database-handler",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:22:00Z"
+        },
+        {
+          "appVersion": "0.4.2",
+          "chartVersion": "0.4.2",
+          "namespace": "krateo-system",
+          "releaseName": "finops-operator-focus",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:58Z"
+        },
+        {
+          "appVersion": "0.4.2",
+          "chartVersion": "0.4.2",
+          "namespace": "krateo-system",
+          "releaseName": "finops-operator-exporter",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:57Z"
+        },
+        {
+          "appVersion": "5.9.6",
+          "chartVersion": "0.1.4",
+          "namespace": "krateo-system",
+          "releaseName": "cratedb",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:55Z"
+        },
+        {
+          "appVersion": "0.5.2",
+          "chartVersion": "0.5.3",
+          "namespace": "krateo-system",
+          "releaseName": "oasgen-provider",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:53Z"
+        },
+        {
+          "appVersion": "0.24.9",
+          "chartVersion": "0.32.0",
+          "namespace": "krateo-system",
+          "releaseName": "core-provider",
+          "revision": 15,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:51Z"
+        },
+        {
+          "appVersion": "0.1.10",
+          "chartVersion": "0.1.10",
+          "namespace": "krateo-system",
+          "releaseName": "composable-portal-starter",
+          "revision": 1,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:48Z"
+        },
+        {
+          "appVersion": "0.3.0",
+          "chartVersion": "0.3.0",
+          "namespace": "krateo-system",
+          "releaseName": "resource-tree-handler",
+          "revision": 146,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:47Z"
+        },
+        {
+          "appVersion": "0.0.17",
+          "chartVersion": "0.0.17",
+          "namespace": "krateo-system",
+          "releaseName": "frontend",
+          "revision": 151,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:46Z"
+        },
+        {
+          "appVersion": "0.5.3",
+          "chartVersion": "0.5.3",
+          "namespace": "krateo-system",
+          "releaseName": "eventsse",
+          "revision": 149,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:44Z"
+        },
+        {
+          "appVersion": "3.5.19",
+          "chartVersion": "11.1.3",
+          "namespace": "krateo-system",
+          "releaseName": "eventsse-etcd",
+          "revision": 151,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:38Z"
+        },
+        {
+          "appVersion": "0.5.5",
+          "chartVersion": "0.5.8",
+          "namespace": "krateo-system",
+          "releaseName": "eventrouter",
+          "revision": 151,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:37Z"
+        },
+        {
+          "appVersion": "0.11.7",
+          "chartVersion": "0.11.7",
+          "namespace": "krateo-system",
+          "releaseName": "snowplow",
+          "revision": 156,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:36Z"
+        },
+        {
+          "appVersion": "0.6.0",
+          "chartVersion": "0.6.0",
+          "namespace": "krateo-system",
+          "releaseName": "smithery",
+          "revision": 159,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:34Z"
+        },
+        {
+          "appVersion": "0.20.1",
+          "chartVersion": "0.20.1",
+          "namespace": "krateo-system",
+          "releaseName": "authn",
+          "revision": 160,
+          "status": "deployed",
+          "updated": "2025-08-18T15:21:32Z"
+        }
+      ],
+      "pageSize": 10,
+      "prefix": "filter-table-fin-ops-test"
+    }
+  }
+}
