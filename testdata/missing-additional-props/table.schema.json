@@ -1,0 +1,166 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "default": "v1beta1"
+    },
+    "kind": {
+      "default": "Table",
+      "description": "Table displays structured data with customizable columns and pagination",
+      "type": "string"
+    },
+    "spec": {
+      "type": "object",
+      "properties": {
+        "widgetData": {
+          "type": "object",
+          "required": ["data", "columns"],
+          "properties": {
+            "prefix": {
+              "description": "it's the filters prefix to get right values",
+              "type": "string"
+            },
+            "pageSize": {
+              "description": "number of rows displayed per page",
+              "type": "integer"
+            },
+            "data": {
+              "description": "array of objects representing the table's row data",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "columns": {
+              "description": "configuration of the table's columns",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "description": "the color of the value (or the icon) to be represented",
+                    "type": "string",
+                    "enum": [
+                      "blue",
+                      "darkBlue",
+                      "orange",
+                      "gray",
+                      "red",
+                      "green"
+                    ]
+                  },
+                  "kind": {
+                    "description": "type of data to be represented",
+                    "type": "string",
+                    "enum": ["value", "icon"]
+                  },
+                  "title": {
+                    "description": "column header label",
+                    "type": "string"
+                  },
+                  "valueKey": {
+                    "description": "key used to extract the value from row data",
+                    "type": "string"
+                  }
+                },
+                "required": ["valueKey", "title"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "resourcesRefs": {
+          "type": "object",
+          "properties": {
+            "_slice_": {
+              "type": "object",
+              "properties": {
+                "offset": {
+                  "type": "integer"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "perPage": {
+                  "type": "integer"
+                },
+                "continue": {
+                  "type": "boolean"
+                }
+              },
+              "required": ["page", "perPage"]
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "namespace": {
+                    "type": "string"
+                  },
+                  "resource": {
+                    "type": "string"
+                  },
+                  "apiVersion": {
+                    "type": "string"
+                  },
+                  "verb": {
+                    "type": "string",
+                    "enum": ["POST", "PUT", "PATCH", "DELETE", "GET"]
+                  },
+                  "payload": {
+                    "type": "object"
+                  }
+                },
+                "required": ["id"]
+              }
+            }
+          },
+          "required": ["items"]
+        },
+        "apiRef": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "namespace": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": ["name", "namespace"]
+        },
+        "widgetDataTemplate": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "forPath": {
+                "type": "string"
+              },
+              "expression": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["widgetData"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["kind", "spec", "version"]
+}

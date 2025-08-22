@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	"sigs.k8s.io/yaml"
@@ -42,8 +43,8 @@ func TestValidate(t *testing.T) {
 	})
 }
 
-func TestValidateIssue(t *testing.T) {
-	data, err := os.ReadFile("../../../../testdata/issues/validation/sample-schema.yaml")
+func TestValidateMissingAdditionalPropertiesOnObjectIssue(t *testing.T) {
+	data, err := os.ReadFile("../../../../testdata/missing-additional-props/table.crd.yaml")
 	assert.NoError(t, err)
 
 	var crd map[string]any
@@ -53,15 +54,15 @@ func TestValidateIssue(t *testing.T) {
 	schema, err := extractOpenAPISchemaFromCRD(crd, "v1beta1")
 	assert.NoError(t, err)
 
-	doc, err := os.ReadFile("../../../../testdata/issues/validation/sample-cr.json")
+	doc, err := os.ReadFile("../../../../testdata/missing-additional-props/table.json")
 	assert.NoError(t, err)
 
 	var jsonObj map[string]any
 	err = json.Unmarshal(doc, &jsonObj)
 	assert.NoError(t, err)
 
-	tmp, ok := jsonObj["status"].(map[string]any)
-	assert.True(t, ok, "status should be map[string]any")
+	tmp, ok := jsonObj["spec"].(map[string]any)
+	assert.True(t, ok, "spec should be map[string]any")
 
 	tmp, ok = tmp["widgetData"].(map[string]any)
 	assert.True(t, ok, "widgetData should be map[string]any")
@@ -69,4 +70,5 @@ func TestValidateIssue(t *testing.T) {
 
 	err = validateCustomResource(schema, tmp)
 	assert.Error(t, err)
+	spew.Dump(err)
 }
