@@ -40,6 +40,40 @@ func buildValidationFromSchemaData(data map[string]any) (*apiextensions.CustomRe
 // enforceStrictObjects set additionalProperties=false on all nodes (type: object)
 func enforceStrictObjects(node map[string]any) {
 	if nodeType, ok := node["type"].(string); ok && nodeType == "object" {
+		// If preserve-unknown-fields exists, do not force additionalProperties
+		preserve, ok := node["x-kubernetes-preserve-unknown-fields"].(bool)
+		if !(ok && preserve) {
+			if _, exists := node["additionalProperties"]; !exists {
+				node["additionalProperties"] = false
+			}
+		}
+	}
+
+	// Recursion for properties
+	if props, ok := node["properties"].(map[string]any); ok {
+		for _, v := range props {
+			if child, ok := v.(map[string]any); ok {
+				enforceStrictObjects(child)
+			}
+		}
+	}
+
+	// Recursion for items (array)
+	if items, ok := node["items"].(map[string]any); ok {
+		enforceStrictObjects(items)
+	} else if itemsSlice, ok := node["items"].([]any); ok {
+		for _, it := range itemsSlice {
+			if child, ok := it.(map[string]any); ok {
+				enforceStrictObjects(child)
+			}
+		}
+	}
+}
+
+/*
+// enforceStrictObjects set additionalProperties=false on all nodes (type: object)
+func enforceStrictObjects(node map[string]any) {
+	if nodeType, ok := node["type"].(string); ok && nodeType == "object" {
 		if _, exists := node["additionalProperties"]; !exists {
 			node["additionalProperties"] = false
 		}
@@ -65,6 +99,7 @@ func enforceStrictObjects(node map[string]any) {
 		}
 	}
 }
+*/
 
 func validateCustomResource(crv *apiextensions.CustomResourceValidation, doc map[string]any) error {
 	validator, _, err := validation.NewSchemaValidator(crv.OpenAPIV3Schema)
