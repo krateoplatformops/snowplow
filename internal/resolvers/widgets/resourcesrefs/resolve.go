@@ -17,7 +17,6 @@ import (
 )
 
 func Resolve(ctx context.Context, items []templatesv1.ResourceRef) ([]templatesv1.ResourceRefResult, error) {
-
 	ep, err := xcontext.UserConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -61,24 +60,24 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 
 	verbs := mapVerbs(in.Verb)
 	for _, verb := range verbs {
-		ok := rbac.UserCan(ctx, rbac.UserCanOptions{
+		el := templatesv1.ResourceRefResult{
+			ID:   in.ID,
+			Verb: kubeToREST[verb],
+		}
+
+		el.Allowed = rbac.UserCan(ctx, rbac.UserCanOptions{
 			Verb:          verb,
 			GroupResource: gvr.GroupResource(),
 			Namespace:     in.Namespace,
 		})
-		if !ok {
+		if !el.Allowed {
 			xcontext.Logger(ctx).Warn("action not allowed",
 				slog.String("verb", verb),
 				slog.String("group", gvr.Group),
 				slog.String("resource", gvr.Resource),
 				slog.String("namespace", in.Namespace))
-			continue
 		}
 
-		el := templatesv1.ResourceRefResult{
-			ID:   in.ID,
-			Verb: kubeToREST[verb],
-		}
 		if in.Name == "" {
 			el.Path = fmt.Sprintf("/call?resource=%s&apiVersion=%s&namespace=%s",
 				gvr.Resource, gvr.GroupVersion().String(), in.Namespace)

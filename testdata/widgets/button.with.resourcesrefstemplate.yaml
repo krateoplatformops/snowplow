@@ -1,13 +1,15 @@
 apiVersion: templates.krateo.io/v1
 kind: RESTAction
 metadata:
+  annotations:
+    "krateo.io/verbose": "false"
   name: cluster-namespaces
   namespace: demo-system
 spec:
   api:
   - name: namespaces
-    path: "/api/v1/namespaces?limit=10"
-    filter: "[.items[] | .metadata.name]"
+    path: "/api/v1/namespaces"
+    filter: "[.items | .metadata.name]"
     continueOnError: true
     errorKey: namespacesError
 ---
@@ -37,7 +39,7 @@ spec:
   resourcesRefsTemplate:
     - iterator: ${ .namespaces }
       template:
-        id: ${ "getns-" + . }
+        id: ${ "getns" + . }
         apiVersion: v1
         resource: namespaces
         namespace: ${ . }

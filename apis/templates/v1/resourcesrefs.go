@@ -26,6 +26,8 @@ type ResourceRefResult struct {
 	Verb string `json:"verb,omitempty"`
 	// Payload the payload for the action result
 	Payload *ResourceRefPayload `json:"payload,omitempty"`
+	// Allowed is this resource reference allowed (or not) for the user
+	Allowed bool `json:"allowed"`
 }
 
 // ResourceRefPayload is the template action result payload.

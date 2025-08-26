@@ -20,4 +20,5 @@ spec:
         apiVersion: v1
         resource: pods
         namespace: ${ .metadata.namespace }
+        name: ${ .metadata.name }
         verb: GET
