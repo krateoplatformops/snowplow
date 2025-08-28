@@ -161,10 +161,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 		}
 	}
 
-	// if si, ok := dict["_slice_"]; ok {
-	// 	delete(si.(map[string]any), "offset")
-	// }
-	delete(dict, "_slice_")
+	//delete(dict, "_slice_")
 
 	return dict
 }
