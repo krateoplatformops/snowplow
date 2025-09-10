@@ -1,0 +1,27 @@
+curl -v -G \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -d "apiVersion=widgets.templates.krateo.io/v1beta1" \
+  -d "resource=pages" \
+  -d "namespace=demo-system" \
+  -d "name=simple-page" \
+  "http://127.0.0.1:30081/call"
+
+
+curl -v -G GET \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -d "apiVersion=widgets.templates.krateo.io/v1beta1" \
+  -d "resource=buttons" \
+  -d "namespace=demo-system" \
+  -d "name=pods-buttons" \
+  -d "perpage=3" -d "page=1" \
+  "http://127.0.0.1:30081/call" 
+
+
+curl -v -G GET \
+  -H "Authorization: Bearer ${KRATEO_TOKEN}" \
+  -d "apiVersion=templates.krateo.io/v1" \
+  -d "resource=restactions" \
+  -d "namespace=demo-system" \
+  -d "name=list-pods" \
+  -d "perpage=3" -d "page=1" \
+  "http://127.0.0.1:30081/call" 

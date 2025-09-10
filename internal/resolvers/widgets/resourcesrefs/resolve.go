@@ -3,9 +3,10 @@ package resourcesrefs
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	"github.com/krateoplatformops/plumbing/kubeconfig"
@@ -47,6 +48,8 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 		return all, nil
 	}
 
+	log := xcontext.Logger(ctx)
+
 	gv, err := schema.ParseGroupVersion(in.APIVersion)
 	if err != nil {
 		return all, err
@@ -57,6 +60,13 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 	if err != nil {
 		return all, err
 	}
+
+	log.Info("resolving resource ref",
+		slog.String("id", in.ID),
+		slog.String("group", gvr.Group),
+		slog.String("name", in.Name),
+		slog.String("namespace", in.Namespace),
+	)
 
 	verbs := mapVerbs(in.Verb)
 	for _, verb := range verbs {
@@ -71,20 +81,15 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 			Namespace:     in.Namespace,
 		})
 		if !el.Allowed {
-			xcontext.Logger(ctx).Warn("action not allowed",
+			log.Warn("resource ref action not allowed",
+				slog.String("id", in.ID),
 				slog.String("verb", verb),
 				slog.String("group", gvr.Group),
 				slog.String("resource", gvr.Resource),
 				slog.String("namespace", in.Namespace))
 		}
 
-		if in.Name == "" {
-			el.Path = fmt.Sprintf("/call?resource=%s&apiVersion=%s&namespace=%s",
-				gvr.Resource, gvr.GroupVersion().String(), in.Namespace)
-		} else {
-			el.Path = fmt.Sprintf("/call?resource=%s&apiVersion=%s&name=%s&namespace=%s",
-				gvr.Resource, gvr.GroupVersion().String(), in.Name, in.Namespace)
-		}
+		el.Path = buildPath(gvr, in)
 
 		if el.Verb == http.MethodPost || el.Verb == http.MethodPut || el.Verb == http.MethodPatch {
 			el.Payload = &templatesv1.ResourceRefPayload{
@@ -98,7 +103,40 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 		}
 
 		all = append(all, el)
+
+		log.Info("resource ref successfully resolved",
+			slog.String("id", in.ID),
+			slog.String("group", gvr.Group),
+			slog.String("name", in.Name),
+			slog.String("namespace", in.Namespace),
+			slog.String("verb", verb),
+			slog.String("path", el.Path),
+			slog.Bool("allowed", el.Allowed),
+		)
 	}
 
 	return all, nil
+}
+
+func buildPath(gvr schema.GroupVersionResource, in *templatesv1.ResourceRef) string {
+	u := url.URL{
+		Path: "/call",
+	}
+
+	q := url.Values{}
+	q.Set("resource", gvr.Resource)
+	q.Set("apiVersion", gvr.GroupVersion().String())
+	q.Set("namespace", in.Namespace)
+
+	if in.Name != "" {
+		q.Set("name", in.Name)
+	}
+
+	if slice := in.Slice; slice != nil {
+		q.Set("page", strconv.Itoa(slice.Page))
+		q.Set("perpage", strconv.Itoa(slice.PerPage))
+	}
+
+	u.RawQuery = q.Encode()
+	return u.String()
 }

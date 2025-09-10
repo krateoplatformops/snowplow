@@ -41,7 +41,7 @@ func fetchObject(req *http.Request) (got objects.Result) {
 func paginationInfo(log *slog.Logger, req *http.Request) (perPage, page int) {
 	perPage, page = -1, -1
 
-	if val := req.URL.Query().Get("per_page"); val != "" {
+	if val := req.URL.Query().Get("perpage"); val != "" {
 		var err error
 		perPage, err = strconv.Atoi(val)
 		if err != nil {

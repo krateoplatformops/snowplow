@@ -9,6 +9,7 @@ rules:
   resources:
   - buttons
   - tables
+  - pages
   verbs:
   - get
   - list

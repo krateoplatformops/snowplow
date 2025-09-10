@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
+	xcontext "github.com/krateoplatformops/plumbing/context"
 	"github.com/krateoplatformops/plumbing/jqutil"
 	"github.com/krateoplatformops/plumbing/ptr"
 	templates "github.com/krateoplatformops/snowplow/apis/templates/v1"
@@ -43,6 +45,9 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 	if dict == nil {
 		dict = map[string]any{}
 	}
+
+	log := xcontext.Logger(ctx)
+	log.Debug("resolved api", slog.Any("dict", dict))
 
 	var raw []byte
 	if opts.In.Spec.Filter != nil {
