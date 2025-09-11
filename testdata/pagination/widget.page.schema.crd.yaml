@@ -4,26 +4,23 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: tables.widgets.templates.krateo.io
+  name: pages.widgets.templates.krateo.io
 spec:
   group: widgets.templates.krateo.io
   names:
     categories:
     - widgets
     - krateo
-    kind: Table
-    listKind: TableList
-    plural: tables
-    singular: table
+    kind: Page
+    listKind: PageList
+    plural: pages
+    singular: page
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .metadata.creationTimestamp
       name: AGE
       type: date
-    - jsonPath: .status.conditions[?(@.type=='Ready')].status
-      name: READY
-      type: string
     name: v1beta1
     schema:
       openAPIV3Schema:
@@ -86,6 +83,20 @@ spec:
                           type: object
                         resource:
                           type: string
+                        slice:
+                          properties:
+                            continue:
+                              type: boolean
+                            offset:
+                              type: integer
+                            page:
+                              type: integer
+                            perPage:
+                              type: integer
+                          required:
+                          - page
+                          - perPage
+                          type: object
                         verb:
                           enum:
                           - POST
@@ -134,53 +145,15 @@ spec:
                 type: array
               widgetData:
                 properties:
-                  columns:
-                    description: configuration of the table's columns
+                  items:
                     items:
                       properties:
-                        color:
-                          description: the color of the value (or the icon) to be
-                            represented
-                          enum:
-                          - blue
-                          - darkBlue
-                          - orange
-                          - gray
-                          - red
-                          - green
-                          type: string
-                        kind:
-                          description: type of data to be represented
-                          enum:
-                          - value
-                          - icon
-                          type: string
-                        title:
-                          description: column header label
-                          type: string
-                        valueKey:
-                          description: key used to extract the value from row data
+                        resourceRefId:
                           type: string
                       required:
-                      - title
-                      - valueKey
+                      - resourceRefId
                       type: object
                     type: array
-                  data:
-                    description: array of objects representing the table's row data
-                    items:
-                      type: object
-                      #x-kubernetes-preserve-unknown-fields: true
-                    type: array
-                  pageSize:
-                    description: number of rows displayed per page
-                    type: integer
-                  prefix:
-                    description: it's the filters prefix to get right values
-                    type: string
-                required:
-                - columns
-                - data
                 type: object
               widgetDataTemplate:
                 items:
@@ -191,8 +164,6 @@ spec:
                       type: string
                   type: object
                 type: array
-            required:
-            - widgetData
             type: object
           status:
             type: object

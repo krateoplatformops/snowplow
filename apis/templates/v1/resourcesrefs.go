@@ -1,5 +1,12 @@
 package v1
 
+type Slice struct {
+	Continue bool
+	Offset   int
+	Page     int
+	PerPage  int
+}
+
 // ResourceRef defines a template for an action.
 type ResourceRef struct {
 	// ID for the action.
@@ -14,6 +21,8 @@ type ResourceRef struct {
 	APIVersion string `json:"apiVersion,omitempty"`
 	// Verb is the HTTP request verb.
 	Verb string `json:"verb,omitempty"`
+	// Slice is used for pagination
+	Slice *Slice `json:"slice,omitempty"`
 }
 
 // ResourceRefResult defines the action result after evaluating a template.

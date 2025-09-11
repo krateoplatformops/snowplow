@@ -35,8 +35,8 @@ func jsonHandler(ctx context.Context, opts jsonHandlerOptions) func(io.ReadClose
 		pig := map[string]any{
 			opts.key: tmp,
 		}
-		if si, ok := opts.out["_slice_"]; ok {
-			pig["_slice_"] = si
+		if si, ok := opts.out["slice"]; ok {
+			pig["slice"] = si
 		}
 
 		if opts.filter != nil {

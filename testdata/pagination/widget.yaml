@@ -2,7 +2,7 @@ apiVersion: widgets.templates.krateo.io/v1beta1
 kind: Button
 metadata:
   namespace: demo-system
-  name: pagination-demo
+  name: pods-buttons
 spec:
   widgetData:
     actions: {}

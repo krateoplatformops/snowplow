@@ -43,6 +43,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	log := xcontext.Logger(ctx)
+	log.Info("pagination options", slog.Int("page", opts.Page), slog.Int("perPage", opts.PerPage))
 
 	user, err := xcontext.UserInfo(ctx)
 	if err != nil {
@@ -82,12 +83,14 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	if opts.PerPage > 0 && opts.Page > 0 {
-		dict["_slice_"] = map[string]any{
+		dict["slice"] = map[string]any{
 			"page":    opts.Page,
 			"perPage": opts.PerPage,
 			"offset":  (opts.Page - 1) * opts.PerPage,
 		}
 	}
+
+	log.Info("base dict for api resolver", slog.Any("dict", dict))
 
 	for _, id := range names {
 		// Get the api with this identifier
@@ -158,10 +161,35 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 					return dict
 				}
 			}
+
+			log.Info("api successfully resolved",
+				slog.String("name", id),
+				slog.String("host", call.Endpoint.ServerURL), slog.String("path", call.Path),
+				slog.Any("depth", mapDepth(dict)),
+			)
 		}
 	}
 
-	//delete(dict, "_slice_")
+	removeManagedFields(dict)
+	//delete(dict, "slice")
 
 	return dict
+}
+
+func removeManagedFields(data any) {
+	switch v := data.(type) {
+	case map[string]any:
+		delete(v, "managedFields")
+		// scansiona tutte le altre chiavi
+		for _, val := range v {
+			removeManagedFields(val)
+		}
+	case []any:
+		for _, elem := range v {
+			removeManagedFields(elem)
+		}
+	// other types (string, int, ecc.) -> do nothing
+	default:
+		return
+	}
 }
