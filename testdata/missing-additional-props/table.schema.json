@@ -76,7 +76,7 @@
         "resourcesRefs": {
           "type": "object",
           "properties": {
-            "_slice_": {
+            "slice": {
               "type": "object",
               "properties": {
                 "offset": {

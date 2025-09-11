@@ -83,7 +83,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	if opts.PerPage > 0 && opts.Page > 0 {
-		dict["_slice_"] = map[string]any{
+		dict["slice"] = map[string]any{
 			"page":    opts.Page,
 			"perPage": opts.PerPage,
 			"offset":  (opts.Page - 1) * opts.PerPage,
@@ -171,7 +171,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	removeManagedFields(dict)
-	//delete(dict, "_slice_")
+	//delete(dict, "slice")
 
 	return dict
 }

@@ -16,8 +16,8 @@ spec:
     {
       "pods": (
         .pods.items as $items
-        | ._slice_.offset as $offset
-        | ._slice_.perPage as $perPage
+        | .slice.offset as $offset
+        | .slice.perPage as $perPage
         | [
           $items
           | length as $len

@@ -79,7 +79,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 			if hasNext {
 				page = page + 1
 			}
-			pig["_slice_"] = map[string]any{
+			pig["slice"] = map[string]any{
 				"perPage":  opts.PerPage,
 				"page":     page,
 				"continue": hasNext,
