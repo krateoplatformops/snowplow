@@ -160,6 +160,18 @@ paths:
         name: namespace
         required: true
         type: string
+      - description: Pagination desired page
+        in: query
+        name: page
+        type: string
+      - description: Pagination desired per page items
+        in: query
+        name: perPage
+        type: string
+      - description: JSON encoded map of extra params
+        in: query
+        name: extras
+        type: string
       - description: Object
         in: body
         name: data
@@ -213,6 +225,18 @@ paths:
         in: query
         name: namespace
         required: true
+        type: string
+      - description: Pagination desired page
+        in: query
+        name: page
+        type: string
+      - description: Pagination desired per page items
+        in: query
+        name: perPage
+        type: string
+      - description: JSON encoded map of extra params
+        in: query
+        name: extras
         type: string
       - description: Object
         in: body
@@ -268,6 +292,18 @@ paths:
         name: namespace
         required: true
         type: string
+      - description: Pagination desired page
+        in: query
+        name: page
+        type: string
+      - description: Pagination desired per page items
+        in: query
+        name: perPage
+        type: string
+      - description: JSON encoded map of extra params
+        in: query
+        name: extras
+        type: string
       - description: Object
         in: body
         name: data
@@ -322,6 +358,18 @@ paths:
         name: namespace
         required: true
         type: string
+      - description: Pagination desired page
+        in: query
+        name: page
+        type: string
+      - description: Pagination desired per page items
+        in: query
+        name: perPage
+        type: string
+      - description: JSON encoded map of extra params
+        in: query
+        name: extras
+        type: string
       - description: Object
         in: body
         name: data
@@ -375,6 +423,18 @@ paths:
         in: query
         name: namespace
         required: true
+        type: string
+      - description: Pagination desired page
+        in: query
+        name: page
+        type: string
+      - description: Pagination desired per page items
+        in: query
+        name: perPage
+        type: string
+      - description: JSON encoded map of extra params
+        in: query
+        name: extras
         type: string
       - description: Object
         in: body

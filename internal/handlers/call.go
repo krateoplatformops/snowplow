@@ -44,6 +44,9 @@ type callHandler struct {
 // @Param  resource         query   string  true  "Resource Plural"
 // @Param  name             query   string  true  "Resource name"
 // @Param  namespace        query   string  true  "Resource namespace"
+// @Param  page             query   string  false "Pagination desired page"
+// @Param  perPage          query   string  false "Pagination desired per page items"
+// @Param  extras           query   string  false "JSON encoded map of extra params"
 // @Param data body string false "Object"
 // @Produce  json
 // @Success 200 {object} map[string]any
@@ -145,7 +148,7 @@ func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err 
 		return
 	}
 
-	if val := req.URL.Query().Get("per_page"); val != "" {
+	if val := req.URL.Query().Get("perPage"); val != "" {
 		opts.perPage, err = strconv.Atoi(val)
 		if err != nil {
 			return
@@ -202,7 +205,7 @@ func buildURIPath(opts callOptions) (string, error) {
 	// Aggiunta dei query parametri, se necessario
 	query := url.Values{}
 	if opts.perPage > 0 {
-		query.Set("per_page", strconv.Itoa(opts.perPage))
+		query.Set("perPage", strconv.Itoa(opts.perPage))
 	}
 	if opts.page > 0 {
 		query.Set("page", strconv.Itoa(opts.page))
