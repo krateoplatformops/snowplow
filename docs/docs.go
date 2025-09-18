@@ -111,6 +111,24 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "Pagination desired page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination desired per page items",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "JSON encoded map of extra params",
+                        "name": "extras",
+                        "in": "query"
+                    },
+                    {
                         "description": "Object",
                         "name": "data",
                         "in": "body",
@@ -188,6 +206,24 @@ const docTemplate = `{
                         "name": "namespace",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination desired page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination desired per page items",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "JSON encoded map of extra params",
+                        "name": "extras",
+                        "in": "query"
                     },
                     {
                         "description": "Object",
@@ -269,6 +305,24 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "Pagination desired page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination desired per page items",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "JSON encoded map of extra params",
+                        "name": "extras",
+                        "in": "query"
+                    },
+                    {
                         "description": "Object",
                         "name": "data",
                         "in": "body",
@@ -348,6 +402,24 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "Pagination desired page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination desired per page items",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "JSON encoded map of extra params",
+                        "name": "extras",
+                        "in": "query"
+                    },
+                    {
                         "description": "Object",
                         "name": "data",
                         "in": "body",
@@ -425,6 +497,24 @@ const docTemplate = `{
                         "name": "namespace",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination desired page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination desired per page items",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "JSON encoded map of extra params",
+                        "name": "extras",
+                        "in": "query"
                     },
                     {
                         "description": "Object",
