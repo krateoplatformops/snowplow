@@ -4,11 +4,11 @@ Snowplow is a web service that plays a key role within the suite of components t
 
 It serves multiple purposes, primarily acting as a bridge between Krateo's custom resources and the UI. By enabling a dynamic and declarative approach to defining UI components and layouts, Snowplow ensures that the interface is interpreted and rendered seamlessly by Krateo Frontend.
 
-Currently, Snowplow handles on-demand resolution of the [RESTAction](RESTAction.md) custom resource. For all other custom resources within Krateo, it delegates the task to the Kubernetes API server, which, in turn, leverages Krateo’s custom aggregation API layer to process them. 
+It handles on-demand resolution of the `RESTAction` custom resource and all Krateo Frontend `Widgets` custom resources.
 
-Looking ahead, Snowplow will take full responsibility for managing all custom resources beyond RESTAction, eventually eliminating the need for delegation altogether.
+## Learn More
 
-As of today, the overall architecture is structured as follows:
-
-![](_images/snowplow.png)
-
+- [Developer Guide: Building and Installing `snowplow` on Kind](howto/developer-guide-build-and-install.md)
+- [`Endpoint` reference](howto/endpoints.md)
+- [`RESTAction` reference](howto/restactions.md)
+- [Understanding the `Widget` Custom Resource](howto/widgets.md)
