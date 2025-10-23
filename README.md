@@ -9,6 +9,8 @@ It handles on-demand resolution of the `RESTAction` custom resource and all Krat
 ## Learn More
 
 - [Developer Guide: Building and Installing `snowplow` on Kind](howto/developer-guide-build-and-install.md)
+- [Installing `snowplow` on Kind](howto/install.md)
+- [ADR: Decoupling `authn` from `snowplow` for Testing and Operations](howto/decoupling-authn-from-snowplow-for-testing.md)
 - [`Endpoint` reference](howto/endpoints.md)
 - [`RESTAction` reference](howto/restactions.md)
 - [Understanding the `Widget` Custom Resource](howto/widgets.md)
