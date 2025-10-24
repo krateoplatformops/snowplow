@@ -7,11 +7,18 @@
 
 ## Overview
 
+The `RESTAction` is a Krateo PlatformOps resource that enables users to **declaratively define one or more REST API calls** within Kubernetes.
+
+It allows you to chain HTTP requests, handle dependencies between them, extract data, and use filters to process results — all through a Kubernetes-native manifest.
+
+This approach is particularly useful for integrating external systems or Kubernetes APIs into workflows managed by Krateo PlatformOps.
+
 > `RESTAction` defines one or more declarative HTTP (REST) calls that can optionally depend on other calls.
 
 It allows you to orchestrate a chain of API requests across multiple endpoints using Kubernetes resources.
 
-A `RESTAction` resource declaratively defines one or more HTTP calls (`spec.api`) that can depend on each other.  
+A `RESTAction` resource declaratively defines one or more HTTP calls (`spec.api`) that can depend on each other.
+
 Each call can produce a JSON response that becomes part of a **shared global context**, enabling subsequent calls to reference previous results using **JQ expressions**, iterators, and filters.
 
 To fully leverage these advanced capabilities — such as resolving JQ expressions, using custom JQ functions or modules, and managing interdependent API calls — the `RESTAction` must be executed through the `snowplow` service endpoint (`/call`).  
