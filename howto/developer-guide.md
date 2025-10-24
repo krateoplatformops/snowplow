@@ -22,13 +22,8 @@ nodes:
     hostPort: 30081
     listenAddress: "127.0.0.1"
     protocol: TCP
-  - containerPort: 30082
-    hostPort: 30082
-    listenAddress: "127.0.0.1"
-    protocol: TCP
 EOF
 ```
-
 
 ## 2. Create a namespace
 
@@ -39,7 +34,6 @@ export NAMESPACE="demo-system"
 kubectl create namespace ${NAMESPACE}
 ```
 
-
 ## 3. Build the `snowplow` image with `ko`
 
 Use [`ko`](https://ko.build/) to build and push the `snowplow` Docker image directly to the **Kind internal registry** (`kind.local`).
@@ -47,7 +41,6 @@ Use [`ko`](https://ko.build/) to build and push the `snowplow` Docker image dire
 ```sh {name=build depends=kind-up}
 KO_DOCKER_REPO=kind.local ko build --base-import-paths .
 ```
-
 
 ## 4. Create a ConfigMap for custom `jq` modules
 
@@ -90,6 +83,8 @@ Deploy `snowplow` using a single manifest that includes:
 * RBAC roles and bindings
 
 ```sh {name=deploy depends=jq-custom-modules}
+export JWT_SECRET=AbbraCadabbra
+
 cat <<EOF | kubectl apply -f -
 ---
 kind: ServiceAccount
@@ -143,11 +138,11 @@ spec:
         image: kind.local/snowplow:latest
         imagePullPolicy: Never
         args:
-          - --debug=false
+          - --debug=true
           - --blizzard=false
           - --port=8081
           - --authn-namespace=${NAMESPACE}
-          - --jwt-sign-key=AbbraCadabbra
+          - --jwt-sign-key=${JWT_SECRET}
           - --pretty-log=false
           - --jq-modules-path=/jq-modules
         ports:
@@ -191,7 +186,6 @@ subjects:
 EOF
 ```
 
-
 ## 6. Wait until the `snowplow` deployment is ready
 
 Finally, wait for the `snowplow` deployment to become **available**.
@@ -202,4 +196,63 @@ kubectl wait deployment/snowplow \
   --namespace ${NAMESPACE} \
   --for=condition=available \
   --timeout=90s
+```
+
+## 9. Apply the `RESTAction` CRD
+
+```sh {name=install-restaction-crd depends=wait-for-snowplow}
+kubectl apply -f ./crds/templates.krateo.io_restactions.yaml
+```
+
+## 8. Create a Krateo PlatformOps User
+
+To quickly create a Krateo PlatformOps user, install [`krateoctl`][krateoctl] and run the following command:
+
+```sh {name=create-krateo-user}
+export KRATEO_USER=cyberjoker
+export KRATEO_ACCESS_TOKEN=$(krateoctl add-user -k "${JWT_SECRET}" -n "${NAMESPACE}" "${KRATEO_USER}")
+
+echo "KRATEO_USER=${KRATEO_USER}" > .env
+echo "KRATEO_ACCESS_TOKEN=${KRATEO_ACCESS_TOKEN}" >> .env
+```
+
+## 9. RBACs for the Krateo PlatformOps User
+
+After creating a new user, you must assign them a minimal set of RBAC permissions.
+In this case, since we are testing [RESTActions][restactions], the user needs at least read access to this resource.
+> Write, create, or delete permissions can be granted at the discretion of the cluster administrator.
+
+Moreover, if the [RESTAction][restactions] invokes any internal cluster APIs (for example, to list other resources), the user must also have the necessary permissions to access those resources.
+
+For now, we will grant read-only permissions on [RESTActions][restactions].
+Since the user created earlier belongs to the _"devs"_ group, we will, for simplicity, assign these permissions to the entire _"devs"_ group:
+
+```sh
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: restactions-viewer
+rules:
+- apiGroups:
+  - templates.krateo.io
+  resources:
+  - restactions
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: restactions-viewer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name:  restactions-viewer
+subjects:
+- kind: Group
+  name: devs
+  apiGroup: rbac.authorization.k8s.io
+EOF
 ```

@@ -10,12 +10,8 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraPortMappings:
-  - containerPort: 30081 # Krateo Snowplow
+  - containerPort: 30081
     hostPort: 30081
-    listenAddress: "127.0.0.1"
-    protocol: TCP
-  - containerPort: 30082 # Krateo AuthN Service
-    hostPort: 30082
     listenAddress: "127.0.0.1"
     protocol: TCP
 EOF
@@ -23,7 +19,7 @@ EOF
 
 ## 2. Create a namespace
 
-Create a dedicated namespace where `snowplow` and its related resources will live.
+Create a dedicated namespace where Snowplow and its related resources will live.
 
 ```sh {name=create-namespace depends=kind-up}
 export NAMESPACE="demo-system"
@@ -35,7 +31,7 @@ kubectl create namespace ${NAMESPACE}
 ```sh {name=create-jwt-secret depends=create-namespace}
 export JWT_SECRET=AbbraCadabbra
 kubectl create secret generic jwt-sign-key \
-  --from-literal=key=${JWT_SECRET} -n ${NAMESPACE}
+  --from-literal=JWT_SIGN_KEY=${JWT_SECRET} -n ${NAMESPACE}
 ```
 
 ## 4. Create a Krateo PlatformOps User
@@ -50,14 +46,72 @@ echo "KRATEO_USER=${KRATEO_USER}" > .env
 echo "KRATEO_ACCESS_TOKEN=${KRATEO_ACCESS_TOKEN}" >> .env
 ```
 
-## 5. Deploy snowplow
+## 5. RBACs for the Krateo PlatformOps User
+
+After creating a new user, you must assign them a minimal set of RBAC permissions.
+In this case, since we are testing [RESTActions][restactions], the user needs at least read access to this resource.
+> Write, create, or delete permissions can be granted at the discretion of the cluster administrator.
+
+Moreover, if the [RESTAction][restactions] invokes any internal cluster APIs (for example, to list other resources), the user must also have the necessary permissions to access those resources.
+
+For now, we will grant read-only permissions on [RESTActions][restactions].
+Since the user created earlier belongs to the _"devs"_ group, we will, for simplicity, assign these permissions to the entire _"devs"_ group:
+
+```sh
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: restactions-viewer
+rules:
+- apiGroups:
+  - templates.krateo.io
+  resources:
+  - restactions
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: restactions-viewer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name:  restactions-viewer
+subjects:
+- kind: Group
+  name: devs
+  apiGroup: rbac.authorization.k8s.io
+EOF
+```
+
+
+## 6. Deploy snowplow
 
 Finally, install `snowplow` using the Helm chart:
 
-```sh {name=install-snowplow depends=create-jwt-secret}
+```sh {name=install depends=create-jwt-secret}
 helm install snowplow https://github.com/krateoplatformops/helm-charts/raw/gh-pages/snowplow-0.20.2.tgz \
-  --namespace ${NAMESPACE}
+  --namespace ${NAMESPACE} \
+  --set service.type=NodePort --set service.nodePort=30081 \
+  --set env.DEBUG=true
 ```
+
+
+## 7. Wait until the `snowplow` deployment is ready
+
+Finally, wait for the `snowplow` deployment to become **available**.
+This ensures all pods are up and running before proceeding.
+
+```sh {name=wait-for-snowplow depends=install}
+kubectl wait deployment/snowplow \
+  --namespace ${NAMESPACE} \
+  --for=condition=available \
+  --timeout=90s
+```
+
 
 You are now ready to move on to the next steps. From here, you can start testing the [RESTActions][restactions] to see how the different use cases work in practice. 
 
