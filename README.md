@@ -23,3 +23,4 @@ It handles on-demand resolution of the `RESTAction` custom resource and all Krat
 ### Examples
 
 - [RESTAction: list _cluster namespaces_](howto/restactions/example-cluster-namespaces.md)
+- [RESTAction: invoke _external API_](howto/restactions/example-external-api.md)
