@@ -101,7 +101,7 @@ Each entry in the list describes one HTTP request with optional chaining, filter
   In addition, this value also represents the key under which Snowplow will place the error details in the resource’s status field.
 
 
-## **Execution Flow**
+## Execution Flow
 
 When this RESTAction is executed:
 
