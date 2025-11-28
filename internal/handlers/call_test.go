@@ -119,11 +119,13 @@ func TestCallHandler(t *testing.T) {
 			return ctx
 		}).
 		Assess("Run Call WS", runWS(request.RequestOptions{
-			Verb: ptr.To(string(http.MethodGet)),
-			Path: "/call?apiVersion=templates.krateo.io/v1&resource=restactions&namespace=demo-system&name=kube",
-			// Headers: []string{
-			// 	fmt.Sprintf("Authorization: Bearer: %s", "TODO"),
-			// }},
+			RequestInfo: request.RequestInfo{
+				Verb: ptr.To(string(http.MethodGet)),
+				Path: "/call?apiVersion=templates.krateo.io/v1&resource=restactions&namespace=demo-system&name=kube",
+				// Headers: []string{
+				// 	fmt.Sprintf("Authorization: Bearer: %s", "TODO"),
+				// }},
+			},
 		},
 			response.Status{
 				Kind: "Status", APIVersion: "v1",

@@ -88,10 +88,12 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	dict := map[string]any{}
 	callOpts := request.RequestOptions{
-		Path: uri,
-		Verb: ptr.To(strings.ToUpper(opts.verb)),
-		Headers: []string{
-			"Accept: application/json",
+		RequestInfo: request.RequestInfo{
+			Path: uri,
+			Verb: ptr.To(strings.ToUpper(opts.verb)),
+			Headers: []string{
+				"Accept: application/json",
+			},
 		},
 		Endpoint:        &ep,
 		ResponseHandler: callResponseHandler(dict),
