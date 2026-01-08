@@ -20,6 +20,10 @@ It is stored as a Kubernetes [`Secret`](https://kubernetes.io/docs/concepts/conf
 | `client-key-data` | `string (base64)` | Base64-encoded PEM private key associated with the client certificate. | ❌ |
 | `debug` | `boolean` | Enables verbose logging of HTTP requests/responses. | ❌ |
 | `insecure` | `boolean` | If `true`, disables TLS certificate verification. | ❌ |
+| `aws-access-key` | `string` | AWS Access Key to generate the signature header for AWS APIs | ❌ |
+| `aws-secret-key` | `string` | AWS Secret Key to generate the signature header for AWS APIs | ❌ |
+| `aws-region` | `string` | AWS Region for the service API called | ❌ |
+| `aws-service` | `string` | AWS Service name for the API called | ❌ |
 
 ## Storage in Kubernetes
 
@@ -46,6 +50,10 @@ stringData:
   client-key-data: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQo="
   debug: "true"
   insecure: "false"
+  aws-access-key: AKIBZQ4DSBNZFAUKNDF7
+  aws-secret-key: 8CGb87PaNXmdUCdlwVbqwq5C9uNAFq6bcFx842uca
+  aws-region: eu-central-1
+  aws-service: s3
 ```
 
 🔎 Note: Certificate and key values must be base64-encoded strings.
@@ -59,4 +67,5 @@ stringData:
 - if certificateAuthorityData is provided, it’s added to the root CA pool
 - when a proxy URL is set, outbound requests are routed through it
 - boolean values (debug, insecure) are parsed from strings
+- when all four `aws-*` fields are specified, then AWS signature header calculation is enabled
 
