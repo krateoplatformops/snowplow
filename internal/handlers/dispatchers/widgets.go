@@ -56,7 +56,7 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 			),
 		)
 
-	perPage, page := paginationInfo(log, req)
+	cursor, perPage, page := paginationInfo(log, req)
 
 	ctx := xcontext.BuildContext(req.Context())
 
@@ -65,6 +65,7 @@ func (r *widgetsHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		AuthnNS: r.authnNS,
 		PerPage: perPage,
 		Page:    page,
+		Cursor:  cursor,
 		Extras:  extras,
 	})
 	if err != nil {

@@ -29,6 +29,7 @@ type ResolveOptions struct {
 	AuthnNS string
 	PerPage int
 	Page    int
+	Cursor  string
 	Extras  map[string]any
 }
 
@@ -40,6 +41,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*templates.RESTAction, e
 		Items:   opts.In.Spec.API,
 		PerPage: opts.PerPage,
 		Page:    opts.Page,
+		Cursor:  opts.Cursor,
 		Extras:  opts.Extras,
 	})
 	if dict == nil {

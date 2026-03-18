@@ -31,6 +31,7 @@ type ResolveOptions struct {
 	AuthnNS string
 	PerPage int
 	Page    int
+	Cursor  string
 	Extras  map[string]any
 }
 
@@ -73,16 +74,21 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		pig := map[string]any{
 			"items": tmp,
 		}
-		if opts.PerPage > 0 && opts.Page > 0 {
+		if (opts.PerPage > 0 && opts.Page > 0) || (opts.PerPage > 0 && opts.Cursor != "") {
 			hasNext := (tot >= opts.PerPage)
 			page := opts.Page
 			if hasNext {
 				page = page + 1
 			}
+
+			// Extract next cursor from upstream response if present
+			nextCursor, _ := ds["cursor"].(string) // adjust key to match your API
+
 			pig["slice"] = map[string]any{
 				"perPage":  opts.PerPage,
 				"page":     page,
 				"continue": hasNext,
+				"cursor":   nextCursor,
 			}
 		}
 
@@ -123,6 +129,7 @@ func resolveApiRef(ctx context.Context, opts ResolveOptions) (map[string]any, er
 		AuthnNS: opts.AuthnNS,
 		PerPage: opts.PerPage,
 		Page:    opts.Page,
+		Cursor:  opts.Cursor,
 	})
 }
 
