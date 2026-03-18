@@ -38,7 +38,7 @@ func fetchObject(req *http.Request) (got objects.Result) {
 	})
 }
 
-func paginationInfo(log *slog.Logger, req *http.Request) (perPage, page int) {
+func paginationInfo(log *slog.Logger, req *http.Request) (cursor string, perPage, page int) {
 	perPage, page = -1, -1
 
 	if val := req.URL.Query().Get("perPage"); val != "" {
@@ -58,6 +58,8 @@ func paginationInfo(log *slog.Logger, req *http.Request) (perPage, page int) {
 				slog.Any("err", err))
 		}
 	}
+
+	cursor = req.URL.Query().Get("cursor")
 
 	if perPage > 0 && page <= 0 {
 		page = 1

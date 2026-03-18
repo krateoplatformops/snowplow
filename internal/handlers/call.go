@@ -164,6 +164,8 @@ func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err 
 		}
 	}
 
+	opts.cursor = req.URL.Query().Get("cursor")
+
 	if req.Body != nil {
 		opts.dat, err = io.ReadAll(io.LimitReader(req.Body, 1048576))
 		if err != nil {
@@ -181,6 +183,7 @@ type callOptions struct {
 	contentType string
 	perPage     int
 	page        int
+	cursor      string
 	dat         []byte
 }
 

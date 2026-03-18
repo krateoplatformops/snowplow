@@ -26,6 +26,7 @@ type ResolveOptions struct {
 	Items   []*templates.API
 	PerPage int
 	Page    int
+	Cursor  string
 	Extras  map[string]any
 }
 
@@ -43,7 +44,7 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 	}
 
 	log := xcontext.Logger(ctx)
-	log.Info("pagination options", slog.Int("page", opts.Page), slog.Int("perPage", opts.PerPage))
+	log.Info("pagination options", slog.Int("page", opts.Page), slog.Int("perPage", opts.PerPage), slog.String("cursor", opts.Cursor))
 
 	user, err := xcontext.UserInfo(ctx)
 	if err != nil {
@@ -82,7 +83,13 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 		dict = maps.DeepCopyJSON(opts.Extras)
 	}
 
-	if opts.PerPage > 0 && opts.Page > 0 {
+	if opts.PerPage > 0 && opts.Cursor != "" {
+		dict["slice"] = map[string]any{
+			"page":    opts.Page,
+			"perPage": opts.PerPage,
+			"cursor":  opts.Cursor,
+		}
+	} else if opts.PerPage > 0 && opts.Page > 0 {
 		dict["slice"] = map[string]any{
 			"page":    opts.Page,
 			"perPage": opts.PerPage,
