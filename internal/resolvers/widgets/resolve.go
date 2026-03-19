@@ -74,9 +74,13 @@ func Resolve(ctx context.Context, opts ResolveOptions) (*Widget, error) {
 		pig := map[string]any{
 			"items": tmp,
 		}
-		if opts.PerPage > 0 && opts.Cursor != "" {
-			nextCursor, hasNext := ds["cursor"].(string)
-
+		if (opts.PerPage > 0 && opts.Page < 0) || (opts.PerPage > 0 && opts.Cursor != "") {
+			sliceData, _ := ds["slice"].(map[string]any)
+			var nextCursor string
+			hasNext := false
+			if sliceData != nil {
+				nextCursor, hasNext = sliceData["cursor"].(string)
+			}
 			pig["slice"] = map[string]any{
 				"perPage":  opts.PerPage,
 				"continue": hasNext,

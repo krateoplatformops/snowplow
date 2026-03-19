@@ -164,7 +164,10 @@ func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err 
 		}
 	}
 
-	opts.cursor = req.URL.Query().Get("cursor")
+	if val := req.URL.Query().Get("cursor"); val != "" {
+		opts.page = -1
+		opts.cursor = val
+	}
 
 	if req.Body != nil {
 		opts.dat, err = io.ReadAll(io.LimitReader(req.Body, 1048576))
@@ -214,6 +217,9 @@ func buildURIPath(opts callOptions) (string, error) {
 	}
 	if opts.page > 0 {
 		query.Set("page", strconv.Itoa(opts.page))
+	}
+	if opts.cursor != "" {
+		query.Set("cursor", opts.cursor)
 	}
 
 	if len(query) > 0 {

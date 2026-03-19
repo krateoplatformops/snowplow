@@ -5,6 +5,7 @@ type Slice struct {
 	Offset   int
 	Page     int
 	PerPage  int
+	Cursor   *string
 }
 
 // ResourceRef defines a template for an action.

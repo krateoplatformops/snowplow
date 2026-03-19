@@ -83,9 +83,8 @@ func Resolve(ctx context.Context, opts ResolveOptions) map[string]any {
 		dict = maps.DeepCopyJSON(opts.Extras)
 	}
 
-	if opts.PerPage > 0 && opts.Cursor != "" {
+	if (opts.PerPage > 0 && opts.Page < 0) || (opts.PerPage > 0 && opts.Cursor != "") {
 		dict["slice"] = map[string]any{
-			"page":    opts.Page,
 			"perPage": opts.PerPage,
 			"cursor":  opts.Cursor,
 		}

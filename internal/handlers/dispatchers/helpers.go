@@ -61,9 +61,9 @@ func paginationInfo(log *slog.Logger, req *http.Request) (cursor string, perPage
 
 	cursor = req.URL.Query().Get("cursor")
 
-	if perPage > 0 && page <= 0 {
-		page = 1
-	}
+	// if perPage > 0 && page <= 0 {
+	// 	page = 1
+	// }
 
 	return
 }

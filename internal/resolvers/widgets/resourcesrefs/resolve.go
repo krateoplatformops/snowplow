@@ -133,8 +133,14 @@ func buildPath(gvr schema.GroupVersionResource, in *templatesv1.ResourceRef) str
 	}
 
 	if slice := in.Slice; slice != nil {
-		q.Set("page", strconv.Itoa(slice.Page))
-		q.Set("perPage", strconv.Itoa(slice.PerPage))
+		if slice.Cursor != nil {
+			q.Set("cursor", *slice.Cursor)
+			q.Set("perPage", strconv.Itoa(slice.PerPage))
+		} else {
+			q.Set("page", strconv.Itoa(slice.Page))
+			q.Set("perPage", strconv.Itoa(slice.PerPage))
+		}
+
 	}
 
 	u.RawQuery = q.Encode()
