@@ -2,7 +2,10 @@ package rbac
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"sync"
+	"time"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
 	"github.com/krateoplatformops/plumbing/kubeconfig"
@@ -18,8 +21,37 @@ type UserCanOptions struct {
 	Namespace     string
 }
 
+type cacheEntry struct {
+	allowed bool
+	expiry  time.Time
+}
+
+var (
+	rbacCache = make(map[string]cacheEntry)
+	mutex     = &sync.Mutex{}
+)
+
+const (
+	cacheTTL = 10 * time.Second
+)
+
 func UserCan(ctx context.Context, opts UserCanOptions) (ok bool) {
 	log := xcontext.Logger(ctx)
+
+	key, err := cacheKey(ctx, opts)
+	if err != nil {
+		log.Error("unable to generate cache key", slog.Any("err", err))
+		return false
+	}
+
+	mutex.Lock()
+	entry, found := rbacCache[key]
+	mutex.Unlock()
+
+	if found && time.Now().Before(entry.expiry) {
+		log.Debug("SelfSubjectAccessReviews result from cache", slog.Any("key", key))
+		return entry.allowed
+	}
 
 	ep, err := xcontext.UserConfig(ctx)
 	if err != nil {
@@ -60,5 +92,23 @@ func UserCan(ctx context.Context, opts UserCanOptions) (ok bool) {
 
 	log.Debug("SelfSubjectAccessReviews result", slog.Any("response", resp))
 
+	mutex.Lock()
+	rbacCache[key] = cacheEntry{
+		allowed: resp.Status.Allowed,
+		expiry:  time.Now().Add(cacheTTL),
+	}
+	mutex.Unlock()
+
 	return resp.Status.Allowed
+}
+
+func cacheKey(ctx context.Context, opts UserCanOptions) (string, error) {
+	usr, err := xcontext.User(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s:%s:%s:%s:%s",
+		usr, opts.Verb, opts.GroupResource.Group,
+		opts.GroupResource.Resource, opts.Namespace), nil
 }
