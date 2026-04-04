@@ -75,11 +75,24 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 			Verb: kubeToREST[verb],
 		}
 
-		el.Allowed = rbac.UserCan(ctx, rbac.UserCanOptions{
+		allowed, err := rbac.UserCan(ctx, rbac.UserCanOptions{
 			Verb:          verb,
 			GroupResource: gvr.GroupResource(),
 			Namespace:     in.Namespace,
 		})
+		if err != nil {
+			log.Error("cannot resolve resource ref",
+				slog.String("id", in.ID),
+				slog.String("verb", verb),
+				slog.String("group", gvr.Group),
+				slog.String("resource", gvr.Resource),
+				slog.String("namespace", in.Namespace),
+				slog.Any("error", err))
+			el.Allowed = false
+		} else {
+			el.Allowed = allowed
+		}
+
 		if !el.Allowed {
 			log.Warn("resource ref action not allowed",
 				slog.String("id", in.ID),
