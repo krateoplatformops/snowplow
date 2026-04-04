@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
@@ -18,25 +19,25 @@ type UserCanOptions struct {
 	Namespace     string
 }
 
-func UserCan(ctx context.Context, opts UserCanOptions) (ok bool) {
+func UserCan(ctx context.Context, opts UserCanOptions) (ok bool, err error) {
 	log := xcontext.Logger(ctx)
 
 	ep, err := xcontext.UserConfig(ctx)
 	if err != nil {
 		log.Error("unable to get user endpoint", slog.Any("err", err))
-		return false
+		return false, fmt.Errorf("unable to get user endpoint: %w", err)
 	}
 
 	rc, err := kubeconfig.NewClientConfig(ctx, ep)
 	if err != nil {
 		log.Error("unable to create user client config", slog.Any("err", err))
-		return false
+		return false, fmt.Errorf("unable to create user client config: %w", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(rc)
 	if err != nil {
 		log.Error("unable to create kubernetes clientset", slog.Any("err", err))
-		return false
+		return false, fmt.Errorf("unable to create kubernetes clientset: %w", err)
 	}
 
 	selfCheck := authv1.SelfSubjectAccessReview{
@@ -55,10 +56,10 @@ func UserCan(ctx context.Context, opts UserCanOptions) (ok bool) {
 	if err != nil {
 		log.Error("unable to perform SelfSubjectAccessReviews",
 			slog.Any("selfCheck", selfCheck), slog.Any("err", err))
-		return false
+		return false, err
 	}
 
 	log.Debug("SelfSubjectAccessReviews result", slog.Any("response", resp))
 
-	return resp.Status.Allowed
+	return resp.Status.Allowed, nil
 }
