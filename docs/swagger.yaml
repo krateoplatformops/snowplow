@@ -17,15 +17,6 @@ definitions:
       singular:
         type: string
     type: object
-  handlers.serviceInfo:
-    properties:
-      build:
-        type: string
-      name:
-        type: string
-      namespace:
-        type: string
-    type: object
   response.Status:
     properties:
       apiVersion:
@@ -503,18 +494,6 @@ paths:
           schema:
             $ref: '#/definitions/response.Status'
       summary: Convert YAML to JSON or JSON to YAML
-  /health:
-    get:
-      description: Health HealthCheck
-      operationId: health
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.serviceInfo'
-      summary: Liveness Endpoint
   /jq:
     post:
       consumes:

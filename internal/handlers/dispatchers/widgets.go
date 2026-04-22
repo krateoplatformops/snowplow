@@ -9,7 +9,6 @@ import (
 	"time"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
-	"github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/plumbing/http/response"
 	"github.com/krateoplatformops/plumbing/maps"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
@@ -17,16 +16,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
-func Widgets() http.Handler {
+func Widgets(authnNS string) http.Handler {
 	return &widgetsHandler{
-		authnNS: env.String("AUTHN_NAMESPACE", ""),
-		verbose: env.True("DEBUG"),
+		authnNS: authnNS,
 	}
 }
 
 type widgetsHandler struct {
 	authnNS string
-	verbose bool
 }
 
 var _ http.Handler = (*widgetsHandler)(nil)

@@ -613,24 +613,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/health": {
-            "get": {
-                "description": "Health HealthCheck",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Liveness Endpoint",
-                "operationId": "health",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.serviceInfo"
-                        }
-                    }
-                }
-            }
-        },
         "/jq": {
             "post": {
                 "description": "This endpoint accepts a JSON body containing a JQ ` + "`" + `query` + "`" + ` and some ` + "`" + `data` + "`" + `.\nIt evaluates the query against the data and returns the result as formatted JSON.",
@@ -769,20 +751,6 @@ const docTemplate = `{
                     }
                 },
                 "singular": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.serviceInfo": {
-            "type": "object",
-            "properties": {
-                "build": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "namespace": {
                     "type": "string"
                 }
             }

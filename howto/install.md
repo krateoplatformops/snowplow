@@ -90,10 +90,10 @@ EOF
 
 ## 6. Deploy snowplow
 
-Finally, install `snowplow` using the Helm chart:
+Finally, install `snowplow` using the Helm chart in this repository:
 
 ```sh {name=install depends=create-jwt-secret}
-helm install snowplow https://github.com/krateoplatformops/helm-charts/raw/gh-pages/snowplow-0.20.2.tgz \
+helm install snowplow ./chart \
   --namespace ${NAMESPACE} \
   --set service.type=NodePort --set service.nodePort=30081 \
   --set env.DEBUG=true

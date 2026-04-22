@@ -13,6 +13,7 @@ import (
 	"github.com/krateoplatformops/plumbing/kubeconfig"
 	"github.com/krateoplatformops/snowplow/internal/dynamic"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
+	"github.com/krateoplatformops/snowplow/internal/telemetry"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -29,23 +30,26 @@ import (
 // @Failure 404 {object} response.Status
 // @Failure 500 {object} response.Status
 // @Router /list [get]
-func List() http.HandlerFunc {
+func List(metrics *telemetry.Metrics) http.HandlerFunc {
 	return func(wri http.ResponseWriter, req *http.Request) {
 		cat := req.URL.Query().Get("category")
 		ns := req.URL.Query().Get("ns")
+		start := time.Now()
 
 		if len(cat) == 0 {
+			metrics.IncListError(req.Context(), cat, "missing_category", http.StatusBadRequest)
+			metrics.RecordListRequest(req.Context(), cat, http.StatusBadRequest, time.Since(start))
 			response.BadRequest(wri, fmt.Errorf("missing 'category' params"))
 			return
 		}
 
 		log := xcontext.Logger(req.Context())
 
-		start := time.Now()
-
 		ep, err := xcontext.UserConfig(req.Context())
 		if err != nil {
 			log.Error("unable to get user endpoint", slog.Any("err", err))
+			metrics.IncListError(req.Context(), cat, "user_config", http.StatusUnauthorized)
+			metrics.RecordListRequest(req.Context(), cat, http.StatusUnauthorized, time.Since(start))
 			response.Unauthorized(wri, err)
 			return
 		}
@@ -55,6 +59,8 @@ func List() http.HandlerFunc {
 		rc, err := kubeconfig.NewClientConfig(req.Context(), ep)
 		if err != nil {
 			log.Error("unable to create user client config", slog.Any("err", err))
+			metrics.IncListError(req.Context(), cat, "client_config", http.StatusInternalServerError)
+			metrics.RecordListRequest(req.Context(), cat, http.StatusInternalServerError, time.Since(start))
 			response.InternalError(wri, err)
 			return
 		}
@@ -62,14 +68,20 @@ func List() http.HandlerFunc {
 		cli, err := dynamic.NewClient(rc)
 		if err != nil {
 			log.Error("cannot create dynamic client", slog.Any("err", err))
+			metrics.IncListError(req.Context(), cat, "dynamic_client", http.StatusInternalServerError)
+			metrics.RecordListRequest(req.Context(), cat, http.StatusInternalServerError, time.Since(start))
 			response.InternalError(wri, err)
 			return
 		}
 
 		log.Debug("performing discovery", slog.String("category", cat))
+		discoveryStart := time.Now()
 		res, err := cli.Discover(context.Background(), cat)
+		metrics.RecordListDiscoveryDuration(req.Context(), cat, time.Since(discoveryStart))
 		if err != nil {
 			log.Error("discovery failed", slog.Any("err", err))
+			metrics.IncListError(req.Context(), cat, "discovery", http.StatusInternalServerError)
+			metrics.RecordListRequest(req.Context(), cat, http.StatusInternalServerError, time.Since(start))
 			response.InternalError(wri, err)
 			return
 		}
@@ -88,9 +100,12 @@ func List() http.HandlerFunc {
 				log.Error("cannot list resources",
 					slog.String("gvr", gvr.String()), slog.Any("err", err))
 				if apierrors.IsForbidden(err) {
+					metrics.IncListError(req.Context(), cat, "list_forbidden", http.StatusForbidden)
+					metrics.RecordListRequest(req.Context(), cat, http.StatusForbidden, time.Since(start))
 					response.Forbidden(wri, err)
 					return
 				}
+				metrics.IncListError(req.Context(), cat, "list_partial", http.StatusInternalServerError)
 				continue
 			}
 
@@ -111,6 +126,12 @@ func List() http.HandlerFunc {
 		wri.WriteHeader(http.StatusOK)
 		enc := json.NewEncoder(wri)
 		enc.SetIndent("", "  ")
-		enc.Encode(rt)
+		if err := enc.Encode(rt); err != nil {
+			metrics.IncListError(req.Context(), cat, "encode_response", http.StatusInternalServerError)
+			return
+		}
+
+		metrics.AddListResourcesReturned(req.Context(), cat, int64(len(rt)))
+		metrics.RecordListRequest(req.Context(), cat, http.StatusOK, time.Since(start))
 	}
 }

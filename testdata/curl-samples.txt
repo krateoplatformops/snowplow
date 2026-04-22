@@ -2,7 +2,7 @@
 Health Check
 ==================
 
-curl "http://127.0.0.1:30081/health"
+curl "http://127.0.0.1:30081/livez"
 
 
 List
