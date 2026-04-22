@@ -7,7 +7,6 @@ import (
 	"time"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
-	"github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/plumbing/http/response"
 	"github.com/krateoplatformops/snowplow/apis"
 	v1 "github.com/krateoplatformops/snowplow/apis/templates/v1"
@@ -16,16 +15,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func RESTAction() http.Handler {
+func RESTAction(authnNS string) http.Handler {
 	return &restActionHandler{
-		authnNS: env.String("AUTHN_NAMESPACE", ""),
-		verbose: env.True("DEBUG"),
+		authnNS: authnNS,
 	}
 }
 
 type restActionHandler struct {
 	authnNS string
-	verbose bool
 }
 
 var _ http.Handler = (*restActionHandler)(nil)

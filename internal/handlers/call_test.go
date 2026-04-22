@@ -157,7 +157,7 @@ func runWS(opts request.RequestOptions, want response.Status) func(ctx context.C
 
 		rec := httptest.NewRecorder()
 
-		handler := handlers.Call()
+		handler := handlers.Call(false, nil)
 		handler.ServeHTTP(rec, req)
 
 		assert.Equal(t, want.Code, rec.Code)

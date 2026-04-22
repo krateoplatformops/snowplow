@@ -14,27 +14,27 @@ import (
 	"time"
 
 	xcontext "github.com/krateoplatformops/plumbing/context"
-	"github.com/krateoplatformops/plumbing/env"
 	"github.com/krateoplatformops/plumbing/http/request"
 	"github.com/krateoplatformops/plumbing/http/response"
 	"github.com/krateoplatformops/plumbing/ptr"
 	"github.com/krateoplatformops/snowplow/internal/handlers/util"
+	"github.com/krateoplatformops/snowplow/internal/telemetry"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func Call() http.Handler {
+func Call(verbose bool, metrics *telemetry.Metrics) http.Handler {
 	return &callHandler{
-		authnNS: env.String("AUTHN_NAMESPACE", ""),
-		verbose: env.True("DEBUG"),
+		verbose: verbose,
+		metrics: metrics,
 	}
 }
 
 var _ http.Handler = (*callHandler)(nil)
 
 type callHandler struct {
-	authnNS string
 	verbose bool
+	metrics *telemetry.Metrics
 }
 
 // @Summary Call Endpoint
@@ -60,14 +60,29 @@ type callHandler struct {
 // @Router /call [patch]
 // @Router /call [delete]
 func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
+	totalStart := time.Now()
+	method := strings.ToUpper(req.Method)
+	apiGroup := ""
+	resource := ""
+
+	validateStart := time.Now()
 	opts, err := r.validateRequest(req)
+	r.metrics.RecordCallStageDuration(req.Context(), "validate", method, apiGroup, resource, time.Since(validateStart))
 	if err != nil {
+		r.metrics.IncCallError(req.Context(), "validate", method, apiGroup, resource, http.StatusBadRequest)
+		r.metrics.RecordCallRequest(req.Context(), method, apiGroup, resource, http.StatusBadRequest, time.Since(totalStart))
 		response.BadRequest(wri, err)
 		return
 	}
+	apiGroup = opts.gvr.Group
+	resource = opts.gvr.Resource
 
+	buildURIStart := time.Now()
 	uri, err := buildURIPath(opts)
+	r.metrics.RecordCallStageDuration(req.Context(), "build_uri", method, apiGroup, resource, time.Since(buildURIStart))
 	if err != nil {
+		r.metrics.IncCallError(req.Context(), "build_uri", method, apiGroup, resource, http.StatusInternalServerError)
+		r.metrics.RecordCallRequest(req.Context(), method, apiGroup, resource, http.StatusInternalServerError, time.Since(totalStart))
 		response.InternalError(wri, err)
 		return
 	}
@@ -76,9 +91,13 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 
 	start := time.Now()
 
+	userConfigStart := time.Now()
 	ep, err := xcontext.UserConfig(req.Context())
+	r.metrics.RecordCallStageDuration(req.Context(), "user_config", method, apiGroup, resource, time.Since(userConfigStart))
 	if err != nil {
 		log.Error("unable to get user endpoint", slog.Any("err", err))
+		r.metrics.IncCallError(req.Context(), "user_config", method, apiGroup, resource, http.StatusUnauthorized)
+		r.metrics.RecordCallRequest(req.Context(), method, apiGroup, resource, http.StatusUnauthorized, time.Since(totalStart))
 		response.Unauthorized(wri, err)
 		return
 	}
@@ -105,12 +124,16 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 		callOpts.Payload = ptr.To(string(opts.dat))
 	}
 
+	upstreamStart := time.Now()
 	rt := request.Do(req.Context(), callOpts)
+	r.metrics.RecordCallStageDuration(req.Context(), "upstream", method, apiGroup, resource, time.Since(upstreamStart))
 	if rt.Status == response.StatusFailure {
 		log.Error("unable to call endpoint",
 			slog.String("verb", strings.ToUpper(opts.verb)),
 			slog.String("uri", uri),
 			slog.String("err", rt.Message))
+		r.metrics.IncCallError(req.Context(), "upstream", method, apiGroup, resource, rt.Code)
+		r.metrics.RecordCallRequest(req.Context(), method, apiGroup, resource, rt.Code, time.Since(totalStart))
 		response.Encode(wri, rt)
 		return
 	}
@@ -128,7 +151,11 @@ func (r *callHandler) ServeHTTP(wri http.ResponseWriter, req *http.Request) {
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(dict); err != nil {
 		log.Error("unable to serve api call response", slog.Any("err", err))
+		r.metrics.IncCallError(req.Context(), "encode_response", method, apiGroup, resource, http.StatusInternalServerError)
+		return
 	}
+
+	r.metrics.RecordCallRequest(req.Context(), method, apiGroup, resource, http.StatusOK, time.Since(totalStart))
 }
 
 func (r *callHandler) validateRequest(req *http.Request) (opts callOptions, err error) {

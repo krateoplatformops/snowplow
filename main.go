@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,23 +12,16 @@ import (
 	"time"
 
 	"github.com/krateoplatformops/plumbing/env"
-	"github.com/krateoplatformops/plumbing/kubeutil"
+	"github.com/krateoplatformops/plumbing/server/probes"
 	"github.com/krateoplatformops/plumbing/server/use"
 	"github.com/krateoplatformops/plumbing/server/use/cors"
-	"github.com/krateoplatformops/plumbing/slogs/pretty"
 	_ "github.com/krateoplatformops/snowplow/docs"
+	"github.com/krateoplatformops/snowplow/internal/config"
 	"github.com/krateoplatformops/snowplow/internal/handlers"
 	"github.com/krateoplatformops/snowplow/internal/handlers/dispatchers"
-	jqsupport "github.com/krateoplatformops/snowplow/internal/support/jq"
+	"github.com/krateoplatformops/snowplow/internal/telemetry"
 	httpSwagger "github.com/swaggo/http-swagger"
-)
-
-const (
-	serviceName = "snowplow"
-)
-
-var (
-	build string
+	"k8s.io/client-go/rest"
 )
 
 // @title SnowPlow API
@@ -37,92 +29,95 @@ var (
 // @description This the total new Krateo backend.
 // @BasePath /
 func main() {
-	debugOn := flag.Bool("debug", env.Bool("DEBUG", false), "enable or disable debug logs")
-	blizzardOn := flag.Bool("blizzard", env.Bool("BLIZZARD", false), "dump verbose output")
-	prettyLog := flag.Bool("pretty-log", env.Bool("PRETTY_LOG", true), "print a nice JSON formatted log")
-	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
-	authnNS := flag.String("authn-namespace", env.String("AUTHN_NAMESPACE", ""),
-		"krateo authn service clientconfig secrets namespace")
-	signKey := flag.String("jwt-sign-key", env.String("JWT_SIGN_KEY", ""), "secret key used to sign JWT tokens")
-	jqModPath := flag.String("jq-modules-path", env.String(jqsupport.EnvModulesPath, ""),
-		"loads JQ custom modules from the filesystem")
+	cfg := config.Setup()
+	rootCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	flag.Usage = func() {
-		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
-		flag.PrintDefaults()
+	metrics, shutdownMetrics, err := telemetry.Setup(rootCtx, cfg.Log, telemetry.Config{
+		Enabled:        cfg.OTelEnabled,
+		ServiceName:    "snowplow",
+		ExportInterval: cfg.OTelInterval,
+	})
+	if err != nil {
+		cfg.Log.Error("OpenTelemetry setup failed", slog.Any("err", err))
+		os.Exit(1)
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdownMetrics(ctx); err != nil {
+			cfg.Log.Warn("OpenTelemetry shutdown failed", slog.Any("err", err))
+		}
+	}()
+
+	server := newServer(cfg, metrics.WrapHTTP(newMux(cfg, metrics)))
+
+	serverErr := make(chan error, 1)
+	go func() {
+		cfg.Log.Info("starting HTTP server", slog.Int("port", cfg.Port))
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
+		}
+	}()
+
+	cfg.Log.Info("application is ready", slog.String("addr", server.Addr))
+	metrics.IncStartupSuccess(rootCtx)
+
+	select {
+	case <-rootCtx.Done():
+		cfg.Log.Info("shutdown signal received")
+	case err := <-serverErr:
+		metrics.IncStartupFailure(rootCtx)
+		cfg.Log.Error("server error", slog.Any("err", err))
 	}
 
-	flag.Parse()
+	cfg.Log.Info("starting graceful shutdown")
 
-	os.Setenv("DEBUG", strconv.FormatBool(*debugOn))
-	os.Setenv("TRACE", strconv.FormatBool(*blizzardOn))
-	os.Setenv("AUTHN_NAMESPACE", *authnNS)
-	os.Setenv(jqsupport.EnvModulesPath, *jqModPath)
-
-	logLevel := slog.LevelInfo
-	if *debugOn {
-		logLevel = slog.LevelDebug
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	server.SetKeepAlivesEnabled(false)
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		cfg.Log.Error("HTTP server shutdown error", slog.Any("err", err))
+		return
 	}
 
-	var lh slog.Handler
-	if *prettyLog {
-		lh = pretty.New(&slog.HandlerOptions{
-			Level:     logLevel,
-			AddSource: false,
-		},
-			pretty.WithDestinationWriter(os.Stderr),
-			pretty.WithColor(),
-			pretty.WithOutputEmptyAttrs(),
-		)
-	} else {
-		lh = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level:     logLevel,
-			AddSource: false,
-		})
-	}
+	cfg.Log.Info("graceful shutdown complete")
+}
 
-	log := slog.New(lh)
-	if *debugOn {
-		log.Debug("environment variables", slog.Any("env", os.Environ()))
-	}
-
+func newMux(cfg *config.Config, metrics *telemetry.Metrics) *http.ServeMux {
 	chain := use.NewChain(
 		use.TraceId(),
-		use.Logger(log),
+		use.Logger(cfg.Log),
 	)
+	authChain := chain.Append(use.UserConfig(cfg.SigningKey, cfg.AuthnNS))
 
 	mux := http.NewServeMux()
+
+	// Register /livez and /readyz without auth — Kubernetes probes must not require JWT.
+	probes.Register(mux, cfg.Log, clusterConfigPinger{}, time.Second)
 
 	mux.Handle("GET /swagger/", httpSwagger.WrapHandler)
 	//mux.Handle("POST /convert", chain.Then(handlers.Converter()))
 
-	mux.Handle("GET /health", handlers.HealthCheck(serviceName, build, kubeutil.ServiceAccountNamespace))
 	mux.Handle("GET /api-info/names", chain.Then(handlers.Plurals()))
-	mux.Handle("GET /list", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.List()))
+	mux.Handle("GET /list", authChain.Then(handlers.List(metrics)))
 
-	mux.Handle("GET /call", chain.Append(
-		use.UserConfig(*signKey, *authnNS),
-		handlers.Dispatcher(dispatchers.All())).
-		Then(handlers.Call()))
-	mux.Handle("POST /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
-	mux.Handle("PUT /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
-	mux.Handle("PATCH /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
-	mux.Handle("DELETE /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
+	mux.Handle("GET /call", authChain.Append(
+		handlers.Dispatcher(dispatchers.All(cfg.AuthnNS))).
+		Then(handlers.Call(cfg.Debug, metrics)))
+	mux.Handle("POST /call", authChain.Then(handlers.Call(cfg.Debug, metrics)))
+	mux.Handle("PUT /call", authChain.Then(handlers.Call(cfg.Debug, metrics)))
+	mux.Handle("PATCH /call", authChain.Then(handlers.Call(cfg.Debug, metrics)))
+	mux.Handle("DELETE /call", authChain.Then(handlers.Call(cfg.Debug, metrics)))
 
-	mux.Handle("POST /jq", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.JQ()))
+	mux.Handle("POST /jq", authChain.Then(handlers.JQ(metrics)))
 
-	ctx, stop := signal.NotifyContext(context.Background(), []os.Signal{
-		os.Interrupt,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGKILL,
-		syscall.SIGHUP,
-		syscall.SIGQUIT,
-	}...)
-	defer stop()
+	return mux
+}
 
-	server := &http.Server{
-		Addr: fmt.Sprintf(":%d", *port),
+func newServer(cfg *config.Config, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr: ":" + strconv.Itoa(cfg.Port),
 		Handler: use.CORS(cors.Options{
 			AllowedOrigins: []string{"*"},
 			AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -136,35 +131,20 @@ func main() {
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: true,
 			MaxAge:           300, // Maximum value not ignored by any of major browsers
-		})(mux),
+		})(handler),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 50 * time.Second,
 		IdleTimeout:  30 * time.Second,
 	}
+}
 
-	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error("server cannot run",
-				slog.String("addr", server.Addr),
-				slog.Any("err", err))
-		}
-	}()
+type clusterConfigPinger struct{}
 
-	// Listen for the interrupt signal.
-	log.Info("server is ready to handle requests", slog.String("addr", server.Addr))
-	<-ctx.Done()
-
-	// Restore default behavior on the interrupt signal and notify user of shutdown.
-	stop()
-	log.Info("server is shutting down gracefully, press Ctrl+C again to force")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	server.SetKeepAlivesEnabled(false)
-	if err := server.Shutdown(ctx); err != nil {
-		log.Error("server forced to shutdown", slog.Any("err", err))
+func (clusterConfigPinger) Ping(context.Context) error {
+	if env.TestMode() {
+		return nil
 	}
 
-	log.Info("server gracefully stopped")
+	_, err := rest.InClusterConfig()
+	return err
 }
