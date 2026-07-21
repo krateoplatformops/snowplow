@@ -50,6 +50,13 @@ spec:
       - name: jq-modules
         configMap:
           name: jq-custom-modules
+      # authn's RSA public key (PEM), used to verify RS256 JWT signatures.
+      - name: jwt-public-key
+        secret:
+          secretName: authn-jwt-public-key
+          items:
+          - key: public.pem
+            path: public.pem
       containers:
       - name: snowplow
         image: kind.local/snowplow:latest
@@ -59,7 +66,7 @@ spec:
           - --blizzard=false
           - --port=8081
           - --authn-namespace=demo-system
-          - --jwt-sign-key=AbbraCadabbra
+          - --jwt-public-key-file=/etc/snowplow/jwt/public.pem
           - --pretty-log=false
           - --jq-modules-path=/jq-modules
         ports:
@@ -68,6 +75,9 @@ spec:
         volumeMounts:
         - name: jq-modules
           mountPath: /jq-modules
+          readOnly: true
+        - name: jwt-public-key
+          mountPath: /etc/snowplow/jwt
           readOnly: true
 ---
 kind: ClusterRole

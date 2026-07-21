@@ -43,7 +43,8 @@ func main() {
 	port := flag.Int("port", env.ServicePort("PORT", 8081), "port to listen on")
 	authnNS := flag.String("authn-namespace", env.String("AUTHN_NAMESPACE", ""),
 		"krateo authn service clientconfig secrets namespace")
-	signKey := flag.String("jwt-sign-key", env.String("JWT_SIGN_KEY", ""), "secret key used to sign JWT tokens")
+	pubKeyFile := flag.String("jwt-public-key-file", env.String("JWT_PUBLIC_KEY_FILE", ""),
+		"path to the PEM-encoded RSA public key used to verify JWT signatures (authn's public key)")
 	jqModPath := flag.String("jq-modules-path", env.String(jqsupport.EnvModulesPath, ""),
 		"loads JQ custom modules from the filesystem")
 
@@ -86,6 +87,14 @@ func main() {
 		log.Debug("environment variables", slog.Any("env", os.Environ()))
 	}
 
+	// authn signs tokens asymmetrically (RS256); snowplow verifies them with
+	// authn's PEM-encoded RSA public key, mounted from a Secret as a file.
+	pubKeyPEM, err := os.ReadFile(*pubKeyFile)
+	if err != nil {
+		log.Error("reading JWT public key file", slog.Any("err", err))
+		os.Exit(1)
+	}
+
 	chain := use.NewChain(
 		use.TraceId(),
 		use.Logger(log),
@@ -98,18 +107,18 @@ func main() {
 
 	mux.Handle("GET /health", handlers.HealthCheck(serviceName, build, kubeutil.ServiceAccountNamespace))
 	mux.Handle("GET /api-info/names", chain.Then(handlers.Plurals()))
-	mux.Handle("GET /list", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.List()))
+	mux.Handle("GET /list", chain.Append(use.UserConfig(string(pubKeyPEM), *authnNS)).Then(handlers.List()))
 
 	mux.Handle("GET /call", chain.Append(
-		use.UserConfig(*signKey, *authnNS),
+		use.UserConfig(string(pubKeyPEM), *authnNS),
 		handlers.Dispatcher(dispatchers.All())).
 		Then(handlers.Call()))
-	mux.Handle("POST /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
-	mux.Handle("PUT /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
-	mux.Handle("PATCH /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
-	mux.Handle("DELETE /call", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.Call()))
+	mux.Handle("POST /call", chain.Append(use.UserConfig(string(pubKeyPEM), *authnNS)).Then(handlers.Call()))
+	mux.Handle("PUT /call", chain.Append(use.UserConfig(string(pubKeyPEM), *authnNS)).Then(handlers.Call()))
+	mux.Handle("PATCH /call", chain.Append(use.UserConfig(string(pubKeyPEM), *authnNS)).Then(handlers.Call()))
+	mux.Handle("DELETE /call", chain.Append(use.UserConfig(string(pubKeyPEM), *authnNS)).Then(handlers.Call()))
 
-	mux.Handle("POST /jq", chain.Append(use.UserConfig(*signKey, *authnNS)).Then(handlers.JQ()))
+	mux.Handle("POST /jq", chain.Append(use.UserConfig(string(pubKeyPEM), *authnNS)).Then(handlers.JQ()))
 
 	ctx, stop := signal.NotifyContext(context.Background(), []os.Signal{
 		os.Interrupt,
