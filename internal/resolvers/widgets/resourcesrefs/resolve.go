@@ -28,9 +28,11 @@ func Resolve(ctx context.Context, items []templatesv1.ResourceRef) ([]templatesv
 		return nil, err
 	}
 
+	memo := newRequestMemo(rc)
+
 	results := []templatesv1.ResourceRefResult{}
 	for _, el := range items {
-		res, err2 := resolveOne(ctx, rc, &el)
+		res, err2 := resolveOne(ctx, memo, &el)
 		if err2 != nil {
 			err = errors.Join(err, err2)
 			continue
@@ -42,7 +44,47 @@ func Resolve(ctx context.Context, items []templatesv1.ResourceRef) ([]templatesv
 	return results, nil
 }
 
-func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRef) ([]templatesv1.ResourceRefResult, error) {
+// requestMemo deduplicates work across the refs of a single Resolve call:
+// each GVR is mapped to its kind once, and each distinct permission check
+// runs once. It lives only for one request, so nothing is kept between requests.
+type requestMemo struct {
+	rc    *rest.Config
+	kinds map[schema.GroupVersionResource]kindResult
+	perms map[rbac.UserCanOptions]bool
+}
+
+type kindResult struct {
+	gvk schema.GroupVersionKind
+	err error
+}
+
+func newRequestMemo(rc *rest.Config) *requestMemo {
+	return &requestMemo{
+		rc:    rc,
+		kinds: map[schema.GroupVersionResource]kindResult{},
+		perms: map[rbac.UserCanOptions]bool{},
+	}
+}
+
+func (m *requestMemo) kindFor(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error) {
+	if res, ok := m.kinds[gvr]; ok {
+		return res.gvk, res.err
+	}
+	gvk, err := dynamic.KindFor(m.rc, gvr)
+	m.kinds[gvr] = kindResult{gvk: gvk, err: err}
+	return gvk, err
+}
+
+func (m *requestMemo) userCan(ctx context.Context, opts rbac.UserCanOptions) bool {
+	if allowed, ok := m.perms[opts]; ok {
+		return allowed
+	}
+	allowed := rbac.UserCan(ctx, opts)
+	m.perms[opts] = allowed
+	return allowed
+}
+
+func resolveOne(ctx context.Context, memo *requestMemo, in *templatesv1.ResourceRef) ([]templatesv1.ResourceRefResult, error) {
 	all := []templatesv1.ResourceRefResult{}
 	if in == nil {
 		return all, nil
@@ -56,7 +98,7 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 	}
 	gvr := gv.WithResource(in.Resource)
 
-	gvk, err := dynamic.KindFor(rc, gvr)
+	gvk, err := memo.kindFor(gvr)
 	if err != nil {
 		return all, err
 	}
@@ -75,7 +117,7 @@ func resolveOne(ctx context.Context, rc *rest.Config, in *templatesv1.ResourceRe
 			Verb: kubeToREST[verb],
 		}
 
-		el.Allowed = rbac.UserCan(ctx, rbac.UserCanOptions{
+		el.Allowed = memo.userCan(ctx, rbac.UserCanOptions{
 			Verb:          verb,
 			GroupResource: gvr.GroupResource(),
 			Namespace:     in.Namespace,
